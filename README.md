@@ -2,7 +2,7 @@
 
 Progressive web app for managing Mission-aligned updates across **Daily**, **Weekly**, **Monthly**, and **Quarterly** cadences — with team reports, Mission ratings, and cascading priorities.
 
-Built from the TE∆MING SYSTEM prototype. Stack: **Vite + React + TypeScript**, **Supabase**, deployed on **GitHub Pages** at [cabrera-research-lab.github.io/Teaming](https://cabrera-research-lab.github.io/Teaming/).
+Built from the TE∆MING SYSTEM prototype. Stack: **Vite + React + TypeScript**, **Supabase**, deployed on **GitHub Pages** at [cabrera-research-lab.github.io](https://cabrera-research-lab.github.io/).
 
 ## Quick start
 

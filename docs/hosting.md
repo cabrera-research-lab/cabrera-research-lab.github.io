@@ -15,8 +15,8 @@
 4. Authentication → Providers → **Email**: enable **Email + password** sign-up/sign-in.
    - For a pilot, you can disable **Confirm email** under Email settings so new accounts work immediately.
 5. Authentication → URL configuration:
-   - **Site URL:** `https://cabrera-research-lab.github.io/Teaming/`
-   - **Redirect URLs:** `https://cabrera-research-lab.github.io/Teaming/**`, `http://localhost:5173/Teaming/**`
+   - **Site URL:** `https://cabrera-research-lab.github.io/`
+   - **Redirect URLs:** `https://cabrera-research-lab.github.io/**`, `http://localhost:5173/**`
 
 Users sign in with **email and password** (real addresses, e.g. work email).
 
@@ -26,8 +26,8 @@ Users sign in with **email and password** (real addresses, e.g. work email).
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
 2. Settings → Pages → Source: **GitHub Actions**.
-3. After the first deploy, the site is live at **https://cabrera-research-lab.github.io/Teaming/** (project site for repo `Teaming`).
-4. `vite.config.ts` uses `base: '/Teaming/'` so assets and routes work under that path.
+3. After the first deploy, the site is live at **https://cabrera-research-lab.github.io/** (org Pages site from `cabrera-research-lab.github.io` repo).
+4. `vite.config.ts` uses `base: '/'` because the org site is served from the domain root, not `/Teaming/`.
 
 ### 3. Local development
 

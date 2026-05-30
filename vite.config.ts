@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
-/** GitHub Pages project site: https://cabrera-research-lab.github.io/Teaming/ */
-const pagesBase = '/Teaming/';
+/** Org GitHub Pages site root: https://cabrera-research-lab.github.io/ */
+const pagesBase = '/';
 
 export default defineConfig({
   base: pagesBase,
