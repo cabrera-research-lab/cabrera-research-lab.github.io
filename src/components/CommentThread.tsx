@@ -1,0 +1,57 @@
+import { useState } from 'react';
+import type { UpdateComment } from '@/lib/types';
+
+interface Props {
+  comments: UpdateComment[];
+  onSend?: (text: string) => Promise<void>;
+  readOnly?: boolean;
+}
+
+export function CommentThread({ comments, onSend, readOnly = false }: Props) {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+
+  async function handleSend() {
+    const trimmed = text.trim();
+    if (!trimmed || sending || !onSend) return;
+    setSending(true);
+    try {
+      await onSend(trimmed);
+      setText('');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="thread">
+      <div className="small">Response Thread</div>
+      {comments.length === 0 ? (
+        <div className="bubble">
+          <div className="who">No comments yet</div>
+          {readOnly ? 'No thread activity.' : 'Start the thread.'}
+        </div>
+      ) : (
+        comments.map((c) => (
+          <div key={c.id} className="bubble">
+            <div className="who">{c.profiles?.display_name ?? 'Member'}</div>
+            {c.body}
+          </div>
+        ))
+      )}
+      {!readOnly && (
+        <div className="comment-row">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Reply..."
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          />
+          <button type="button" onClick={handleSend} disabled={sending}>
+            Send
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
