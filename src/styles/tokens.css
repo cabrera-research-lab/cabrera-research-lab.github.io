@@ -452,6 +452,10 @@ button {
   border-color: #cfe0ff;
 }
 
+.weekly-priorities-board {
+  margin: 16px 0 20px;
+}
+
 .goal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

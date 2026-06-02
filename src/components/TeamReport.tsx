@@ -5,7 +5,6 @@ import {
   fetchCommentsForUpdates,
   fetchRatingsForUpdates,
   fetchUpdates,
-  rateUpdate,
 } from '@/lib/api';
 import { formatPeriodLabel } from '@/lib/periods';
 import { requireSupabase } from '@/lib/supabase';
@@ -90,12 +89,6 @@ export function TeamReport({
     };
   }, [teamId, cadence, load]);
 
-  async function handleRate(updateId: string, stars: number) {
-    if (!user) return;
-    await rateUpdate(updateId, user.id, stars);
-    await load();
-  }
-
   async function handleComment(updateId: string, body: string) {
     if (!user) return;
     await addComment(updateId, user.id, body);
@@ -137,7 +130,8 @@ export function TeamReport({
               <div>
                 <div className="name">{name}</div>
                 <div className="meta">
-                  {teamName} · {date}
+                  {teamName ? `Ref: ${teamName} · ` : ''}
+                  {date}
                 </div>
               </div>
               <div className="badge">{r.cadence.toUpperCase()}</div>
@@ -157,11 +151,7 @@ export function TeamReport({
             {showDailyExtras && (
               <>
                 <div className="rating-line">
-                  <RatingStars
-                    average={avgRatings(ratings)}
-                    onRate={archive ? undefined : (s) => handleRate(r.id, s)}
-                    readOnly={archive}
-                  />
+                  <RatingStars average={avgRatings(ratings)} readOnly />
                 </div>
                 <CommentThread
                   comments={comments}

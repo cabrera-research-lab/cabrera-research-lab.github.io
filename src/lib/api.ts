@@ -9,6 +9,7 @@ import type {
   UpdateRating,
   UpdateRow,
 } from './types';
+import { resolveOrgPriorityTeamId } from './org';
 import { periodRange, periodStartForCadence, periodStartForPriority } from './periods';
 
 function slugify(name: string): string {
@@ -324,6 +325,58 @@ export async function fetchPrioritySet(
     .order('sort_order');
   if (itemsErr) throw itemsErr;
   return { id: set.id, items: items ?? [] };
+}
+
+/** Shared weekly list for the whole org (one canonical storage team). */
+export async function fetchOrgWeeklyPriorities(
+  fallbackTeamId?: string | null,
+): Promise<PriorityItemInput[]> {
+  try {
+    const teamId = await resolveOrgPriorityTeamId(fallbackTeamId);
+    const data = await fetchPrioritySet(teamId, 'weekly');
+    return data?.items ?? [];
+  } catch {
+    return fetchWeeklyPrioritiesMergedFallback();
+  }
+}
+
+async function fetchWeeklyPrioritiesMergedFallback(): Promise<PriorityItemInput[]> {
+  const period_start = periodStartForPriority('weekly');
+  const { data: sets, error } = await requireSupabase()
+    .from('priority_sets')
+    .select('id')
+    .eq('cadence', 'weekly')
+    .eq('period_start', period_start);
+  if (error || !sets?.length) return [];
+
+  const { data: items, error: itemsErr } = await requireSupabase()
+    .from('priority_items')
+    .select('sort_order, goal, owner, metric, action')
+    .in(
+      'priority_set_id',
+      sets.map((s) => s.id),
+    )
+    .order('sort_order');
+  if (itemsErr) return [];
+
+  let order = 0;
+  return (items ?? [])
+    .filter((i) => i.goal.trim())
+    .map((i) => ({
+      sort_order: order++,
+      goal: i.goal,
+      owner: i.owner,
+      metric: i.metric,
+      action: i.action,
+    }));
+}
+
+export async function saveOrgWeeklyPriorities(
+  items: PriorityItemInput[],
+  fallbackTeamId?: string | null,
+): Promise<void> {
+  const teamId = await resolveOrgPriorityTeamId(fallbackTeamId);
+  await savePrioritySet(teamId, 'weekly', items);
 }
 
 export async function savePrioritySet(

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getCadence } from '@/lib/cadenceConfig';
-import { buildPrioritiesPreview, fetchPrioritySet, savePrioritySet } from '@/lib/api';
+import {
+  buildPrioritiesPreview,
+  fetchOrgWeeklyPriorities,
+  fetchPrioritySet,
+  saveOrgWeeklyPriorities,
+  savePrioritySet,
+} from '@/lib/api';
 import type { Cadence, PriorityItemInput } from '@/lib/types';
 
 const PRIORITY_TITLES: Record<string, string> = {
@@ -31,7 +37,10 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchPrioritySet(teamId, priorityCadence);
+      const data =
+        priorityCadence === 'weekly'
+          ? { items: await fetchOrgWeeklyPriorities(teamId) }
+          : await fetchPrioritySet(teamId, priorityCadence);
       if (data?.items.length) {
         setItems(
           data.items.map((it, i) => ({
@@ -71,7 +80,11 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   async function handleSave() {
     setStatus('');
     try {
-      await savePrioritySet(teamId, priorityCadence, items);
+      if (priorityCadence === 'weekly') {
+        await saveOrgWeeklyPriorities(items, teamId);
+      } else {
+        await savePrioritySet(teamId, priorityCadence, items);
+      }
       setStatus('Priorities saved.');
       onSaved();
     } catch (e) {

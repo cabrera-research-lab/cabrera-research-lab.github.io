@@ -7,6 +7,7 @@ import { Onboarding } from '@/components/Onboarding';
 import { PriorityStep2 } from '@/components/PriorityStep2';
 import { TargetsCard } from '@/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/components/ActivityFeed';
+import { AllWeeklyPriorities } from '@/components/AllWeeklyPriorities';
 import { useAuth } from '@/context/AuthContext';
 import {
   buildUpdatePreview,
@@ -59,7 +60,7 @@ export function HomePage() {
 
   const loadParentTargets = useCallback(async () => {
     const parent = cadenceToPriorityParent(cadence);
-    if (!parent || !team) return;
+    if (!parent || !team || cadence === 'daily') return;
     const d = getCadence(cadence);
     try {
       const data = await fetchPrioritySet(team.id, parent);
@@ -148,7 +149,7 @@ export function HomePage() {
         {team ? (
           <>
             {' '}
-            · Team <strong>{teamName}</strong>
+            · Ref: <strong>{teamName}</strong>
           </>
         ) : null}
         <button type="button" className="sign-out" onClick={handleSignOut}>
@@ -160,12 +161,16 @@ export function HomePage() {
 
       <CadenceTabs active={cadence} onChange={setCadence} />
 
+      {cadence === 'daily' && (
+        <AllWeeklyPriorities refreshKey={priorityKey} fallbackTeamId={team?.id ?? null} />
+      )}
+
       {showInputs && canSubmit ? (
       <div className="card">
         <section className="form">
           <h2>{def.formTitle}</h2>
           <div className="sub">{def.subtitle}</div>
-          {def.targetsLabel && (
+          {def.targetsLabel && cadence !== 'daily' && (
             <TargetsCard label={def.targetsLabel} text={targetsText} />
           )}
           {def.questions.map((q, i) => (

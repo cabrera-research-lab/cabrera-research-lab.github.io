@@ -23,7 +23,7 @@ export function FeedViewTabs({ active, currentLabel, onChange }: Props) {
         onClick={() => onChange('archive')}
       >
         Archive
-        <span className="feed-view-sub">past periods</span>
+        <span className="feed-view-sub">past records</span>
       </button>
     </div>
   );

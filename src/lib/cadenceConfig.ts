@@ -31,9 +31,6 @@ export const CADENCES: CadenceDefinition[] = [
     subtitle: 'Yesterday → Today → Blockers',
     previewTitle: 'Daily Standup',
     submitLabel: 'Submit Daily Update',
-    targetsLabel: "This Week's Targets",
-    targetsEmpty: 'No weekly goals entered yet.',
-    parentPriorityCadence: 'weekly',
     questions: [
       'What updates to share with team?',
       'What will I do today to meet our weekly priorities?',
@@ -61,9 +58,9 @@ export const CADENCES: CadenceDefinition[] = [
     reportLabels: ['Rave & Refer', 'Friction', 'Opportunity / Fix'],
     showStep2: true,
     step2Kicker: 'Weekly Step 2',
-    step2Title: 'Team Weekly Priorities',
+    step2Title: 'Our Weekly Priorities',
     step2Description:
-      'Complete together after reviewing the TE∆MING REPORT. Choose the few goals that most increase rave→refer this week.',
+      'Complete together after reviewing the TE∆MING REPORT. One shared list for everyone — choose the few goals that most increase rave→refer this week.',
   },
   {
     id: 'monthly',
