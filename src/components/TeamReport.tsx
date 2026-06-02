@@ -130,7 +130,7 @@ export function TeamReport({
               <div>
                 <div className="name">{name}</div>
                 <div className="meta">
-                  {teamName ? `Ref: ${teamName} · ` : ''}
+                  {teamName ? `Team: ${teamName} · ` : ''}
                   {date}
                 </div>
               </div>

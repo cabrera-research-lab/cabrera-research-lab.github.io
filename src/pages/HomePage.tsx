@@ -149,7 +149,7 @@ export function HomePage() {
         {team ? (
           <>
             {' '}
-            · Ref: <strong>{teamName}</strong>
+            · Team: <strong>{teamName}</strong>
           </>
         ) : null}
         <button type="button" className="sign-out" onClick={handleSignOut}>

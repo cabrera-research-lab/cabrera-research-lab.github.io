@@ -39,7 +39,7 @@ export function AllWeeklyPriorities({ refreshKey = 0, fallbackTeamId = null }: P
       </div>
       <p className="mini" style={{ margin: '0 0 14px' }}>
         One list for everyone — decided together on the Weekly tab. Use it when you plan what you
-        will do today. Team names elsewhere are only a reference label.
+        will do today. Team names elsewhere are only a label.
       </p>
       {loading ? (
         <div className="mini">Loading weekly priorities…</div>

@@ -16,6 +16,8 @@ Apply database schema: [`supabase/migrations/20250530000000_initial_schema.sql`]
 
 Hosting guide: [`docs/hosting.md`](docs/hosting.md)
 
+Feature inventory & cleanup backlog: [`docs/features.md`](docs/features.md)
+
 ## Scripts
 
 | Command | Description |
