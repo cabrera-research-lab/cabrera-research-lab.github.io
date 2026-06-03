@@ -3,15 +3,13 @@ import { getCadence } from '@/lib/cadenceConfig';
 import {
   addComment,
   fetchCommentsForUpdates,
-  fetchRatingsForUpdates,
   fetchUpdates,
 } from '@/lib/api';
 import { formatPeriodLabel } from '@/lib/periods';
 import { requireSupabase } from '@/lib/supabase';
-import type { Cadence, UpdateComment, UpdateRating, UpdateRow } from '@/lib/types';
+import type { Cadence, UpdateComment, UpdateRow } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { CommentThread } from './CommentThread';
-import { RatingStars } from './RatingStars';
 
 interface Props {
   cadence: Cadence;
@@ -20,11 +18,6 @@ interface Props {
   orgWide?: boolean;
   periodStart?: string;
   archive?: boolean;
-}
-
-function avgRatings(ratings: UpdateRating[]): number {
-  if (!ratings.length) return 0;
-  return ratings.reduce((s, r) => s + r.stars, 0) / ratings.length;
 }
 
 export function TeamReport({
@@ -38,7 +31,6 @@ export function TeamReport({
   const { user } = useAuth();
   const def = getCadence(cadence);
   const [updates, setUpdates] = useState<UpdateRow[]>([]);
-  const [ratingsMap, setRatingsMap] = useState<Record<string, UpdateRating[]>>({});
   const [commentsMap, setCommentsMap] = useState<Record<string, UpdateComment[]>>({});
   const [loading, setLoading] = useState(true);
 
@@ -48,12 +40,7 @@ export function TeamReport({
       const rows = await fetchUpdates(teamId, cadence, periodStart);
       setUpdates(rows);
       const ids = rows.map((r) => r.id);
-      const [ratings, comments] = await Promise.all([
-        fetchRatingsForUpdates(ids),
-        fetchCommentsForUpdates(ids),
-      ]);
-      setRatingsMap(ratings);
-      setCommentsMap(comments);
+      setCommentsMap(await fetchCommentsForUpdates(ids));
     } catch (e) {
       console.error(e);
     } finally {
@@ -77,9 +64,6 @@ export function TeamReport({
         () => load(),
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'update_comments' }, () =>
-        load(),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'update_ratings' }, () =>
         load(),
       )
       .subscribe();
@@ -112,57 +96,65 @@ export function TeamReport({
     );
   }
 
-  const showDailyExtras = cadence === 'daily';
+  if (cadence === 'daily') {
+    return (
+      <>
+        {updates.map((r) => {
+          const comments = commentsMap[r.id] ?? [];
+          const name = r.profiles?.display_name ?? 'Member';
+          const teamName = r.teams?.name ?? '';
+          const date = new Date(r.created_at).toLocaleDateString();
+          const answers = Array.isArray(r.answers) ? r.answers : [];
+
+          return (
+            <div key={r.id} className="report">
+              <div className="report-top">
+                <div>
+                  <div className="name">{name}</div>
+                  <div className="meta">
+                    {teamName ? `${teamName} · ` : ''}
+                    {date}
+                  </div>
+                </div>
+                <div className="badge">{r.cadence.toUpperCase()}</div>
+              </div>
+              {answers.map((text, i) => (
+                <div key={i} className="part">
+                  <div className="small">{def.reportLabels[i] ?? 'Update'}</div>
+                  <div className="text">{text || '—'}</div>
+                </div>
+              ))}
+              <CommentThread
+                comments={comments}
+                onSend={archive ? undefined : (body) => handleComment(r.id, body)}
+                readOnly={archive}
+              />
+            </div>
+          );
+        })}
+      </>
+    );
+  }
 
   return (
     <>
-      {updates.map((r) => {
-        const ratings = ratingsMap[r.id] ?? [];
-        const comments = commentsMap[r.id] ?? [];
-        const name = r.profiles?.display_name ?? 'Member';
-        const teamName = r.teams?.name ?? '';
-        const date = new Date(r.created_at).toLocaleDateString();
-        const answers = Array.isArray(r.answers) ? r.answers : [];
-
-        return (
-          <div key={r.id} className="report">
-            <div className="report-top">
-              <div>
-                <div className="name">{name}</div>
-                <div className="meta">
-                  {teamName ? `Team: ${teamName} · ` : ''}
-                  {date}
-                </div>
-              </div>
-              <div className="badge">{r.cadence.toUpperCase()}</div>
-            </div>
-            {answers.map((text, i) => (
-              <div key={i} className="part">
-                <div className="small">{def.reportLabels[i] ?? 'Update'}</div>
-                <div className="text">{text || '—'}</div>
-              </div>
-            ))}
-            {r.self_mission_score != null && r.self_mission_score > 0 && (
-              <div className="part">
-                <div className="small">Self Mission Rating</div>
-                <div className="text">{r.self_mission_score} / 5 Ms</div>
-              </div>
-            )}
-            {showDailyExtras && (
-              <>
-                <div className="rating-line">
-                  <RatingStars average={avgRatings(ratings)} readOnly />
-                </div>
-                <CommentThread
-                  comments={comments}
-                  onSend={archive ? undefined : (body) => handleComment(r.id, body)}
-                  readOnly={archive}
-                />
-              </>
-            )}
+      {def.reportLabels.map((label, qIndex) => (
+        <div key={qIndex} className="question-report">
+          <div className="question-title">
+            Q{qIndex + 1}. {label}
           </div>
-        );
-      })}
+          {updates.map((r) => {
+            const answers = Array.isArray(r.answers) ? r.answers : [];
+            const answer = answers[qIndex] ?? '—';
+            const name = r.profiles?.display_name ?? 'Member';
+            return (
+              <div key={r.id} className="answer-card">
+                <span className="answer-name">{name}:</span> {answer || '—'}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </>
   );
 }

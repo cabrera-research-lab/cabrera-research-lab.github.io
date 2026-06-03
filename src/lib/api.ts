@@ -271,6 +271,30 @@ export async function fetchCommentsForUpdates(
   return byUpdate;
 }
 
+/** Step 3: user rates their own daily update only. */
+export async function rateOwnDailyMission(updateId: string, userId: string, stars: number) {
+  const sb = requireSupabase();
+  const { data: update, error: fetchErr } = await sb
+    .from('updates')
+    .select('user_id, cadence')
+    .eq('id', updateId)
+    .single();
+  if (fetchErr) throw fetchErr;
+  if (update.user_id !== userId) {
+    throw new Error('You can only rate your own daily update.');
+  }
+  if (update.cadence !== 'daily') {
+    throw new Error('Self-ratings apply to daily updates only.');
+  }
+
+  const { error } = await sb
+    .from('updates')
+    .update({ self_mission_score: stars })
+    .eq('id', updateId)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
 export async function rateUpdate(updateId: string, raterId: string, stars: number) {
   const sb = requireSupabase();
   const { error } = await sb.from('update_ratings').upsert(
@@ -431,10 +455,8 @@ export function formatTargetsText(
   if (!filled.length) return empty;
   return filled
     .map((item, idx) => {
-      let line = `${idx + 1}. ${item.goal}`;
-      if (item.owner.trim()) line += `\n   Owner: ${item.owner}`;
-      if (item.metric.trim()) line += `\n   Metric: ${item.metric}`;
-      if (item.action.trim()) line += `\n   Test: ${item.action}`;
+      let line = `${idx + 1}. ${item.goal.trim()}`;
+      if (item.metric.trim()) line += `\n   Metric: ${item.metric.trim()}`;
       return line;
     })
     .join('\n\n');
@@ -443,19 +465,14 @@ export function formatTargetsText(
 export function buildUpdatePreview(params: {
   cadenceTitle: string;
   name: string;
-  teamName: string;
   date: string;
   questions: string[];
   answers: string[];
-  selfMissionScore?: number;
 }): string {
-  let out = `TE∆M ${params.cadenceTitle}\nName: ${params.name}\nTeam: ${params.teamName}\nDate: ${params.date}\n\n`;
+  let out = `TE∆M ${params.cadenceTitle}\nName: ${params.name}\nDate: ${params.date}\n\n`;
   params.questions.forEach((q, i) => {
     out += `${i + 1}. ${q}\n${params.answers[i]?.trim() || '—'}\n\n`;
   });
-  if (params.selfMissionScore && params.selfMissionScore > 0) {
-    out += `Mission self-rating: ${params.selfMissionScore} / 5 Ms\n`;
-  }
   return out.trimEnd();
 }
 
@@ -466,9 +483,7 @@ export function buildPrioritiesPreview(title: string, items: PriorityItemInput[]
   filled.forEach((item, idx) => {
     out += `Priority ${idx + 1}\n`;
     out += `Goal: ${item.goal || '—'}\n`;
-    out += `Owner: ${item.owner || '—'}\n`;
-    out += `Success Metric: ${item.metric || '—'}\n`;
-    out += `How to Test: ${item.action || '—'}\n\n`;
+    out += `Success Metric: ${item.metric || '—'}\n\n`;
   });
   return out.trimEnd();
 }

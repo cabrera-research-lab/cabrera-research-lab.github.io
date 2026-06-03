@@ -2,15 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CadenceTabs } from '@/components/CadenceTabs';
 import { CharTextarea } from '@/components/CharTextarea';
-import { MissionRating } from '@/components/MissionRating';
+import { DailyTeamRating } from '@/components/DailyTeamRating';
 import { Onboarding } from '@/components/Onboarding';
 import { PriorityStep2 } from '@/components/PriorityStep2';
+import { StepBanner } from '@/components/StepBanner';
 import { TargetsCard } from '@/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/components/ActivityFeed';
-import { AllWeeklyPriorities } from '@/components/AllWeeklyPriorities';
 import { useAuth } from '@/context/AuthContext';
 import {
   buildUpdatePreview,
+  fetchOrgWeeklyPriorities,
   fetchPrioritySet,
   formatTargetsText,
   signOut,
@@ -37,7 +38,6 @@ export function HomePage() {
   const feedTeamId = orgWideFeed ? null : team?.id ?? null;
 
   const [answers, setAnswers] = useState<string[]>(() => def.questions.map(() => ''));
-  const [selfMission, setSelfMission] = useState(0);
   const [targetsText, setTargetsText] = useState(def.targetsEmpty ?? '');
   const [preview, setPreview] = useState('');
   const [status, setStatus] = useState('');
@@ -48,25 +48,24 @@ export function HomePage() {
   const showInputs = feedView === 'current';
 
   const displayName = profile?.display_name?.trim() || 'Your Name';
-  const teamName = team?.name ?? 'Your Team';
 
   useEffect(() => {
     const d = getCadence(cadence);
     setAnswers(d.questions.map(() => ''));
-    setSelfMission(0);
     setTargetsText(d.targetsEmpty ?? '');
     setStatus('');
   }, [cadence]);
 
   const loadParentTargets = useCallback(async () => {
     const parent = cadenceToPriorityParent(cadence);
-    if (!parent || !team || cadence === 'daily') return;
+    if (!parent || !team) return;
     const d = getCadence(cadence);
     try {
-      const data = await fetchPrioritySet(team.id, parent);
-      setTargetsText(
-        formatTargetsText(data?.items ?? [], d.targetsEmpty ?? 'No goals yet.'),
-      );
+      const items =
+        parent === 'weekly'
+          ? await fetchOrgWeeklyPriorities(team.id)
+          : (await fetchPrioritySet(team.id, parent))?.items ?? [];
+      setTargetsText(formatTargetsText(items, d.targetsEmpty ?? 'No goals yet.'));
     } catch {
       setTargetsText(d.targetsEmpty ?? '');
     }
@@ -81,13 +80,11 @@ export function HomePage() {
       buildUpdatePreview({
         cadenceTitle: def.previewTitle,
         name: displayName,
-        teamName,
         date: new Date().toLocaleDateString(),
         questions: def.questions,
         answers,
-        selfMissionScore: def.showSelfMissionRating ? selfMission : undefined,
       }),
-    [def, displayName, teamName, answers, selfMission],
+    [def, displayName, answers],
   );
 
   useEffect(() => {
@@ -112,9 +109,9 @@ export function HomePage() {
         userId: user.id,
         cadence,
         answers: answers.map((a) => a.trim() || '—'),
-        selfMissionScore: def.showSelfMissionRating ? selfMission : null,
+        selfMissionScore: null,
       });
-      setStatus('Update submitted.');
+      setStatus('Submitted to report.');
       setReportKey((k) => k + 1);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Submit failed');
@@ -126,7 +123,7 @@ export function HomePage() {
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(preview);
-      setStatus('Copied to clipboard.');
+      setStatus('Copied update.');
     } catch {
       setStatus('Copy failed.');
     }
@@ -136,6 +133,8 @@ export function HomePage() {
     await signOut();
     await refresh();
   }
+
+  const reportPill = orgWideFeed ? 'all teams · everyone' : 'cross-team discussion';
 
   return (
     <div className="app">
@@ -149,7 +148,7 @@ export function HomePage() {
         {team ? (
           <>
             {' '}
-            · Team: <strong>{teamName}</strong>
+            · Team: <strong>{team.name}</strong>
           </>
         ) : null}
         <button type="button" className="sign-out" onClick={handleSignOut}>
@@ -161,57 +160,54 @@ export function HomePage() {
 
       <CadenceTabs active={cadence} onChange={setCadence} />
 
-      {cadence === 'daily' && (
-        <AllWeeklyPriorities refreshKey={priorityKey} fallbackTeamId={team?.id ?? null} />
-      )}
-
       {showInputs && canSubmit ? (
-      <div className="card">
-        <section className="form">
-          <h2>{def.formTitle}</h2>
-          <div className="sub">{def.subtitle}</div>
-          {def.targetsLabel && cadence !== 'daily' && (
-            <TargetsCard label={def.targetsLabel} text={targetsText} />
-          )}
-          {def.questions.map((q, i) => (
-            <CharTextarea
-              key={i}
-              index={i}
-              question={q}
-              value={answers[i] ?? ''}
-              onChange={(v) => setAnswer(i, v)}
-            />
-          ))}
-          {def.showSelfMissionRating && (
-            <MissionRating score={selfMission} onRate={setSelfMission} />
-          )}
-        </section>
+        <div className="card">
+          <section className="form">
+            <StepBanner label={def.step1Label} sub={def.step1Sub} />
+            <h2>{def.formTitle}</h2>
+            <div className="sub">{def.subtitle}</div>
+            {def.targetsLabel && (
+              <TargetsCard
+                label={def.targetsLabel}
+                text={targetsText}
+                empty={def.targetsEmpty}
+              />
+            )}
+            {def.questions.map((q, i) => (
+              <CharTextarea
+                key={i}
+                index={i}
+                question={q}
+                value={answers[i] ?? ''}
+                onChange={(v) => setAnswer(i, v)}
+              />
+            ))}
+          </section>
 
-        <div className="actions">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={handleCopy}
-            style={{ maxWidth: 70 }}
-            title="Copy preview"
-          >
-            📋
-          </button>
-          <button
-            type="button"
-            className="btn primary"
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? 'Submitting…' : def.submitLabel}
-          </button>
+          <div className="actions">
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={handleCopy}
+              title="Copy update"
+            >
+              📋
+            </button>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Submitting…' : def.submitLabel}
+            </button>
+          </div>
+          {status && <div className="status-msg">{status}</div>}
+          <div className="small" style={{ marginTop: 14 }}>
+            Submitted Update Preview
+          </div>
+          <div className="preview">{preview}</div>
         </div>
-        {status && <div className="status-msg">{status}</div>}
-        <div className="small" style={{ marginTop: 14 }}>
-          Submitted Update Preview
-        </div>
-        <div className="preview">{preview}</div>
-      </div>
       ) : showInputs ? (
         <div className="card mini" style={{ marginBottom: 10 }}>
           Create or join a team above to submit {cadence} updates. Daily and weekly activity below
@@ -219,11 +215,10 @@ export function HomePage() {
         </div>
       ) : null}
 
+      <StepBanner label={def.step2Label} sub={def.step2Sub} />
       <div className="section-title">
         <h2>{orgWideFeed ? 'TE∆M ACTIVITY' : 'TE∆MING REPORT'}</h2>
-        <div className="pill">
-          {orgWideFeed ? 'all teams · everyone' : 'avg Mission score + response thread'}
-        </div>
+        <div className="pill">{reportPill}</div>
       </div>
       <ActivityFeed
         cadence={cadence}
@@ -245,10 +240,16 @@ export function HomePage() {
         />
       )}
 
-      <div className="rule">
-        <strong>Decision rule:</strong> If an action, fix, or roadmap item does not increase the
-        probability that people rave and refer, question it.
-      </div>
+      {cadence === 'daily' && def.step3Label && def.step3Sub && (
+        <div className="card">
+          <StepBanner label={def.step3Label} sub={def.step3Sub} />
+          <DailyTeamRating
+            teamId={feedTeamId}
+            refreshKey={reportKey}
+            orgWide={orgWideFeed}
+          />
+        </div>
+      )}
     </div>
   );
 }

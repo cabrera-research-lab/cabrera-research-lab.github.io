@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCadence } from '@/lib/cadenceConfig';
 import {
   buildPrioritiesPreview,
@@ -8,6 +8,7 @@ import {
   savePrioritySet,
 } from '@/lib/api';
 import type { Cadence, PriorityItemInput } from '@/lib/types';
+import { StepBanner } from './StepBanner';
 
 const PRIORITY_TITLES: Record<string, string> = {
   weekly: 'TE∆MING Weekly Priorities',
@@ -27,12 +28,15 @@ interface Props {
 
 export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   const def = getCadence(cadence);
-  if (!def.showStep2) return null;
+  if (!def.showStep2 || !def.step3Label || !def.step3Sub || !def.step2Title || !def.step2Description) {
+    return null;
+  }
 
   const priorityCadence = cadence as 'weekly' | 'monthly' | 'quarterly';
   const [items, setItems] = useState<PriorityItemInput[]>([emptyItem(0)]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,33 +67,48 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
     load();
   }, [load]);
 
-  function updateItem(index: number, field: keyof PriorityItemInput, value: string) {
-    setItems((prev) =>
-      prev.map((it, i) => (i === index ? { ...it, [field]: value } : it)),
-    );
-  }
-
-  function addItem() {
-    setItems((prev) => [...prev, emptyItem(prev.length)]);
-  }
-
-  function clearAll() {
-    setItems([emptyItem(0)]);
-  }
-
-  async function handleSave() {
-    setStatus('');
+  async function persist(next: PriorityItemInput[]) {
     try {
       if (priorityCadence === 'weekly') {
-        await saveOrgWeeklyPriorities(items, teamId);
+        await saveOrgWeeklyPriorities(next, teamId);
       } else {
-        await savePrioritySet(teamId, priorityCadence, items);
+        await savePrioritySet(teamId, priorityCadence, next);
       }
-      setStatus('Priorities saved.');
       onSaved();
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Save failed');
     }
+  }
+
+  function scheduleSave(next: PriorityItemInput[]) {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void persist(next);
+    }, 800);
+  }
+
+  function updateItem(index: number, field: 'goal' | 'metric', value: string) {
+    setItems((prev) => {
+      const next = prev.map((it, i) => (i === index ? { ...it, [field]: value } : it));
+      scheduleSave(next);
+      return next;
+    });
+  }
+
+  function addItem() {
+    setItems((prev) => {
+      const next = [...prev, emptyItem(prev.length)];
+      scheduleSave(next);
+      return next;
+    });
+  }
+
+  function deleteItem(index: number) {
+    setItems((prev) => {
+      const next = prev.length <= 1 ? [emptyItem(0)] : prev.filter((_, i) => i !== index);
+      scheduleSave(next);
+      return next;
+    });
   }
 
   async function copyPreview() {
@@ -109,28 +128,29 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
 
   return (
     <div className="card">
-      <div className="kicker">{def.step2Kicker}</div>
-      <h2 style={{ fontSize: 25, margin: '0 0 6px', letterSpacing: '-0.03em' }}>{def.step2Title}</h2>
+      <StepBanner label={def.step3Label} sub={def.step3Sub} />
+      <h2 style={{ marginTop: 0 }}>{def.step2Title}</h2>
       <div className="mini">{def.step2Description}</div>
       {items.map((item, idx) => (
         <div key={idx} className="goal-card">
-          <label>
-            {kindLabel} Priority {idx + 1}
-          </label>
+          <div className="goal-head">
+            <label>
+              {kindLabel} Priority {idx + 1}
+            </label>
+            <button
+              type="button"
+              className="delete-priority"
+              onClick={() => deleteItem(idx)}
+            >
+              Delete
+            </button>
+          </div>
           <textarea
-            placeholder={`What specific goal matters this ${priorityCadence}?`}
+            placeholder={`What specific priority matters this ${priorityCadence}?`}
             value={item.goal}
             onChange={(e) => updateItem(idx, 'goal', e.target.value)}
           />
           <div className="goal-grid">
-            <div>
-              <label>Owner</label>
-              <input
-                placeholder="Who owns it?"
-                value={item.owner}
-                onChange={(e) => updateItem(idx, 'owner', e.target.value)}
-              />
-            </div>
             <div>
               <label>Success Metric</label>
               <input
@@ -140,28 +160,16 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
               />
             </div>
           </div>
-          <label>How to Test</label>
-          <input
-            placeholder="How will we test this?"
-            value={item.action}
-            onChange={(e) => updateItem(idx, 'action', e.target.value)}
-          />
         </div>
       ))}
       <button type="button" className="btn secondary" onClick={addItem}>
         + Add {kindLabel} Priority
       </button>
-      <div className="actions">
-        <button type="button" className="btn primary" onClick={handleSave}>
-          Save {kindLabel} Priorities
-        </button>
-        <button type="button" className="btn secondary" onClick={copyPreview}>
+      <div className="split-actions">
+        <button type="button" className="btn primary" onClick={copyPreview}>
           Copy {kindLabel} Priorities
         </button>
       </div>
-      <button type="button" className="btn secondary" style={{ marginTop: 8 }} onClick={clearAll}>
-        Clear Goals
-      </button>
       {status && <div className="status-msg">{status}</div>}
       <div className="preview">{preview}</div>
     </div>
