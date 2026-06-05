@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { requestPasswordReset, signInWithPassword, signUpWithPassword } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { renderTeamBrand } from '@/lib/teamBrand';
 
 type AuthMode = 'signin' | 'signup' | 'forgot';
 
@@ -19,7 +20,7 @@ export function AuthPage() {
   if (!isSupabaseConfigured) {
     return (
       <div className="auth-page">
-        <h1>TE∆M</h1>
+        <h1>{renderTeamBrand('TE∆M')}</h1>
         <p className="auth-error">
           Supabase is not configured. Add <code>VITE_SUPABASE_URL</code> and{' '}
           <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to <code>.env</code> (see{' '}
@@ -77,8 +78,8 @@ export function AuthPage() {
 
   return (
     <div className="auth-page">
-      <div className="kicker">TE∆MING SYSTEM</div>
-      <h1>TE∆M</h1>
+      <div className="kicker">{renderTeamBrand('TE∆MING SYSTEM')}</div>
+      <h1>{renderTeamBrand('TE∆M')}</h1>
       <p className="mini">{subtitle}</p>
       <form onSubmit={handleSubmit} className="card" style={{ marginTop: 20 }}>
         <label>Email</label>

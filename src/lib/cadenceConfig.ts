@@ -55,8 +55,8 @@ export const CADENCES: CadenceDefinition[] = [
   {
     id: 'weekly',
     tabLabel: 'Weekly',
-    title: 'Weekly Learning', // remove this
-    formTitle: 'Weekly Learning',
+    title: 'Weekly Priorities', 
+    formTitle: 'Weekly Priorities',
     subtitle: '',
     previewTitle: 'Weekly Learning',
     submitLabel: 'Submit Perspective on Data',
@@ -84,9 +84,9 @@ export const CADENCES: CadenceDefinition[] = [
   {
     id: 'monthly',
     tabLabel: 'Monthly',
-    title: 'Monthly Systems',
-    formTitle: 'Monthly Systems',
-    subtitle: 'Bottlenecks → Systems → Roadmap',
+    title: 'Monthly Priorities',
+    formTitle: 'Monthly Priorities',
+    subtitle: '',
     previewTitle: 'Monthly Systems',
     submitLabel: 'Submit Perspective',
     targetsLabel: "This Quarter's Targets",
@@ -113,9 +113,9 @@ export const CADENCES: CadenceDefinition[] = [
   {
     id: 'quarterly',
     tabLabel: 'Quarterly',
-    title: 'Quarterly Roadmap',
-    formTitle: 'Quarterly Roadmap',
-    subtitle: 'Strategic Reset',
+    title: 'Quarterly Priorities',
+    formTitle: 'Quarterly Priorities',
+    subtitle: '',
     previewTitle: 'Quarterly Roadmap',
     submitLabel: 'Submit Perspective',
     questions: [

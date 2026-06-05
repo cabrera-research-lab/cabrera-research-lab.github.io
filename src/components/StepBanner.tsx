@@ -1,3 +1,5 @@
+import { renderTeamBrand } from '@/lib/teamBrand';
+
 interface Props {
   label: string;
   sub: string;
@@ -10,7 +12,7 @@ export function StepBanner({ label, sub, collapsed, onToggle }: Props) {
 
   const content = (
     <>
-      <div className="step-label">{label}</div>
+      <div className="step-label">{renderTeamBrand(label)}</div>
       <div className="step-sub">{sub}</div>
     </>
   );

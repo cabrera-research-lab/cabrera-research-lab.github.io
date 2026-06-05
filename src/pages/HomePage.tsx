@@ -9,6 +9,7 @@ import { StepBanner } from '@/components/StepBanner';
 import { TargetsCard } from '@/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/components/ActivityFeed';
 import { useAuth } from '@/context/AuthContext';
+import { renderTeamBrand } from '@/lib/teamBrand';
 import { useDailyRatingGate } from '@/hooks/useDailyRatingGate';
 import { useUserSubmitted } from '@/hooks/useUserSubmitted';
 import {
@@ -163,10 +164,10 @@ export function HomePage() {
 
   return (
     <div className="app">
-      <div className="kicker">TE∆MING SYSTEM</div>
+      <div className="kicker">{renderTeamBrand('TE∆MING SYSTEM')}</div>
       <h1>Build experiences people rave about and refer.</h1>
       <div className="mini">
-        Communication. Weekly priorities. Monthly systems. Quarterly roadmap.
+        Daily Commune-ication. Weekly priorities. Monthly priorities. Quarterly priorities. Annual roadmap.
       </div>
       <p className="mini">
         Signed in as <strong>{displayName}</strong>
@@ -253,7 +254,7 @@ export function HomePage() {
 
       <StepBanner label={def.step2Label} sub={def.step2Sub} />
       <div className="section-title">
-        <h2>{orgWideFeed ? 'TE∆M ACTIVITY' : 'TE∆MING REPORT'}</h2>
+        <h2>{renderTeamBrand(orgWideFeed ? 'TE∆M ACTIVITY' : 'TE∆MING REPORT')}</h2>
         <div className="pill">{reportPill}</div>
       </div>
       <ActivityFeed

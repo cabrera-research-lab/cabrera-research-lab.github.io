@@ -8,6 +8,7 @@ import {
   savePrioritySet,
 } from '@/lib/api';
 import type { Cadence, PriorityItemInput } from '@/lib/types';
+import { renderTeamBrand } from '@/lib/teamBrand';
 import { StepBanner } from './StepBanner';
 
 const PRIORITY_TITLES: Record<string, string> = {
@@ -130,7 +131,7 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
     <div className="card">
       <StepBanner label={def.step3Label} sub={def.step3Sub} />
       <h2 style={{ marginTop: 0 }}>{def.step2Title}</h2>
-      <div className="mini">{def.step2Description}</div>
+      <div className="mini">{renderTeamBrand(def.step2Description)}</div>
       {items.map((item, idx) => (
         <div key={idx} className="goal-card">
           <div className="goal-head">
