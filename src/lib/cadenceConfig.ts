@@ -32,7 +32,7 @@ export const CADENCES: CadenceDefinition[] = [
     tabLabel: 'Daily',
     title: 'Daily Standup',
     formTitle: 'Daily Standup',
-    subtitle: 'Yesterday → Today → Blockers',
+    subtitle: '',
     previewTitle: 'Daily Standup',
     submitLabel: 'Submit Daily Update',
     targetsLabel: "This Week's Targets",
@@ -55,9 +55,9 @@ export const CADENCES: CadenceDefinition[] = [
   {
     id: 'weekly',
     tabLabel: 'Weekly',
-    title: 'Weekly Learning',
+    title: 'Weekly Learning', // remove this
     formTitle: 'Weekly Learning',
-    subtitle: 'Report → Fixes → Roadmap',
+    subtitle: '',
     previewTitle: 'Weekly Learning',
     submitLabel: 'Submit Perspective on Data',
     targetsLabel: "This Month's Targets",
@@ -72,8 +72,8 @@ export const CADENCES: CadenceDefinition[] = [
     showStep2: true,
     step1Label: 'STEP 1 • Individual Q/A',
     step1Sub:
-      'Optional: Use the automated prompts below, or simply have a team conversation around these questions before setting priorities.',
-    step2Label: 'STEP 2 • TE∆M Cross Chat',
+      'Options: Automated or in-person',
+    step2Label: 'STEP 2 • TE∆M Synthesis',
     step2Sub: 'Discuss updates, blockers, dependencies, and support needs.',
     step3Label: 'STEP 3 • TE∆M Priorities',
     step3Sub: 'Convert team synthesis into weekly priorities.',

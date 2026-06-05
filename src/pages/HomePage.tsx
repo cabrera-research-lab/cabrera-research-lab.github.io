@@ -9,6 +9,7 @@ import { StepBanner } from '@/components/StepBanner';
 import { TargetsCard } from '@/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/components/ActivityFeed';
 import { useAuth } from '@/context/AuthContext';
+import { useDailyRatingGate } from '@/hooks/useDailyRatingGate';
 import {
   buildUpdatePreview,
   fetchOrgWeeklyPriorities,
@@ -39,7 +40,6 @@ export function HomePage() {
 
   const [answers, setAnswers] = useState<string[]>(() => def.questions.map(() => ''));
   const [targetsText, setTargetsText] = useState(def.targetsEmpty ?? '');
-  const [preview, setPreview] = useState('');
   const [status, setStatus] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [reportKey, setReportKey] = useState(0);
@@ -75,7 +75,7 @@ export function HomePage() {
     loadParentTargets();
   }, [loadParentTargets, priorityKey]);
 
-  const previewText = useMemo(
+  const copyText = useMemo(
     () =>
       buildUpdatePreview({
         cadenceTitle: def.previewTitle,
@@ -87,9 +87,10 @@ export function HomePage() {
     [def, displayName, answers],
   );
 
-  useEffect(() => {
-    setPreview(previewText);
-  }, [previewText]);
+  const dailyRatingGate = useDailyRatingGate(
+    reportKey,
+    cadence === 'daily' && showInputs,
+  );
 
   function setCadence(c: Cadence) {
     setSearchParams({ cadence: c });
@@ -122,7 +123,7 @@ export function HomePage() {
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(preview);
+      await navigator.clipboard.writeText(copyText);
       setStatus('Copied update.');
     } catch {
       setStatus('Copy failed.');
@@ -141,7 +142,7 @@ export function HomePage() {
       <div className="kicker">TE∆MING SYSTEM</div>
       <h1>Build experiences people rave about and refer.</h1>
       <div className="mini">
-        Daily standup. Weekly learning. Monthly systems. Quarterly roadmap.
+        Communication. Weekly priorities. Monthly systems. Quarterly roadmap.
       </div>
       <p className="mini">
         Signed in as <strong>{displayName}</strong>
@@ -203,10 +204,6 @@ export function HomePage() {
             </button>
           </div>
           {status && <div className="status-msg">{status}</div>}
-          <div className="small" style={{ marginTop: 14 }}>
-            Submitted Update Preview
-          </div>
-          <div className="preview">{preview}</div>
         </div>
       ) : showInputs ? (
         <div className="card mini" style={{ marginBottom: 10 }}>
@@ -240,14 +237,28 @@ export function HomePage() {
         />
       )}
 
-      {cadence === 'daily' && def.step3Label && def.step3Sub && (
+      {cadence === 'daily' && def.step3Label && def.step3Sub && showInputs && (
         <div className="card">
           <StepBanner label={def.step3Label} sub={def.step3Sub} />
-          <DailyTeamRating
-            teamId={feedTeamId}
-            refreshKey={reportKey}
-            orgWide={orgWideFeed}
-          />
+          {dailyRatingGate.loading && !dailyRatingGate.open ? (
+            <div className="mini">Checking standup status…</div>
+          ) : dailyRatingGate.open ? (
+            <DailyTeamRating
+              teamId={feedTeamId}
+              refreshKey={reportKey}
+              orgWide={orgWideFeed}
+            />
+          ) : (
+            <div className="mini">
+              {dailyRatingGate.pending.length > 0 && (
+                <>
+                  {' '}
+                  Still waiting on:{' '}
+                  <strong>{dailyRatingGate.pending.map((u) => `${u}`).join(', ')}</strong>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

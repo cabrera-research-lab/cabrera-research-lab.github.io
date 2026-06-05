@@ -232,6 +232,24 @@ async function fetchDisplayNames(userIds: string[]): Promise<Record<string, stri
   return map;
 }
 
+/** Lowercase email local part (profiles.username) for gate checks. */
+export async function fetchProfileUsernames(
+  userIds: string[],
+): Promise<Record<string, string>> {
+  if (!userIds.length) return {};
+  const { data, error } = await requireSupabase()
+    .from('profiles')
+    .select('user_id, username')
+    .in('user_id', userIds);
+  if (error) throw error;
+  const map: Record<string, string> = {};
+  for (const p of data ?? []) {
+    const u = p.username?.trim().toLowerCase();
+    if (u) map[p.user_id] = u;
+  }
+  return map;
+}
+
 export async function fetchRatingsForUpdates(updateIds: string[]): Promise<Record<string, UpdateRating[]>> {
   if (!updateIds.length) return {};
   const { data, error } = await requireSupabase()
