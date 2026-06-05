@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createTeam, joinTeamBySlug, updateProfile } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { renderDeltaText } from '@/lib/deltaText';
 
 export function Onboarding() {
   const { user, profile, refresh } = useAuth();
@@ -77,11 +78,19 @@ export function Onboarding() {
       </button>
       <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '20px 0' }} />
       <label>Create a new team</label>
-      <input
-        value={teamName}
-        onChange={(e) => setTeamName(e.target.value)}
-        placeholder="C∆MP, PODC∆ST, Ops..."
-      />
+      <div className="delta-input-wrap">
+        <input
+          value={teamName}
+          onChange={(e) => setTeamName(e.target.value)}
+          placeholder=""
+          aria-label="Team name"
+        />
+        {!teamName && (
+          <span className="delta-input-placeholder" aria-hidden>
+            {renderDeltaText('C∆MP, PODC∆ST, Ops...')}
+          </span>
+        )}
+      </div>
       <button type="button" className="btn primary" style={{ marginTop: 8 }} onClick={handleCreate} disabled={busy}>
         Create team
       </button>

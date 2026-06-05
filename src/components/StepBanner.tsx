@@ -1,4 +1,4 @@
-import { renderTeamBrand } from '@/lib/teamBrand';
+import { renderDeltaText } from '@/lib/deltaText';
 
 interface Props {
   label: string;
@@ -12,7 +12,7 @@ export function StepBanner({ label, sub, collapsed, onToggle }: Props) {
 
   const content = (
     <>
-      <div className="step-label">{renderTeamBrand(label)}</div>
+      <div className="step-label">{renderDeltaText(label)}</div>
       <div className="step-sub">{sub}</div>
     </>
   );

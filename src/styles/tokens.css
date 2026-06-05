@@ -1,4 +1,4 @@
-/* Full Montserrat for TE∆M / TE∆MING branding (all letters share one weight) */
+/* Full Montserrat for any token containing ∆ (all letters share one weight) */
 @font-face {
   font-family: 'Montserrat Brand';
   font-style: normal;
@@ -33,47 +33,6 @@
   font-display: swap;
   src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCvC70w-.ttf)
     format('truetype');
-}
-
-/* Montserrat only for lone U+0394 (∆), e.g. C∆MP */
-@font-face {
-  font-family: 'Montserrat Delta';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Ew-.ttf)
-    format('truetype');
-  unicode-range: U+0394;
-}
-
-@font-face {
-  font-family: 'Montserrat Delta';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM70w-.ttf)
-    format('truetype');
-  unicode-range: U+0394;
-}
-
-@font-face {
-  font-family: 'Montserrat Delta';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCvr70w-.ttf)
-    format('truetype');
-  unicode-range: U+0394;
-}
-
-@font-face {
-  font-family: 'Montserrat Delta';
-  font-style: normal;
-  font-weight: 900;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCvC70w-.ttf)
-    format('truetype');
-  unicode-range: U+0394;
 }
 
 .team-mark {
@@ -105,7 +64,7 @@ body {
   margin: 0;
   background: #fff;
   color: var(--ink);
-  font-family: 'Montserrat Delta', Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .app {
@@ -202,6 +161,31 @@ textarea {
   font-family: inherit;
   color: var(--ink);
   background: #fff;
+}
+
+.delta-input-wrap {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fff;
+}
+
+.delta-input-wrap input {
+  border: 0;
+  background: transparent;
+  font-family: 'Montserrat Brand', Arial, Helvetica, sans-serif;
+}
+
+.delta-input-placeholder {
+  position: absolute;
+  inset: 13px;
+  color: #9aa3ad;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 textarea {

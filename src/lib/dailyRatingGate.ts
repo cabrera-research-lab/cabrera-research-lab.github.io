@@ -2,7 +2,7 @@
 const DEFAULT_REQUIRED_USERNAMES = ['elena', 'sreek', 'daves', 'derekc', 'laurac'];
 
 const ET_TIMEZONE = 'America/New_York';
-const RATING_OPEN_HOUR_ET = 10;
+const RATING_OPEN_HOUR_ET = 9;
 
 export function getRequiredDailyUsernames(): string[] {
   const raw = (import.meta.env.VITE_DAILY_RATING_REQUIRED_USERS as string | undefined)?.trim();
@@ -13,7 +13,7 @@ export function getRequiredDailyUsernames(): string[] {
     .filter(Boolean);
 }
 
-/** True when local time in US Eastern is 12:00 PM or later (handles DST). */
+/** True when local time in US Eastern is X:00 PM or later (handles DST). */
 export function isAfterDailyRatingTimeEt(date = new Date()): boolean {
   const hour = Number(
     new Intl.DateTimeFormat('en-US', {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchOrgWeeklyPriorities, formatTargetsText } from '@/lib/api';
 import { formatPeriodLabel, periodStartForPriority } from '@/lib/periods';
+import { DeltaText } from '@/lib/deltaText';
 import type { PriorityItemInput } from '@/lib/types';
 
 interface Props {
@@ -47,7 +48,9 @@ export function AllWeeklyPriorities({ refreshKey = 0, fallbackTeamId = null }: P
         <div className="mini">No weekly priorities published yet for {periodLabel}.</div>
       ) : (
         <div className="goal-card targets-highlight">
-          <div className="text">{formatTargetsText(filled, 'No goals entered yet.')}</div>
+          <div className="text">
+            <DeltaText>{formatTargetsText(filled, 'No goals entered yet.')}</DeltaText>
+          </div>
         </div>
       )}
     </div>

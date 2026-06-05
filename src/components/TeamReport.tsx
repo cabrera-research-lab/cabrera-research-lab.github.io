@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getCadence } from '@/lib/cadenceConfig';
+import { DeltaText } from '@/lib/deltaText';
 import {
   addComment,
   fetchCommentsForUpdates,
@@ -110,9 +111,16 @@ export function TeamReport({
           <div key={r.id} className="report">
             <div className="report-top">
               <div>
-                <div className="name">{name}</div>
+                <div className="name">
+                  <DeltaText>{name}</DeltaText>
+                </div>
                 <div className="meta">
-                  {teamName ? `${teamName} · ` : ''}
+                  {teamName ? (
+                    <>
+                      <DeltaText>{teamName}</DeltaText>
+                      {' · '}
+                    </>
+                  ) : null}
                   {date}
                 </div>
               </div>
@@ -121,7 +129,9 @@ export function TeamReport({
             {answers.map((text, i) => (
               <div key={i} className="part">
                 <div className="small">{def.reportLabels[i] ?? 'Update'}</div>
-                <div className="text">{text || '—'}</div>
+                <div className="text">
+                  <DeltaText>{text || '—'}</DeltaText>
+                </div>
               </div>
             ))}
             <CommentThread

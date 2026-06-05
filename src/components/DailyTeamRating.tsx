@@ -3,6 +3,7 @@ import { fetchUpdates, rateOwnDailyMission } from '@/lib/api';
 import { periodStartForCadence } from '@/lib/periods';
 import type { UpdateRow } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { DeltaText } from '@/lib/deltaText';
 import { RatingStars } from './RatingStars';
 
 interface Props {
@@ -95,7 +96,9 @@ export function DailyTeamRating({
     <div className={`daily-rating-card${ratingEnabled ? '' : ' daily-rating-locked'}`}>
       {rows.map(({ update, name, score, canEdit }) => (
         <div key={update.id} className="daily-rating-row">
-          <span className="daily-rating-name">{name}</span>
+          <span className="daily-rating-name">
+            <DeltaText>{name}</DeltaText>
+          </span>
           <RatingStars
             average={score}
             readOnly={!canEdit}

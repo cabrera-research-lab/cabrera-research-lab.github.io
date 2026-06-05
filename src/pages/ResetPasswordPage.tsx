@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { updatePassword } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { renderTeamBrand } from '@/lib/teamBrand';
+import { renderDeltaText } from '@/lib/deltaText';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export function ResetPasswordPage() {
   if (!isSupabaseConfigured) {
     return (
       <div className="auth-page">
-        <h1>{renderTeamBrand('TE∆M')}</h1>
+        <h1>{renderDeltaText('TE∆M')}</h1>
         <p className="auth-error">
           Supabase is not configured. Add <code>VITE_SUPABASE_URL</code> and{' '}
           <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to <code>.env</code> (see{' '}
@@ -55,8 +55,8 @@ export function ResetPasswordPage() {
   if (!session) {
     return (
       <div className="auth-page">
-        <div className="kicker">{renderTeamBrand('TE∆MING SYSTEM')}</div>
-        <h1>{renderTeamBrand('TE∆M')}</h1>
+        <div className="kicker">{renderDeltaText('TE∆MING SYSTEM')}</div>
+        <h1>{renderDeltaText('TE∆M')}</h1>
         <p className="auth-error">This reset link is invalid or has expired.</p>
         <p className="mini" style={{ marginTop: 16, textAlign: 'center' }}>
           <Link to="/login?forgot=1">Request a new reset link</Link>
@@ -67,8 +67,8 @@ export function ResetPasswordPage() {
 
   return (
     <div className="auth-page">
-      <div className="kicker">{renderTeamBrand('TE∆MING SYSTEM')}</div>
-      <h1>{renderTeamBrand('TE∆M')}</h1>
+      <div className="kicker">{renderDeltaText('TE∆MING SYSTEM')}</div>
+      <h1>{renderDeltaText('TE∆M')}</h1>
       <p className="mini">Choose a new password for your account.</p>
       <form onSubmit={handleSubmit} className="card" style={{ marginTop: 20 }}>
         <label>New password</label>

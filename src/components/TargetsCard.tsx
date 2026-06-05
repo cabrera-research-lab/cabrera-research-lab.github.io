@@ -1,3 +1,5 @@
+import { DeltaText } from '@/lib/deltaText';
+
 interface Props {
   label: string;
   text: string;
@@ -9,7 +11,9 @@ export function TargetsCard({ label, text, empty }: Props) {
   return (
     <div className="goal-card target">
       <label>{label}</label>
-      <div className={`text ${isEmpty ? 'empty' : ''}`}>{text}</div>
+      <div className={`text ${isEmpty ? 'empty' : ''}`}>
+        <DeltaText>{text}</DeltaText>
+      </div>
     </div>
   );
 }

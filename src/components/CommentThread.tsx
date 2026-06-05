@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DeltaText } from '@/lib/deltaText';
 import type { UpdateComment } from '@/lib/types';
 
 interface Props {
@@ -38,8 +39,10 @@ export function CommentThread({ comments, onSend, readOnly = false }: Props) {
       ) : (
         comments.map((c) => (
           <div key={c.id} className="bubble">
-            <div className="who">{c.profiles?.display_name ?? 'Member'}</div>
-            {c.body}
+            <div className="who">
+              <DeltaText>{c.profiles?.display_name ?? 'Member'}</DeltaText>
+            </div>
+            <DeltaText>{c.body}</DeltaText>
           </div>
         ))
       )}

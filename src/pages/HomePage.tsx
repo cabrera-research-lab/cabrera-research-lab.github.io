@@ -9,7 +9,7 @@ import { StepBanner } from '@/components/StepBanner';
 import { TargetsCard } from '@/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/components/ActivityFeed';
 import { useAuth } from '@/context/AuthContext';
-import { renderTeamBrand } from '@/lib/teamBrand';
+import { DeltaText, renderDeltaText } from '@/lib/deltaText';
 import { useDailyRatingGate } from '@/hooks/useDailyRatingGate';
 import { useUserSubmitted } from '@/hooks/useUserSubmitted';
 import {
@@ -164,17 +164,23 @@ export function HomePage() {
 
   return (
     <div className="app">
-      <div className="kicker">{renderTeamBrand('TE∆MING SYSTEM')}</div>
+      <div className="kicker">{renderDeltaText('TE∆MING SYSTEM')}</div>
       <h1>Build experiences people rave about and refer.</h1>
       <div className="mini">
         Daily Commune-ication. Weekly priorities. Monthly priorities. Quarterly priorities. Annual roadmap.
       </div>
       <p className="mini">
-        Signed in as <strong>{displayName}</strong>
+        Signed in as{' '}
+        <strong>
+          <DeltaText>{displayName}</DeltaText>
+        </strong>
         {team ? (
           <>
             {' '}
-            · Team: <strong>{team.name}</strong>
+            · Team:{' '}
+            <strong>
+              <DeltaText>{team.name}</DeltaText>
+            </strong>
           </>
         ) : null}
         <button type="button" className="sign-out" onClick={handleSignOut}>
@@ -254,7 +260,7 @@ export function HomePage() {
 
       <StepBanner label={def.step2Label} sub={def.step2Sub} />
       <div className="section-title">
-        <h2>{renderTeamBrand(orgWideFeed ? 'TE∆M ACTIVITY' : 'TE∆MING REPORT')}</h2>
+        <h2>{renderDeltaText(orgWideFeed ? 'TE∆M ACTIVITY' : 'TE∆MING REPORT')}</h2>
         <div className="pill">{reportPill}</div>
       </div>
       <ActivityFeed
