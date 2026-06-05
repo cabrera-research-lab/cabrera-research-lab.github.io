@@ -2,7 +2,7 @@
 const DEFAULT_REQUIRED_USERNAMES = ['elena', 'sreek', 'daves', 'derekc', 'laurac'];
 
 const ET_TIMEZONE = 'America/New_York';
-const RATING_OPEN_HOUR_ET = 12;
+const RATING_OPEN_HOUR_ET = 10;
 
 export function getRequiredDailyUsernames(): string[] {
   const raw = (import.meta.env.VITE_DAILY_RATING_REQUIRED_USERS as string | undefined)?.trim();
