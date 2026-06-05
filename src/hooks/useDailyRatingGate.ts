@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchUpdates, fetchProfileUsernames } from '@/lib/api';
-import {
-  getPendingDailyUsernames,
-  isAfterDailyRatingTimeEt,
-  isDailyRatingGateOpen,
-} from '@/lib/dailyRatingGate';
+import { getPendingDailyUsernames, isDailyRatingGateOpen } from '@/lib/dailyRatingGate';
 import { periodStartForCadence } from '@/lib/periods';
 import type { UpdateRow } from '@/lib/types';
 
@@ -50,7 +46,7 @@ export function useDailyRatingGate(refreshKey: number, enabled: boolean) {
       setPending(getPendingDailyUsernames(submitted));
     } catch (e) {
       console.error(e);
-      setOpen(isAfterDailyRatingTimeEt());
+      setOpen(false);
       setPending(getPendingDailyUsernames(new Set()));
     } finally {
       setLoading(false);
@@ -63,15 +59,9 @@ export function useDailyRatingGate(refreshKey: number, enabled: boolean) {
 
   useEffect(() => {
     if (!enabled || open) return;
-    const tick = () => {
-      if (isAfterDailyRatingTimeEt()) {
-        setOpen(true);
-        setPending([]);
-      }
-    };
-    const id = window.setInterval(tick, 60_000);
+    const id = window.setInterval(() => load(), 60_000);
     return () => window.clearInterval(id);
-  }, [enabled, open]);
+  }, [enabled, open, load]);
 
   return { open, pending, loading, refresh: load };
 }

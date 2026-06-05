@@ -13,7 +13,7 @@ export function getRequiredDailyUsernames(): string[] {
     .filter(Boolean);
 }
 
-/** True when local time in US Eastern is X:00 PM or later (handles DST). */
+/** True when local time in US Eastern is 9:00 AM or later (handles DST). */
 export function isAfterDailyRatingTimeEt(date = new Date()): boolean {
   const hour = Number(
     new Intl.DateTimeFormat('en-US', {
@@ -25,14 +25,26 @@ export function isAfterDailyRatingTimeEt(date = new Date()): boolean {
   return hour >= RATING_OPEN_HOUR_ET;
 }
 
+/**
+ * Step 3 opens when everyone on the required list has submitted, or at 9 AM ET
+ * once at least one required person has submitted that day.
+ */
 export function isDailyRatingGateOpen(
   submittedUsernames: Set<string>,
   date = new Date(),
 ): boolean {
-  if (isAfterDailyRatingTimeEt(date)) return true;
   const required = getRequiredDailyUsernames();
-  if (!required.length) return true;
-  return required.every((u) => submittedUsernames.has(u));
+
+  if (required.length > 0 && required.every((u) => submittedUsernames.has(u))) {
+    return true;
+  }
+
+  if (isAfterDailyRatingTimeEt(date)) {
+    if (!required.length) return submittedUsernames.size > 0;
+    return required.some((u) => submittedUsernames.has(u));
+  }
+
+  return false;
 }
 
 export function getPendingDailyUsernames(submittedUsernames: Set<string>): string[] {

@@ -36,8 +36,9 @@
 }
 
 .team-mark {
-  font-family: 'Montserrat Brand', Arial, Helvetica, sans-serif;
+  font-family: 'Montserrat Brand', Montserrat, Arial, Helvetica, sans-serif;
   font-weight: inherit;
+  font-synthesis: none;
 }
 
 :root {
@@ -173,7 +174,7 @@ textarea {
 .delta-input-wrap input {
   border: 0;
   background: transparent;
-  font-family: 'Montserrat Brand', Arial, Helvetica, sans-serif;
+  font-family: 'Montserrat Brand', Montserrat, Arial, Helvetica, sans-serif;
 }
 
 .delta-input-placeholder {
@@ -682,7 +683,8 @@ button {
   margin: 0 0 12px;
 }
 
-.daily-rating-locked .stars .star {
+.daily-rating-locked .stars .star,
+.stars--readonly .star {
   opacity: 0.45;
   cursor: not-allowed;
 }

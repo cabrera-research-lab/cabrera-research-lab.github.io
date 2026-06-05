@@ -53,7 +53,7 @@ export function DailyTeamRating({
   }, [load, refreshKey]);
 
   async function handleRate(update: UpdateRow, stars: number) {
-    if (!user || update.user_id !== user.id) return;
+    if (!ratingEnabled || !user || update.user_id !== user.id) return;
     await rateOwnDailyMission(update.id, user.id, stars);
     await load();
   }
@@ -67,11 +67,12 @@ export function DailyTeamRating({
         total += score;
         count++;
       }
+      const isOwnRow = Boolean(user && update.user_id === user.id);
       return {
         update,
         name: update.profiles?.display_name ?? 'Member',
         score,
-        canEdit: ratingEnabled && Boolean(user && update.user_id === user.id),
+        canEdit: ratingEnabled && isOwnRow,
       };
     });
     return {

@@ -7,7 +7,7 @@ interface Props {
 export function RatingStars({ average, onRate, readOnly = false }: Props) {
   const rounded = Math.round(average);
   return (
-    <div className="stars">
+    <div className={`stars${readOnly ? ' stars--readonly' : ''}`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
