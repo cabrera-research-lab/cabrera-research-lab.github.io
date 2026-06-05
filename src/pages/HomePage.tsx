@@ -240,24 +240,18 @@ export function HomePage() {
       {cadence === 'daily' && def.step3Label && def.step3Sub && showInputs && (
         <div className="card">
           <StepBanner label={def.step3Label} sub={def.step3Sub} />
-          {dailyRatingGate.loading && !dailyRatingGate.open ? (
+          {dailyRatingGate.loading ? (
             <div className="mini">Checking standup status…</div>
-          ) : dailyRatingGate.open ? (
-            <DailyTeamRating
-              teamId={feedTeamId}
-              refreshKey={reportKey}
-              orgWide={orgWideFeed}
-            />
           ) : (
-            <div className="mini">
-              {dailyRatingGate.pending.length > 0 && (
-                <>
-                  {' '}
-                  Still waiting on:{' '}
-                  <strong>{dailyRatingGate.pending.map((u) => `${u}`).join(', ')}</strong>
-                </>
-              )}
-            </div>
+            <>
+              {!dailyRatingGate.open}
+              <DailyTeamRating
+                teamId={feedTeamId}
+                refreshKey={reportKey}
+                orgWide={orgWideFeed}
+                ratingEnabled={dailyRatingGate.open}
+              />
+            </>
           )}
         </div>
       )}

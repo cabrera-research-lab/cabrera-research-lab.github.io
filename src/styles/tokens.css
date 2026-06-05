@@ -582,6 +582,15 @@ button {
   color: var(--blue);
 }
 
+.daily-rating-waiting {
+  margin: 0 0 12px;
+}
+
+.daily-rating-locked .stars .star {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .weekly-priorities-board {
   margin: 16px 0 20px;
 }
