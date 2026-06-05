@@ -33,6 +33,7 @@ export function TeamReport({
   const [updates, setUpdates] = useState<UpdateRow[]>([]);
   const [commentsMap, setCommentsMap] = useState<Record<string, UpdateComment[]>>({});
   const [loading, setLoading] = useState(true);
+  const canComment = Boolean(user && !archive);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,8 +75,8 @@ export function TeamReport({
   }, [teamId, cadence, load]);
 
   async function handleComment(updateId: string, body: string) {
-    if (!user) return;
-    await addComment(updateId, user.id, body);
+    if (!user) throw new Error('Sign in to reply.');
+    await addComment(updateId, body);
     await load();
   }
 
@@ -96,65 +97,41 @@ export function TeamReport({
     );
   }
 
-  if (cadence === 'daily') {
-    return (
-      <>
-        {updates.map((r) => {
-          const comments = commentsMap[r.id] ?? [];
-          const name = r.profiles?.display_name ?? 'Member';
-          const teamName = r.teams?.name ?? '';
-          const date = new Date(r.created_at).toLocaleDateString();
-          const answers = Array.isArray(r.answers) ? r.answers : [];
-
-          return (
-            <div key={r.id} className="report">
-              <div className="report-top">
-                <div>
-                  <div className="name">{name}</div>
-                  <div className="meta">
-                    {teamName ? `${teamName} · ` : ''}
-                    {date}
-                  </div>
-                </div>
-                <div className="badge">{r.cadence.toUpperCase()}</div>
-              </div>
-              {answers.map((text, i) => (
-                <div key={i} className="part">
-                  <div className="small">{def.reportLabels[i] ?? 'Update'}</div>
-                  <div className="text">{text || '—'}</div>
-                </div>
-              ))}
-              <CommentThread
-                comments={comments}
-                onSend={archive ? undefined : (body) => handleComment(r.id, body)}
-                readOnly={archive}
-              />
-            </div>
-          );
-        })}
-      </>
-    );
-  }
-
   return (
     <>
-      {def.reportLabels.map((label, qIndex) => (
-        <div key={qIndex} className="question-report">
-          <div className="question-title">
-            Q{qIndex + 1}. {label}
-          </div>
-          {updates.map((r) => {
-            const answers = Array.isArray(r.answers) ? r.answers : [];
-            const answer = answers[qIndex] ?? '—';
-            const name = r.profiles?.display_name ?? 'Member';
-            return (
-              <div key={r.id} className="answer-card">
-                <span className="answer-name">{name}:</span> {answer || '—'}
+      {updates.map((r) => {
+        const comments = commentsMap[r.id] ?? [];
+        const name = r.profiles?.display_name ?? 'Member';
+        const teamName = r.teams?.name ?? '';
+        const date = new Date(r.created_at).toLocaleDateString();
+        const answers = Array.isArray(r.answers) ? r.answers : [];
+
+        return (
+          <div key={r.id} className="report">
+            <div className="report-top">
+              <div>
+                <div className="name">{name}</div>
+                <div className="meta">
+                  {teamName ? `${teamName} · ` : ''}
+                  {date}
+                </div>
               </div>
-            );
-          })}
-        </div>
-      ))}
+              <div className="badge">{r.cadence.toUpperCase()}</div>
+            </div>
+            {answers.map((text, i) => (
+              <div key={i} className="part">
+                <div className="small">{def.reportLabels[i] ?? 'Update'}</div>
+                <div className="text">{text || '—'}</div>
+              </div>
+            ))}
+            <CommentThread
+              comments={comments}
+              onSend={canComment ? (body) => handleComment(r.id, body) : undefined}
+              readOnly={archive}
+            />
+          </div>
+        );
+      })}
     </>
   );
 }

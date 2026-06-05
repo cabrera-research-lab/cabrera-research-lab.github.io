@@ -519,6 +519,35 @@ button {
   font-weight: 700;
 }
 
+.step-banner--collapsible {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  position: relative;
+  padding-right: 40px;
+}
+
+.step-banner--collapsible:hover {
+  filter: brightness(0.98);
+}
+
+.step-chevron {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  color: var(--blue);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.step-banner--collapsed .step-chevron {
+  transform: rotate(-90deg);
+}
+
 .question-report {
   border: 1px solid var(--line);
   border-radius: 20px;

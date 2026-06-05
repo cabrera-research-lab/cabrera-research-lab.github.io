@@ -20,6 +20,11 @@ function slugify(name: string): string {
     .slice(0, 48) || 'team';
 }
 
+function formatApiError(error: { message?: string; details?: string }, fallback: string): Error {
+  const message = error.message?.trim() || error.details?.trim() || fallback;
+  return new Error(message);
+}
+
 export async function getSession() {
   const { data } = await requireSupabase().auth.getSession();
   return data.session;
@@ -336,13 +341,40 @@ export async function rateUpdate(updateId: string, raterId: string, stars: numbe
   });
 }
 
-export async function addComment(updateId: string, authorId: string, body: string) {
-  const { error } = await requireSupabase().from('update_comments').insert({
-    update_id: updateId,
-    author_id: authorId,
-    body,
+const COMMENT_DB_FIX =
+  'Apply supabase/fix-comment-replies.sql in the Supabase SQL Editor, then retry.';
+
+export async function addComment(updateId: string, body: string) {
+  const sb = requireSupabase();
+  const { error: rpcError } = await sb.rpc('add_update_comment', {
+    p_update_id: updateId,
+    p_body: body,
   });
-  if (error) throw error;
+  if (!rpcError) return;
+
+  const rpcMissing =
+    rpcError.code === 'PGRST202' ||
+    rpcError.message?.includes('Could not find the function');
+
+  if (rpcMissing) {
+    const {
+      data: { user },
+    } = await sb.auth.getUser();
+    if (!user) throw new Error('Sign in to reply.');
+
+    const { error } = await sb.from('update_comments').insert({
+      update_id: updateId,
+      author_id: user.id,
+      body,
+    });
+    if (!error) return;
+    if (error.message?.includes('row-level security')) {
+      throw new Error(`Reply blocked by database policy. ${COMMENT_DB_FIX}`);
+    }
+    throw formatApiError(error, 'Reply failed');
+  }
+
+  throw formatApiError(rpcError, 'Reply failed');
 }
 
 export async function fetchPrioritySet(

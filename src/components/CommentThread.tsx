@@ -10,14 +10,18 @@ interface Props {
 export function CommentThread({ comments, onSend, readOnly = false }: Props) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleSend() {
     const trimmed = text.trim();
     if (!trimmed || sending || !onSend) return;
     setSending(true);
+    setError('');
     try {
       await onSend(trimmed);
       setText('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Reply failed');
     } finally {
       setSending(false);
     }
@@ -39,7 +43,7 @@ export function CommentThread({ comments, onSend, readOnly = false }: Props) {
           </div>
         ))
       )}
-      {!readOnly && (
+      {!readOnly && onSend && (
         <div className="comment-row">
           <input
             value={text}
@@ -52,6 +56,7 @@ export function CommentThread({ comments, onSend, readOnly = false }: Props) {
           </button>
         </div>
       )}
+      {error && <div className="status-msg">{error}</div>}
     </div>
   );
 }

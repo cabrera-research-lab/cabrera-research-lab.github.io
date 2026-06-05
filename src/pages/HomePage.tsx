@@ -10,6 +10,7 @@ import { TargetsCard } from '@/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/components/ActivityFeed';
 import { useAuth } from '@/context/AuthContext';
 import { useDailyRatingGate } from '@/hooks/useDailyRatingGate';
+import { useUserSubmitted } from '@/hooks/useUserSubmitted';
 import {
   buildUpdatePreview,
   fetchOrgWeeklyPriorities,
@@ -45,6 +46,7 @@ export function HomePage() {
   const [reportKey, setReportKey] = useState(0);
   const [priorityKey, setPriorityKey] = useState(0);
   const [feedView, setFeedView] = useState<FeedView>('current');
+  const [step1Expanded, setStep1Expanded] = useState(true);
   const showInputs = feedView === 'current';
 
   const displayName = profile?.display_name?.trim() || 'Your Name';
@@ -87,10 +89,28 @@ export function HomePage() {
     [def, displayName, answers],
   );
 
+  const userSubmitted = useUserSubmitted(
+    user?.id,
+    team?.id,
+    cadence,
+    reportKey,
+    showInputs && canSubmit,
+  );
+
   const dailyRatingGate = useDailyRatingGate(
     reportKey,
     cadence === 'daily' && showInputs,
   );
+
+  useEffect(() => {
+    setStep1Expanded(true);
+  }, [cadence]);
+
+  useEffect(() => {
+    if (!userSubmitted.loading && userSubmitted.submitted) {
+      setStep1Expanded(false);
+    }
+  }, [userSubmitted.loading, userSubmitted.submitted]);
 
   function setCadence(c: Cadence) {
     setSearchParams({ cadence: c });
@@ -113,6 +133,7 @@ export function HomePage() {
         selfMissionScore: null,
       });
       setStatus('Submitted to report.');
+      setStep1Expanded(false);
       setReportKey((k) => k + 1);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Submit failed');
@@ -136,6 +157,9 @@ export function HomePage() {
   }
 
   const reportPill = orgWideFeed ? 'all teams · everyone' : 'cross-team discussion';
+  const step1Collapsed = userSubmitted.submitted && !step1Expanded;
+  const showStep1Form =
+    !userSubmitted.loading && (step1Expanded || !userSubmitted.submitted);
 
   return (
     <div className="app">
@@ -163,47 +187,62 @@ export function HomePage() {
 
       {showInputs && canSubmit ? (
         <div className="card">
-          <section className="form">
-            <StepBanner label={def.step1Label} sub={def.step1Sub} />
-            <h2>{def.formTitle}</h2>
-            <div className="sub">{def.subtitle}</div>
-            {def.targetsLabel && (
-              <TargetsCard
-                label={def.targetsLabel}
-                text={targetsText}
-                empty={def.targetsEmpty}
-              />
-            )}
-            {def.questions.map((q, i) => (
-              <CharTextarea
-                key={i}
-                index={i}
-                question={q}
-                value={answers[i] ?? ''}
-                onChange={(v) => setAnswer(i, v)}
-              />
-            ))}
-          </section>
+          <StepBanner
+            label={def.step1Label}
+            sub={
+              step1Collapsed
+                ? `${def.step1Sub}`
+                : def.step1Sub
+            }
+            collapsed={step1Collapsed}
+            onToggle={
+              userSubmitted.submitted ? () => setStep1Expanded((v) => !v) : undefined
+            }
+          />
+          {showStep1Form && (
+            <>
+              <section className="form">
+                <h2>{def.formTitle}</h2>
+                <div className="sub">{def.subtitle}</div>
+                {def.targetsLabel && (
+                  <TargetsCard
+                    label={def.targetsLabel}
+                    text={targetsText}
+                    empty={def.targetsEmpty}
+                  />
+                )}
+                {def.questions.map((q, i) => (
+                  <CharTextarea
+                    key={i}
+                    index={i}
+                    question={q}
+                    value={answers[i] ?? ''}
+                    onChange={(v) => setAnswer(i, v)}
+                  />
+                ))}
+              </section>
 
-          <div className="actions">
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={handleCopy}
-              title="Copy update"
-            >
-              📋
-            </button>
-            <button
-              type="button"
-              className="btn primary"
-              onClick={handleSubmit}
-              disabled={submitting}
-            >
-              {submitting ? 'Submitting…' : def.submitLabel}
-            </button>
-          </div>
-          {status && <div className="status-msg">{status}</div>}
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={handleCopy}
+                  title="Copy update"
+                >
+                  📋
+                </button>
+                <button
+                  type="button"
+                  className="btn primary"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Submitting…' : def.submitLabel}
+                </button>
+              </div>
+              {status && <div className="status-msg">{status}</div>}
+            </>
+          )}
         </div>
       ) : showInputs ? (
         <div className="card mini" style={{ marginBottom: 10 }}>
