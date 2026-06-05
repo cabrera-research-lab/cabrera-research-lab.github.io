@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AuthPage } from '@/pages/AuthPage';
 import { HomePage } from '@/pages/HomePage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<AuthPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         path="/"
         element={

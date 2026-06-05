@@ -43,7 +43,7 @@ export const CADENCES: CadenceDefinition[] = [
       'What will I do today to meet our weekly priorities?',
       'Blockers: What blockers, dependencies, or support do I need?',
     ],
-    reportLabels: ['Yesterday / Signal', 'Today / Next', 'Blockers / Support'],
+    reportLabels: ['Updates', 'Today / Next', 'Blockers / Dependencies / Support'],
     step1Label: 'STEP 1 • Individual Q/A',
     step1Sub: 'Each person shares updates, priorities, and blockers.',
     step2Label: 'STEP 2 • TE∆M Cross Chat',
@@ -74,7 +74,7 @@ export const CADENCES: CadenceDefinition[] = [
     step1Sub:
       'Options: Automated or in-person',
     step2Label: 'STEP 2 • TE∆M Synthesis',
-    step2Sub: 'Discuss updates, blockers, dependencies, and support needs.',
+    step2Sub: 'Discuss bottlenecks, systems, and resources.',
     step3Label: 'STEP 3 • TE∆M Priorities',
     step3Sub: 'Convert team synthesis into weekly priorities.',
     step2Title: 'Team Weekly Priorities',
@@ -133,7 +133,7 @@ export const CADENCES: CadenceDefinition[] = [
     step1Sub:
       'Optional: Use the automated prompts below, or simply have a team conversation around these questions before setting priorities.',
     step2Label: 'STEP 2 • TE∆M Cross Chat',
-    step2Sub: 'Discuss updates, blockers, dependencies, and support needs.',
+    step2Sub: 'Discuss bottlenecks, systems, and priorities.',
     step3Label: 'STEP 3 • TE∆M Priorities',
     step3Sub: 'Convert team synthesis into quarterly priorities.',
     step2Title: 'Team Quarterly Priorities',
