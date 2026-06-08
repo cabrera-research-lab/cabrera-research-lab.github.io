@@ -17,8 +17,26 @@ const PRIORITY_TITLES: Record<string, string> = {
   quarterly: 'TE∆MING Quarterly Priorities',
 };
 
-function emptyItem(order: number): PriorityItemInput {
-  return { sort_order: order, goal: '', owner: '', metric: '', action: '' };
+type LocalItem = PriorityItemInput & { id: string };
+
+function newId(): string {
+  return crypto.randomUUID();
+}
+
+function emptyItem(order: number): LocalItem {
+  return { id: newId(), sort_order: order, goal: '', owner: '', metric: '', action: '' };
+}
+
+function normalizeItems(items: LocalItem[]): LocalItem[] {
+  return items.map((item, index) => ({ ...item, sort_order: index }));
+}
+
+function toLocalItems(items: PriorityItemInput[]): LocalItem[] {
+  return items.map((item, index) => ({
+    ...item,
+    id: newId(),
+    sort_order: index,
+  }));
 }
 
 interface Props {
@@ -34,9 +52,11 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   }
 
   const priorityCadence = cadence as 'weekly' | 'monthly' | 'quarterly';
-  const [items, setItems] = useState<PriorityItemInput[]>([emptyItem(0)]);
+  const [items, setItems] = useState<LocalItem[]>([emptyItem(0)]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
@@ -47,15 +67,7 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
           ? { items: await fetchOrgWeeklyPriorities(teamId) }
           : await fetchPrioritySet(teamId, priorityCadence);
       if (data?.items.length) {
-        setItems(
-          data.items.map((it, i) => ({
-            sort_order: i,
-            goal: it.goal,
-            owner: it.owner,
-            metric: it.metric,
-            action: it.action,
-          })),
-        );
+        setItems(toLocalItems(data.items));
       } else {
         setItems([emptyItem(0)]);
       }
@@ -68,12 +80,13 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
     load();
   }, [load]);
 
-  async function persist(next: PriorityItemInput[]) {
+  async function persist(next: LocalItem[]) {
     try {
+      const payload = normalizeItems(next);
       if (priorityCadence === 'weekly') {
-        await saveOrgWeeklyPriorities(next, teamId);
+        await saveOrgWeeklyPriorities(payload, teamId);
       } else {
-        await savePrioritySet(teamId, priorityCadence, next);
+        await savePrioritySet(teamId, priorityCadence, payload);
       }
       onSaved();
     } catch (e) {
@@ -81,7 +94,7 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
     }
   }
 
-  function scheduleSave(next: PriorityItemInput[]) {
+  function scheduleSave(next: LocalItem[]) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       void persist(next);
@@ -98,7 +111,7 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
 
   function addItem() {
     setItems((prev) => {
-      const next = [...prev, emptyItem(prev.length)];
+      const next = normalizeItems([...prev, emptyItem(prev.length)]);
       scheduleSave(next);
       return next;
     });
@@ -106,10 +119,45 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
 
   function deleteItem(index: number) {
     setItems((prev) => {
-      const next = prev.length <= 1 ? [emptyItem(0)] : prev.filter((_, i) => i !== index);
+      const next = normalizeItems(prev.length <= 1 ? [emptyItem(0)] : prev.filter((_, i) => i !== index));
       scheduleSave(next);
       return next;
     });
+  }
+
+  function reorderItems(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) return;
+    setItems((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      const normalized = normalizeItems(next);
+      scheduleSave(normalized);
+      return normalized;
+    });
+  }
+
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+    setDropIndex(index);
+  }
+
+  function handleDragOver(event: React.DragEvent, index: number) {
+    event.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+    setDropIndex(index);
+  }
+
+  function handleDrop(index: number) {
+    if (dragIndex === null) return;
+    reorderItems(dragIndex, index);
+    setDragIndex(null);
+    setDropIndex(null);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    setDropIndex(null);
   }
 
   async function copyPreview() {
@@ -133,11 +181,34 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
       <h2 style={{ marginTop: 0 }}>{def.step2Title}</h2>
       <div className="mini">{renderDeltaText(def.step2Description)}</div>
       {items.map((item, idx) => (
-        <div key={idx} className="goal-card">
+        <div
+          key={item.id}
+          className={[
+            'goal-card',
+            dragIndex === idx ? 'goal-card--dragging' : '',
+            dropIndex === idx && dragIndex !== null && dragIndex !== idx ? 'goal-card--drop-target' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          onDragOver={(event) => handleDragOver(event, idx)}
+          onDrop={() => handleDrop(idx)}
+        >
           <div className="goal-head">
-            <label>
-              {kindLabel} Priority {idx + 1}
-            </label>
+            <div className="goal-head-start">
+              <button
+                type="button"
+                className="priority-drag-handle"
+                draggable
+                aria-label={`Drag ${kindLabel} priority ${idx + 1}`}
+                onDragStart={() => handleDragStart(idx)}
+                onDragEnd={handleDragEnd}
+              >
+                ⋮⋮
+              </button>
+              <label>
+                {kindLabel} Priority {idx + 1}
+              </label>
+            </div>
             <button
               type="button"
               className="delete-priority"

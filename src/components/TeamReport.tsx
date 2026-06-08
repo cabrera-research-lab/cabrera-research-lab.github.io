@@ -110,6 +110,9 @@ export function TeamReport({
 
     return (
       <>
+        {def.questionsIntro ? (
+          <div className="questions-intro">{def.questionsIntro}</div>
+        ) : null}
         {def.questions.map((question, qIdx) => (
           <div key={qIdx} className="question-report">
             <div className="question-title">

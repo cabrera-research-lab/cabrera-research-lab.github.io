@@ -84,6 +84,7 @@ export function HomePage() {
         cadenceTitle: def.previewTitle,
         name: displayName,
         date: new Date().toLocaleDateString(),
+        questionsIntro: def.questionsIntro,
         questions: def.questions,
         answers,
       }),
@@ -218,6 +219,9 @@ export function HomePage() {
                     empty={def.targetsEmpty}
                   />
                 )}
+                {def.questionsIntro ? (
+                  <div className="questions-intro">{def.questionsIntro}</div>
+                ) : null}
                 {def.questions.map((q, i) => (
                   <CharTextarea
                     key={i}

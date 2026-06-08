@@ -526,25 +526,29 @@ export function formatTargetsText(
   items: PriorityItemInput[],
   empty: string,
 ): string {
-  const filled = items.filter((i) => i.goal.trim());
-  if (!filled.length) return empty;
-  return filled
-    .map((item, idx) => {
-      let line = `${idx + 1}. ${item.goal.trim()}`;
-      if (item.metric.trim()) line += `\n   Metric: ${item.metric.trim()}`;
-      return line;
-    })
-    .join('\n\n');
+  const lines: string[] = [];
+  items.forEach((item, idx) => {
+    if (!item.goal.trim()) return;
+    let line = `${idx + 1}. ${item.goal.trim()}`;
+    if (item.metric.trim()) line += `\n   Metric: ${item.metric.trim()}`;
+    lines.push(line);
+  });
+  if (!lines.length) return empty;
+  return lines.join('\n\n');
 }
 
 export function buildUpdatePreview(params: {
   cadenceTitle: string;
   name: string;
   date: string;
+  questionsIntro?: string;
   questions: string[];
   answers: string[];
 }): string {
   let out = `TE∆M ${params.cadenceTitle}\nName: ${params.name}\nDate: ${params.date}\n\n`;
+  if (params.questionsIntro?.trim()) {
+    out += `${params.questionsIntro.trim()}\n\n`;
+  }
   params.questions.forEach((q, i) => {
     out += `${i + 1}. ${q}\n${params.answers[i]?.trim() || '—'}\n\n`;
   });
@@ -553,12 +557,14 @@ export function buildUpdatePreview(params: {
 
 export function buildPrioritiesPreview(title: string, items: PriorityItemInput[]): string {
   let out = `${title}\nDate: ${new Date().toLocaleDateString()}\n\n`;
-  const filled = items.filter((i) => i.goal.trim());
-  if (!filled.length) return out.trimEnd();
-  filled.forEach((item, idx) => {
+  let hasContent = false;
+  items.forEach((item, idx) => {
+    if (!item.goal.trim()) return;
+    hasContent = true;
     out += `Priority ${idx + 1}\n`;
-    out += `Goal: ${item.goal || '—'}\n`;
-    out += `Success Metric: ${item.metric || '—'}\n\n`;
+    out += `Goal: ${item.goal.trim()}\n`;
+    out += `Success Metric: ${item.metric.trim() || '—'}\n\n`;
   });
+  if (!hasContent) return out.trimEnd();
   return out.trimEnd();
 }

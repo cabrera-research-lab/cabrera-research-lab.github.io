@@ -30,7 +30,7 @@ export function AllWeeklyPriorities({ refreshKey = 0, fallbackTeamId = null }: P
   }, [load, refreshKey]);
 
   const periodLabel = formatPeriodLabel('weekly', periodStartForPriority('weekly'));
-  const filled = items.filter((i) => i.goal.trim());
+  const hasGoals = items.some((i) => i.goal.trim());
 
   return (
     <div className="weekly-priorities-board">
@@ -44,12 +44,12 @@ export function AllWeeklyPriorities({ refreshKey = 0, fallbackTeamId = null }: P
       </p>
       {loading ? (
         <div className="mini">Loading weekly priorities…</div>
-      ) : !filled.length ? (
+      ) : !hasGoals ? (
         <div className="mini">No weekly priorities published yet for {periodLabel}.</div>
       ) : (
         <div className="goal-card targets-highlight">
           <div className="text">
-            <DeltaText>{formatTargetsText(filled, 'No goals entered yet.')}</DeltaText>
+            <DeltaText>{formatTargetsText(items, 'No goals entered yet.')}</DeltaText>
           </div>
         </div>
       )}

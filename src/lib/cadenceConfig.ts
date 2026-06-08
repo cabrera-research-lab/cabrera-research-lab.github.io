@@ -13,6 +13,8 @@ export interface CadenceDefinition {
   targetsLabel?: string;
   targetsEmpty?: string;
   parentPriorityCadence?: 'weekly' | 'monthly' | 'quarterly';
+  /** Shared lead-in shown once above all Step 1 questions. */
+  questionsIntro?: string;
   questions: string[];
   reportLabels: string[];
   /** Team report groups by question with all members' answers (monthly / quarterly). */
@@ -67,18 +69,12 @@ export const CADENCES: CadenceDefinition[] = [
     targetsLabel: "This Month's Targets",
     targetsEmpty: 'No monthly priorities entered yet.',
     parentPriorityCadence: 'monthly',
+    questionsIntro: 'After looking at the data,',
     questions: [
-      'What is my top unanswered question right now?',
-      'What is the biggest business-level "Zoom Out" opportunity we should pursue?',
-      'What is the biggest business-level "Zoom In" opportunity we should pursue?',
-      'What is the single most important thing I should do this week to address the opportunities and questions identified above?',
+      'What is the top friction for users?',
+      'What is the top friction we should fix?',
     ],
-    reportLabels: [
-      'Top Unanswered Question',
-      'Zoom Out Opportunity',
-      'Zoom In Opportunity',
-      'Most Important Action This Week',
-    ],
+    reportLabels: ['Top User Friction', 'Top Friction to Fix'],
     groupReportByQuestion: true,
     showResponseThreads: false,
     showStep2: true,

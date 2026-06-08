@@ -216,6 +216,14 @@ textarea {
   margin: 17px 0 8px;
 }
 
+.questions-intro {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--blue);
+  line-height: 1.25;
+  margin: 17px 0 4px;
+}
+
 .counter {
   font-size: 12px;
   font-weight: 900;
@@ -543,6 +551,41 @@ button {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
+}
+
+.goal-head-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.priority-drag-handle {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: grab;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.priority-drag-handle:active {
+  cursor: grabbing;
+}
+
+.goal-card--dragging {
+  opacity: 0.45;
+}
+
+.goal-card--drop-target {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(97, 116, 209, 0.15);
 }
 
 .goal-head label {
