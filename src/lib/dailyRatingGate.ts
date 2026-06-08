@@ -46,7 +46,3 @@ export function isDailyRatingGateOpen(
 
   return false;
 }
-
-export function getPendingDailyUsernames(submittedUsernames: Set<string>): string[] {
-  return getRequiredDailyUsernames().filter((u) => !submittedUsernames.has(u));
-}

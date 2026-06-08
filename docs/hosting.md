@@ -25,7 +25,8 @@ Users sign in with **email and password** (real addresses, e.g. work email).
 1. Settings → Secrets → Actions:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
-2. Settings → Pages → Source: **GitHub Actions**.
+2. Settings → Pages → Build and deployment → Source: **GitHub Actions** (not “Deploy from branch”).
+   - If Source is set to `main` / `/`, GitHub serves raw repo files and the browser loads `/src/main.tsx` with the wrong MIME type (`application/octet-stream`).
 3. After the first deploy, the site is live at **https://cabrera-research-lab.github.io/** (org Pages site from `cabrera-research-lab.github.io` repo).
 4. `vite.config.ts` uses `base: '/'` because the org site is served from the domain root, not `/Teaming/`.
 
@@ -54,6 +55,16 @@ Push to `main`. The workflow [`.github/workflows/deploy.yml`](../.github/workflo
 ## SPA routing
 
 `npm run build` copies `index.html` to `404.html` so client-side routes work on refresh (GitHub Pages has no server rewrites).
+
+## Troubleshooting
+
+**“Failed to load module script… MIME type application/octet-stream”**
+
+GitHub Pages is serving the development `index.html` (`/src/main.tsx`) instead of the Vite build in `dist/`. Fix:
+
+1. Repo → **Settings → Pages → Build and deployment → Source** → **GitHub Actions**
+2. Re-run the **Deploy to GitHub Pages** workflow (Actions tab → workflow → Run workflow)
+3. Confirm the live page source references `/assets/index-….js`, not `/src/main.tsx`
 
 ## Upgrade path
 

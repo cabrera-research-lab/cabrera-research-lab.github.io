@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchUpdates, fetchProfileUsernames } from '@/lib/api';
-import { getPendingDailyUsernames, isDailyRatingGateOpen } from '@/lib/dailyRatingGate';
+import { isDailyRatingGateOpen } from '@/lib/dailyRatingGate';
 import { periodStartForCadence } from '@/lib/periods';
 import type { UpdateRow } from '@/lib/types';
 
@@ -17,13 +17,11 @@ function latestUpdatePerUser(rows: UpdateRow[]): UpdateRow[] {
 
 export function useDailyRatingGate(refreshKey: number, enabled: boolean) {
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState<string[]>([]);
   const [loading, setLoading] = useState(enabled);
 
   const load = useCallback(async () => {
     if (!enabled) {
       setOpen(false);
-      setPending([]);
       setLoading(false);
       return;
     }
@@ -43,11 +41,9 @@ export function useDailyRatingGate(refreshKey: number, enabled: boolean) {
         if (u) submitted.add(u);
       }
       setOpen(isDailyRatingGateOpen(submitted));
-      setPending(getPendingDailyUsernames(submitted));
     } catch (e) {
       console.error(e);
       setOpen(false);
-      setPending(getPendingDailyUsernames(new Set()));
     } finally {
       setLoading(false);
     }
@@ -63,5 +59,5 @@ export function useDailyRatingGate(refreshKey: number, enabled: boolean) {
     return () => window.clearInterval(id);
   }, [enabled, open, load]);
 
-  return { open, pending, loading, refresh: load };
+  return { open, loading, refresh: load };
 }

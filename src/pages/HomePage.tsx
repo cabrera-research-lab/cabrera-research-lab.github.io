@@ -292,9 +292,7 @@ export function HomePage() {
             <>
               {!dailyRatingGate.open && (
                 <p className="mini daily-rating-waiting">
-                  {dailyRatingGate.pending.length > 0
-                    ? `Ratings open when everyone has submitted, or at 9 AM ET after the first standup. Waiting on: ${dailyRatingGate.pending.join(', ')}.`
-                    : 'Ratings open at 9 AM ET after the first standup submission, or sooner when everyone on the list has submitted.'}
+                  Ratings open when everyone has submitted, or at 9 AM ET.
                 </p>
               )}
               <DailyTeamRating
