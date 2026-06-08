@@ -15,6 +15,10 @@ export interface CadenceDefinition {
   parentPriorityCadence?: 'weekly' | 'monthly' | 'quarterly';
   questions: string[];
   reportLabels: string[];
+  /** Team report groups by question with all members' answers (monthly / quarterly). */
+  groupReportByQuestion?: boolean;
+  /** Per-update comment threads in the step 2 activity feed. */
+  showResponseThreads?: boolean;
   showStep2?: boolean;
   step1Label: string;
   step1Sub: string;
@@ -69,6 +73,8 @@ export const CADENCES: CadenceDefinition[] = [
       'What opportunity should we pursue? What improvement should we make? What deficiency should we fix?',
     ],
     reportLabels: ['Rave / Refer Cause', 'Friction Cause', 'Opportunity / Improvement / Fix'],
+    groupReportByQuestion: true,
+    showResponseThreads: false,
     showStep2: true,
     step1Label: 'STEP 1 • Individual Q/A',
     step1Sub:
@@ -98,6 +104,7 @@ export const CADENCES: CadenceDefinition[] = [
       'Where should resources shift?',
     ],
     reportLabels: ['Bottleneck', 'System Redesign', 'Resource Shift'],
+    groupReportByQuestion: true,
     showStep2: true,
     step1Label: 'STEP 1 • Individual Q/A',
     step1Sub:

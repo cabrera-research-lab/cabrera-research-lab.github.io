@@ -31,24 +31,29 @@ export function TeamReport({
 }: Props) {
   const { user } = useAuth();
   const def = getCadence(cadence);
+  const showThreads = def.showResponseThreads !== false;
   const [updates, setUpdates] = useState<UpdateRow[]>([]);
   const [commentsMap, setCommentsMap] = useState<Record<string, UpdateComment[]>>({});
   const [loading, setLoading] = useState(true);
-  const canComment = Boolean(user && !archive);
+  const canComment = showThreads && Boolean(user && !archive);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const rows = await fetchUpdates(teamId, cadence, periodStart);
       setUpdates(rows);
-      const ids = rows.map((r) => r.id);
-      setCommentsMap(await fetchCommentsForUpdates(ids));
+      if (showThreads) {
+        const ids = rows.map((r) => r.id);
+        setCommentsMap(await fetchCommentsForUpdates(ids));
+      } else {
+        setCommentsMap({});
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, [teamId, cadence, periodStart]);
+  }, [teamId, cadence, periodStart, showThreads]);
 
   useEffect(() => {
     load();
@@ -58,22 +63,24 @@ export function TeamReport({
     const sb = requireSupabase();
     const channelName = teamId ? `team-${teamId}-${cadence}` : `feed-${cadence}`;
     const updatesFilter = teamId ? { filter: `team_id=eq.${teamId}` } : {};
-    const channel = sb
-      .channel(channelName)
-      .on(
+    let channel = sb.channel(channelName).on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'updates', ...updatesFilter },
+      () => load(),
+    );
+    if (showThreads) {
+      channel = channel.on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'updates', ...updatesFilter },
+        { event: '*', schema: 'public', table: 'update_comments' },
         () => load(),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'update_comments' }, () =>
-        load(),
-      )
-      .subscribe();
+      );
+    }
+    channel.subscribe();
 
     return () => {
       sb.removeChannel(channel);
     };
-  }, [teamId, cadence, load]);
+  }, [teamId, cadence, load, showThreads]);
 
   async function handleComment(updateId: string, body: string) {
     if (!user) throw new Error('Sign in to reply.');
@@ -95,6 +102,61 @@ export function TeamReport({
             ? `No activity yet for ${periodLabel}.`
             : `No updates yet for ${periodLabel}. Be the first to submit.`}
       </div>
+    );
+  }
+
+  if (def.groupReportByQuestion) {
+    const lastQuestionIndex = def.questions.length - 1;
+
+    return (
+      <>
+        {def.questions.map((question, qIdx) => (
+          <div key={qIdx} className="question-report">
+            <div className="question-title">
+              {qIdx + 1}. {question}
+            </div>
+            <div className="small">{def.reportLabels[qIdx] ?? 'Update'}</div>
+            {updates.map((r) => {
+              const comments = commentsMap[r.id] ?? [];
+              const name = r.profiles?.display_name ?? 'Member';
+              const teamName = r.teams?.name ?? '';
+              const date = new Date(r.created_at).toLocaleDateString();
+              const answers = Array.isArray(r.answers) ? r.answers : [];
+              const text = answers[qIdx] ?? '—';
+
+              return (
+                <div key={r.id} className="answer-card">
+                  <div>
+                    <span className="answer-name">
+                      <DeltaText>{name}</DeltaText>
+                    </span>
+                    <span className="meta">
+                      {orgWide && teamName ? (
+                        <>
+                          {' · '}
+                          <DeltaText>{teamName}</DeltaText>
+                        </>
+                      ) : null}
+                      {' · '}
+                      {date}
+                    </span>
+                  </div>
+                  <div className="text">
+                    <DeltaText>{text || '—'}</DeltaText>
+                  </div>
+                  {showThreads && qIdx === lastQuestionIndex && (
+                    <CommentThread
+                      comments={comments}
+                      onSend={canComment ? (body) => handleComment(r.id, body) : undefined}
+                      readOnly={archive}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </>
     );
   }
 
@@ -134,11 +196,13 @@ export function TeamReport({
                 </div>
               </div>
             ))}
-            <CommentThread
-              comments={comments}
-              onSend={canComment ? (body) => handleComment(r.id, body) : undefined}
-              readOnly={archive}
-            />
+            {showThreads && (
+              <CommentThread
+                comments={comments}
+                onSend={canComment ? (body) => handleComment(r.id, body) : undefined}
+                readOnly={archive}
+              />
+            )}
           </div>
         );
       })}
