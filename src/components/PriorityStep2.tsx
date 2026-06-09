@@ -59,7 +59,6 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const pointerDrag = useRef<{ fromIndex: number; pointerId: number } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -151,47 +150,49 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   }
 
   function clearDragState() {
-    pointerDrag.current = null;
     setDragIndex(null);
     setDropIndex(null);
+    document.body.classList.remove('is-reordering-priorities');
   }
 
-  function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>, index: number) {
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>, index: number) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pointerDrag.current = { fromIndex: index, pointerId: event.pointerId };
+    event.stopPropagation();
+
+    const handle = event.currentTarget;
+    handle.setPointerCapture(event.pointerId);
     setDragIndex(index);
     setDropIndex(index);
+    document.body.classList.add('is-reordering-priorities');
+
+    const onMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== event.pointerId) return;
+      moveEvent.preventDefault();
+      setDropIndex(getDropIndex(moveEvent.clientY, index));
+    };
+
+    const onEnd = (endEvent: PointerEvent) => {
+      if (endEvent.pointerId !== event.pointerId) return;
+      endEvent.preventDefault();
+      handle.releasePointerCapture(event.pointerId);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onEnd);
+      document.removeEventListener('pointercancel', onEnd);
+      const toIndex = getDropIndex(endEvent.clientY, index);
+      clearDragState();
+      reorderItems(index, toIndex);
+    };
+
+    document.addEventListener('pointermove', onMove, { passive: false });
+    document.addEventListener('pointerup', onEnd);
+    document.addEventListener('pointercancel', onEnd);
   }
 
-  function handlePointerMove(event: React.PointerEvent<HTMLButtonElement>) {
-    const drag = pointerDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    setDropIndex(getDropIndex(event.clientY, drag.fromIndex));
-  }
-
-  function finishPointerDrag(event: React.PointerEvent<HTMLButtonElement>) {
-    const drag = pointerDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    const toIndex = getDropIndex(event.clientY, drag.fromIndex);
-    const fromIndex = drag.fromIndex;
-    clearDragState();
-    reorderItems(fromIndex, toIndex);
-  }
-
-  function handlePointerCancel(event: React.PointerEvent<HTMLButtonElement>) {
-    const drag = pointerDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    clearDragState();
+  function moveItem(index: number, delta: -1 | 1) {
+    const toIndex = index + delta;
+    if (toIndex < 0 || toIndex >= items.length) return;
+    reorderItems(index, toIndex);
   }
 
   async function copyPreview() {
@@ -230,17 +231,45 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
         >
           <div className="goal-head">
             <div className="goal-head-start">
-              <button
-                type="button"
-                className="priority-drag-handle"
-                aria-label={`Drag ${kindLabel} priority ${idx + 1}`}
-                onPointerDown={(event) => handlePointerDown(event, idx)}
-                onPointerMove={handlePointerMove}
-                onPointerUp={finishPointerDrag}
-                onPointerCancel={handlePointerCancel}
-              >
-                ⋮⋮
-              </button>
+              <div className="priority-reorder-controls">
+                <div
+                  className="priority-drag-handle"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Drag ${kindLabel} priority ${idx + 1}`}
+                  onPointerDown={(event) => handlePointerDown(event, idx)}
+                  onContextMenu={(event) => event.preventDefault()}
+                >
+                  <span className="priority-drag-grip" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                </div>
+                <div className="priority-move-buttons">
+                  <button
+                    type="button"
+                    className="priority-move-btn"
+                    aria-label={`Move ${kindLabel} priority ${idx + 1} up`}
+                    disabled={idx === 0}
+                    onClick={() => moveItem(idx, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="priority-move-btn"
+                    aria-label={`Move ${kindLabel} priority ${idx + 1} down`}
+                    disabled={idx === items.length - 1}
+                    onClick={() => moveItem(idx, 1)}
+                  >
+                    ↓
+                  </button>
+                </div>
+              </div>
               <label>
                 {kindLabel} Priority {idx + 1}
               </label>
