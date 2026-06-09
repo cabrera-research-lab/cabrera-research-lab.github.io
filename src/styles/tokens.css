@@ -565,14 +565,16 @@ button {
   background: #fff;
   color: var(--muted);
   border-radius: 10px;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   cursor: grab;
   font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .priority-drag-handle:active {
@@ -581,6 +583,7 @@ button {
 
 .goal-card--dragging {
   opacity: 0.45;
+  touch-action: none;
 }
 
 .goal-card--drop-target {
