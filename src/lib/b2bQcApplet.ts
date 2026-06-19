@@ -200,7 +200,7 @@ Please reply once your team has confirmed the browser and domain requirements.
 
 Thank you,
 Laura Cabrera
-STSI / GO∆TNET`;
+STSI`;
 }
 
 export function runQc(form: CohortForm, finalCheck: FinalCheck): QcResult {
