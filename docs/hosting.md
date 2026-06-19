@@ -1,5 +1,7 @@
 # Hosting — GitHub Pages + Supabase (free tier)
 
+One deployment serves **both apps** (Teaming at `/`, Mission Moments at `/mission-moments`). See [Architecture](./architecture.md).
+
 ## Architecture
 
 - **Frontend:** Static PWA built with Vite, deployed via GitHub Actions to GitHub Pages.

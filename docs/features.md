@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for what the app does today (prototype-complete), what “done for everyone” should mean, and a prioritized backlog to get there.
 
-**Related docs:** [Cadence spec](./cadence-spec.md) · [Hosting](./hosting.md) · [README](../README.md)
+**Related docs:** [Cadence spec](./cadence-spec.md) · [Hosting](./hosting.md) · [Architecture](./architecture.md) · [README](../README.md)
 
 **Last reviewed:** 2025-06-01 (align with your ship date when you edit)
 
@@ -263,7 +263,7 @@ Work in this order unless you have a blocking launch constraint.
 
 Consider v1 production-ready when:
 
-- [ ] Every CRL user can sign up, join a team, and submit daily without asking for help
+- [ ] Every STSI user can sign up, join a team, and submit daily without asking for help
 - [ ] Org weekly priorities have **one** canonical list everyone sees on Daily
 - [ ] Daily/weekly visibility rules are explained in-app (org-wide vs team-only)
 - [ ] Peer feedback works as designed (rating and/or comments — pick one spec and ship it)
@@ -274,18 +274,22 @@ Consider v1 production-ready when:
 
 ## 10. Code map (quick reference)
 
+Teaming code lives under `src/apps/teaming/`. See [Architecture](./architecture.md) for the full repo layout including Mission Moments.
+
 | Area | Location |
 |------|----------|
-| Routes & auth gate | `src/App.tsx`, `src/context/AuthContext.tsx` |
-| Main shell | `src/pages/HomePage.tsx` |
-| Cadence copy & flags | `src/lib/cadenceConfig.ts` |
-| Period math | `src/lib/periods.ts` |
-| API / Supabase | `src/lib/api.ts`, `src/lib/org.ts` |
-| Org weekly board | `src/components/AllWeeklyPriorities.tsx` |
-| Step 2 | `src/components/PriorityStep2.tsx` |
-| Feed shell | `src/components/ActivityFeed.tsx` |
-| Report cards | `src/components/TeamReport.tsx` |
-| Schema & RLS | `supabase/migrations/*.sql` |
+| Routes & auth gate | `src/App.tsx`, `src/shared/auth/` |
+| Main shell | `src/apps/teaming/pages/HomePage.tsx` |
+| Cadence copy & flags | `src/apps/teaming/lib/cadenceConfig.ts` |
+| Period math | `src/apps/teaming/lib/periods.ts` |
+| API / Supabase | `src/apps/teaming/lib/api.ts`, `org.ts` |
+| Org weekly board | `src/apps/teaming/components/AllWeeklyPriorities.tsx` |
+| Step 2 | `src/apps/teaming/components/PriorityStep2.tsx` |
+| Feed shell | `src/apps/teaming/components/ActivityFeed.tsx` |
+| Report cards | `src/apps/teaming/components/TeamReport.tsx` |
+| Schema & RLS | `supabase/migrations/*.sql` (Teaming tables) |
+
+Mission Moments: [`docs/mission-moments.md`](./mission-moments.md)
 
 ---
 
