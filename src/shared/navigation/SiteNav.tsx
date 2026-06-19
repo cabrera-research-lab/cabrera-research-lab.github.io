@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/shared/auth/AuthContext';
+import { signOut } from '@/shared/lib/authApi';
 import { INTERNAL_TOOLS, isToolActive } from '@/shared/navigation/tools';
 import '@/shared/navigation/site-nav.css';
 
@@ -21,10 +23,16 @@ function HamburgerIcon({ open }: { open: boolean }) {
 
 export function SiteNav() {
   const { pathname } = useLocation();
+  const { user, profile, team, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const panelId = useId();
 
   const close = useCallback(() => setOpen(false), []);
+  const displayName = profile?.display_name?.trim() || user?.email || '';
+
+  async function handleSignOut() {
+    await signOut();
+  }
 
   useEffect(() => {
     close();
@@ -60,6 +68,22 @@ export function SiteNav() {
           <HamburgerIcon open={open} />
         </button>
         <span className="site-nav-bar-label">STSI GO∆TNET</span>
+        {!loading && user && displayName ? (
+          <div className="site-nav-user">
+            <span className="site-nav-user-name">{displayName}</span>
+            {team ? (
+              <>
+                <span className="site-nav-user-sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="site-nav-team-name">{team.name}</span>
+              </>
+            ) : null}
+            <button type="button" className="site-nav-sign-out" onClick={handleSignOut}>
+              Sign out
+            </button>
+          </div>
+        ) : null}
       </header>
 
       {open && (

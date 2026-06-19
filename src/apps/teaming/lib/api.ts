@@ -3,7 +3,6 @@ export {
   normalizeEmail,
   signInWithPassword,
   signOut,
-  signUpWithPassword,
   updatePassword,
   requestPasswordReset,
   getAppUrl,

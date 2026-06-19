@@ -9,7 +9,7 @@ import { StepBanner } from '@/apps/teaming/components/StepBanner';
 import { TargetsCard } from '@/apps/teaming/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/apps/teaming/components/ActivityFeed';
 import { useAuth } from '@/shared/auth/AuthContext';
-import { DeltaText, renderDeltaText } from '@/apps/teaming/lib/deltaText';
+import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import { useDailyRatingGate } from '@/apps/teaming/hooks/useDailyRatingGate';
 import { useUserSubmitted } from '@/apps/teaming/hooks/useUserSubmitted';
 import {
@@ -17,7 +17,6 @@ import {
   fetchOrgWeeklyPriorities,
   fetchPrioritySet,
   formatTargetsText,
-  signOut,
   submitUpdate,
 } from '@/apps/teaming/lib/api';
 import { getCadence } from '@/apps/teaming/lib/cadenceConfig';
@@ -32,7 +31,7 @@ function parseCadence(param: string | null): Cadence {
 }
 
 export function HomePage() {
-  const { user, profile, team, refresh } = useAuth();
+  const { user, profile, team } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const cadence = parseCadence(searchParams.get('cadence'));
   const def = getCadence(cadence);
@@ -153,11 +152,6 @@ export function HomePage() {
     }
   }
 
-  async function handleSignOut() {
-    await signOut();
-    await refresh();
-  }
-
   const reportPill = orgWideFeed ? 'all teams · everyone' : 'cross-team discussion';
   const step1Collapsed = userSubmitted.submitted && !step1Expanded;
   const showStep1Form =
@@ -170,24 +164,6 @@ export function HomePage() {
       <div className="mini">
         Daily Commune-ication. Weekly priorities. Monthly priorities. Quarterly priorities. Annual roadmap.
       </div>
-      <p className="mini">
-        Signed in as{' '}
-        <strong>
-          <DeltaText>{displayName}</DeltaText>
-        </strong>
-        {team ? (
-          <>
-            {' '}
-            · Team:{' '}
-            <strong>
-              <DeltaText>{team.name}</DeltaText>
-            </strong>
-          </>
-        ) : null}
-        <button type="button" className="sign-out" onClick={handleSignOut}>
-          Sign out
-        </button>
-      </p>
 
       {!canSubmit && <Onboarding />}
 

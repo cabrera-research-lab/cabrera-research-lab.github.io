@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { requestPasswordReset, signInWithPassword, signUpWithPassword } from '@/shared/lib/authApi';
+import { requestPasswordReset, signInWithPassword } from '@/shared/lib/authApi';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 
-type AuthMode = 'signin' | 'signup' | 'forgot';
+type AuthMode = 'signin' | 'forgot';
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -12,7 +12,6 @@ export function AuthPage() {
   const [mode, setMode] = useState<AuthMode>(searchParams.get('forgot') === '1' ? 'forgot' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,23 +44,11 @@ export function AuthPage() {
       if (mode === 'forgot') {
         await requestPasswordReset(email);
         setMessage('Check your email for a link to reset your password.');
-      } else if (mode === 'signin') {
+      } else {
         await signInWithPassword(email, password);
         const next = searchParams.get('next');
         const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
         navigate(safeNext, { replace: true });
-      } else {
-        const { session } = await signUpWithPassword(email, password, displayName);
-        if (session) {
-          const next = searchParams.get('next');
-          const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
-          navigate(safeNext, { replace: true });
-        } else {
-          setMessage(
-            'Account created. If email confirmation is enabled in Supabase, confirm your email before signing in.',
-          );
-          setMode('signin');
-        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -73,12 +60,9 @@ export function AuthPage() {
   const subtitle =
     mode === 'signin'
       ? 'Sign in with your email and password.'
-      : mode === 'signup'
-        ? 'Create an account to submit updates and view team reports.'
-        : 'Enter your email and we will send you a link to reset your password.';
+      : 'Enter your email and we will send you a link to reset your password.';
 
-  const submitLabel =
-    mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link';
+  const submitLabel = mode === 'signin' ? 'Sign in' : 'Send reset link';
 
   return (
     <div className="auth-page">
@@ -95,28 +79,15 @@ export function AuthPage() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
         />
-        {mode === 'signup' && (
-          <>
-            <label style={{ marginTop: 12 }}>Display name (optional)</label>
-            <input
-              type="text"
-              autoComplete="name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="How your team sees you"
-            />
-          </>
-        )}
         {mode !== 'forgot' && (
           <>
             <label style={{ marginTop: 12 }}>Password</label>
             <input
               type="password"
               required
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={mode === 'signup' ? 'At least 6 characters' : ''}
               minLength={6}
             />
           </>
@@ -129,24 +100,9 @@ export function AuthPage() {
       </form>
       <p className="mini" style={{ marginTop: 16, textAlign: 'center' }}>
         {mode === 'signin' && (
-          <>
-            <button type="button" className="sign-out" onClick={() => switchMode('forgot')}>
-              Forgot password?
-            </button>
-            <br />
-            New here?{' '}
-            <button type="button" className="sign-out" onClick={() => switchMode('signup')}>
-              Create an account
-            </button>
-          </>
-        )}
-        {mode === 'signup' && (
-          <>
-            Already have an account?{' '}
-            <button type="button" className="sign-out" onClick={() => switchMode('signin')}>
-              Sign in
-            </button>
-          </>
+          <button type="button" className="sign-out" onClick={() => switchMode('forgot')}>
+            Forgot password?
+          </button>
         )}
         {mode === 'forgot' && (
           <>
