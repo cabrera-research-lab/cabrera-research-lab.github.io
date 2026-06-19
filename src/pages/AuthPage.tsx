@@ -47,11 +47,15 @@ export function AuthPage() {
         setMessage('Check your email for a link to reset your password.');
       } else if (mode === 'signin') {
         await signInWithPassword(email, password);
-        navigate('/', { replace: true });
+        const next = searchParams.get('next');
+        const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+        navigate(safeNext, { replace: true });
       } else {
         const { session } = await signUpWithPassword(email, password, displayName);
         if (session) {
-          navigate('/', { replace: true });
+          const next = searchParams.get('next');
+          const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+          navigate(safeNext, { replace: true });
         } else {
           setMessage(
             'Account created. If email confirmation is enabled in Supabase, confirm your email before signing in.',
