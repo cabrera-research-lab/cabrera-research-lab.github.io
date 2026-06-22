@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { signOut } from '@/shared/lib/authApi';
+import { useDesktopNotificationPreference } from '@/shared/notifications/useDesktopNotificationPreference';
 import { INTERNAL_TOOLS, isToolActive } from '@/shared/navigation/tools';
 import '@/shared/navigation/site-nav.css';
 
@@ -18,6 +19,38 @@ function HamburgerIcon({ open }: { open: boolean }) {
       <path d="M3 10h14" />
       <path d="M3 15h14" />
     </svg>
+  );
+}
+
+function DesktopNotificationToggle() {
+  const { supported, enabled, permission, setEnabled } = useDesktopNotificationPreference();
+
+  if (!supported) return null;
+
+  const label =
+    permission === 'denied'
+      ? 'Desktop notifications blocked in browser settings'
+      : enabled
+        ? 'Desktop notifications on'
+        : 'Turn on desktop notifications';
+
+  async function handleToggle() {
+    if (permission === 'denied') return;
+    await setEnabled(!enabled);
+  }
+
+  return (
+    <button
+      type="button"
+      className={`site-nav-notifications${enabled ? ' active' : ''}`}
+      aria-pressed={enabled}
+      aria-label={label}
+      title={label}
+      disabled={permission === 'denied'}
+      onClick={handleToggle}
+    >
+      {enabled ? 'Alerts on' : 'Alerts off'}
+    </button>
   );
 }
 
@@ -70,6 +103,7 @@ export function SiteNav() {
         <span className="site-nav-bar-label">STSI GO∆TNET</span>
         {!loading && user && displayName ? (
           <div className="site-nav-user">
+            <DesktopNotificationToggle />
             <span className="site-nav-user-name">{displayName}</span>
             {team ? (
               <>
