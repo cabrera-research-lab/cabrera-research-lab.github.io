@@ -149,7 +149,7 @@ Expected start date: ${form.startDate || '[INSERT DATE]'}
 
 What to expect:
 - Sign in with the same email address that received this message.
-- You will be prompted to answer some onboarding questions as part of Training Camp (3 questions), upon submission you can start training and practice.
+- New users will be prompted to answer three onboarding questions as part of Training Camp, upon submission you can start training and practice.
 - Confirm that the page shows ${form.startBelt} first.
 - ${replyLine}
 
