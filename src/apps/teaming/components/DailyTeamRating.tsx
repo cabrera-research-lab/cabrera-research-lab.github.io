@@ -10,8 +10,6 @@ interface Props {
   teamId: string | null;
   refreshKey: number;
   orgWide?: boolean;
-  /** When false, stars are visible but not selectable (gate not open). */
-  ratingEnabled?: boolean;
 }
 
 function latestUpdatePerUser(rows: UpdateRow[]): UpdateRow[] {
@@ -29,7 +27,6 @@ export function DailyTeamRating({
   teamId,
   refreshKey,
   orgWide = false,
-  ratingEnabled = true,
 }: Props) {
   const { user } = useAuth();
   const [updates, setUpdates] = useState<UpdateRow[]>([]);
@@ -53,7 +50,7 @@ export function DailyTeamRating({
   }, [load, refreshKey]);
 
   async function handleRate(update: UpdateRow, stars: number) {
-    if (!ratingEnabled || !user || update.user_id !== user.id) return;
+    if (!user || update.user_id !== user.id) return;
     await rateOwnDailyMission(update.id, user.id, stars);
     await load();
   }
@@ -72,14 +69,14 @@ export function DailyTeamRating({
         update,
         name: update.profiles?.display_name ?? 'Member',
         score,
-        canEdit: ratingEnabled && isOwnRow,
+        canEdit: isOwnRow,
       };
     });
     return {
       rows: mapped,
       collectiveAvg: count ? (total / count).toFixed(1) : '—',
     };
-  }, [updates, user, ratingEnabled]);
+  }, [updates, user]);
 
   if (loading && !updates.length) {
     return <div className="mini">Loading team ratings…</div>;
@@ -94,7 +91,7 @@ export function DailyTeamRating({
   }
 
   return (
-    <div className={`daily-rating-card${ratingEnabled ? '' : ' daily-rating-locked'}`}>
+    <div className="daily-rating-card">
       {rows.map(({ update, name, score, canEdit }) => (
         <div key={update.id} className="daily-rating-row">
           <span className="daily-rating-name">

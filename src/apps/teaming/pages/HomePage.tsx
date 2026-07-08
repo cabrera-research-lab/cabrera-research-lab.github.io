@@ -10,7 +10,6 @@ import { TargetsCard } from '@/apps/teaming/components/TargetsCard';
 import { ActivityFeed, type FeedView } from '@/apps/teaming/components/ActivityFeed';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
-import { useDailyRatingGate } from '@/apps/teaming/hooks/useDailyRatingGate';
 import { useUserSubmitted } from '@/apps/teaming/hooks/useUserSubmitted';
 import {
   buildUpdatePreview,
@@ -96,11 +95,6 @@ export function HomePage() {
     cadence,
     reportKey,
     showInputs && canSubmit,
-  );
-
-  const dailyRatingGate = useDailyRatingGate(
-    reportKey,
-    cadence === 'daily' && showInputs,
   );
 
   useEffect(() => {
@@ -266,23 +260,11 @@ export function HomePage() {
       {cadence === 'daily' && def.step3Label && def.step3Sub && showInputs && (
         <div className="card">
           <StepBanner label={def.step3Label} sub={def.step3Sub} />
-          {dailyRatingGate.loading ? (
-            <div className="mini">Checking standup status…</div>
-          ) : (
-            <>
-              {!dailyRatingGate.open && (
-                <p className="mini daily-rating-waiting">
-                  Ratings open when everyone has submitted, or at 9 AM ET.
-                </p>
-              )}
-              <DailyTeamRating
-                teamId={feedTeamId}
-                refreshKey={reportKey}
-                orgWide={orgWideFeed}
-                ratingEnabled={dailyRatingGate.open}
-              />
-            </>
-          )}
+          <DailyTeamRating
+            teamId={feedTeamId}
+            refreshKey={reportKey}
+            orgWide={orgWideFeed}
+          />
         </div>
       )}
     </div>
