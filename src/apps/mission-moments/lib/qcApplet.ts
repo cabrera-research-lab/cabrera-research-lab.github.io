@@ -149,6 +149,7 @@ Expected start date: ${form.startDate || '[INSERT DATE]'}
 
 What to expect:
 - Sign in with the same email address that received this message.
+- You will be prompted to answer some onboarding questions as part of Training Camp (3 questions), upon submission you can start training and practice.
 - Confirm that the page shows ${form.startBelt} first.
 - ${replyLine}
 
@@ -173,7 +174,9 @@ We are preparing the ${form.company} training cohort and want to make sure every
 Please confirm the following before the cohort start date: ${form.startDate || '[INSERT DATE]'}.
 
 1. Browser support
-Participants should use Google Chrome or Microsoft Edge only.
+Participants should use Google Chrome, Safari, or Microsoft Edge.
+
+If users are unable to access CAMP, ask them to try clearing their browser cache, using another supported browser, or opening the link in a private/incognito tab.
 
 2. Domain allowlist
 Please make sure these domains are whitelisted by your IT/network team:

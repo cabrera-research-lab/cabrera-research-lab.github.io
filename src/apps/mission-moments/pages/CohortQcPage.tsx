@@ -35,6 +35,19 @@ const FINAL_CHECK_KEYS: (keyof FinalCheck)[] = [
   'buyerReady',
 ];
 
+const PRIMARY_FINAL_CHECK_KEYS: (keyof FinalCheck)[] = [
+  'linkOpens',
+  'newUserSignup',
+  'landsStartBelt',
+  'pathVisible',
+  'buyerReady',
+];
+
+const FOLLOWUP_QC_KEYS: (keyof FinalCheck)[] = [
+  'domainsWhitelisted',
+  'vpnSecurityConfirmed',
+];
+
 const COHORT_CHECK_COUNT = 7;
 
 function CheckIcon({ state }: { state: 'pass' | 'warn' | 'fail' }) {
@@ -166,6 +179,28 @@ export function CohortQcPage() {
     [form, finalCheck.cohortLink],
   );
   const companyTechEmail = useMemo(() => makeCompanyTechEmail(form), [form]);
+  const finalChecks = useMemo(() => qc.checks.slice(COHORT_CHECK_COUNT), [qc.checks]);
+
+  const renderFinalCheckToggle = (key: keyof FinalCheck) => {
+    const check = finalChecks[FINAL_CHECK_KEYS.indexOf(key)];
+    if (!check) return null;
+
+    return (
+      <label key={check.name} className={`b2b-qc-check b2b-qc-check--toggle ${check.state}`}>
+        <input
+          type="checkbox"
+          className="b2b-qc-check-box"
+          checked={finalCheck[key] as boolean}
+          onChange={(e) => updateFinalCheck(key, e.target.checked as FinalCheck[typeof key])}
+        />
+        <div>
+          <b>{check.name}</b>
+          <p>{check.detail}</p>
+        </div>
+        <span className="b2b-qc-tag">{check.state}</span>
+      </label>
+    );
+  };
 
   const pageTitle = isNew ? 'New cohort' : buildCohortName(form);
 
@@ -499,26 +534,7 @@ export function CohortQcPage() {
 
             <h3 className="b2b-qc-checks-heading">Final check</h3>
 
-            {qc.checks.slice(COHORT_CHECK_COUNT).map((check, i) => {
-              const key = FINAL_CHECK_KEYS[i];
-              return (
-                <label key={check.name} className={`b2b-qc-check b2b-qc-check--toggle ${check.state}`}>
-                  <input
-                    type="checkbox"
-                    className="b2b-qc-check-box"
-                    checked={finalCheck[key] as boolean}
-                    onChange={(e) =>
-                      updateFinalCheck(key, e.target.checked as FinalCheck[typeof key])
-                    }
-                  />
-                  <div>
-                    <b>{check.name}</b>
-                    <p>{check.detail}</p>
-                  </div>
-                  <span className="b2b-qc-tag">{check.state}</span>
-                </label>
-              );
-            })}
+            {PRIMARY_FINAL_CHECK_KEYS.map((key) => renderFinalCheckToggle(key))}
           </div>
 
           <h3>Operational Snapshot</h3>
@@ -539,6 +555,11 @@ export function CohortQcPage() {
               <span className="b2b-qc-small">Finish level</span>
               <strong>{BELT_SHORT[form.finishBelt]}</strong>
             </div>
+          </div>
+
+          <h3 className="b2b-qc-checks-heading">Followup QC steps</h3>
+          <div className="b2b-qc-checks">
+            {FOLLOWUP_QC_KEYS.map((key) => renderFinalCheckToggle(key))}
           </div>
 
           <h3>Buyer-Facing Email Template</h3>
