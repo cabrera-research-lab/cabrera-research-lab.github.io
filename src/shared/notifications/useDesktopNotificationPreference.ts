@@ -7,6 +7,13 @@ import {
 
 const STORAGE_KEY = 'goatnet.desktopNotifications';
 
+type EnabledListener = (enabled: boolean) => void;
+const enabledListeners = new Set<EnabledListener>();
+
+function notifyEnabledListeners(enabled: boolean): void {
+  for (const listener of enabledListeners) listener(enabled);
+}
+
 function readEnabled(): boolean {
   try {
     return localStorage.getItem(STORAGE_KEY) === '1';
@@ -35,9 +42,24 @@ export function useDesktopNotificationPreference() {
       setPermission(getNotificationPermission());
     }
 
+    function onStorage(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY) return;
+      setEnabledState(readEnabled());
+    }
+
+    function onEnabledChange(enabled: boolean) {
+      setEnabledState(enabled);
+    }
+
     syncPermission();
+    enabledListeners.add(onEnabledChange);
     document.addEventListener('visibilitychange', syncPermission);
-    return () => document.removeEventListener('visibilitychange', syncPermission);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      enabledListeners.delete(onEnabledChange);
+      document.removeEventListener('visibilitychange', syncPermission);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [supported]);
 
   const setEnabled = useCallback(async (value: boolean): Promise<boolean> => {
@@ -49,12 +71,14 @@ export function useDesktopNotificationPreference() {
       if (nextPermission !== 'granted') {
         writeEnabled(false);
         setEnabledState(false);
+        notifyEnabledListeners(false);
         return false;
       }
     }
 
     writeEnabled(value);
     setEnabledState(value);
+    notifyEnabledListeners(value);
     return true;
   }, [supported]);
 
