@@ -5,11 +5,12 @@ import type { PriorityCadence } from './types';
 /** Slug for the shared org priority list (optional; see resolveOrgPriorityTeamId). */
 export const ORG_TEAM_SLUG = (import.meta.env.VITE_ORG_TEAM_SLUG as string | undefined)?.trim() || 'teaming';
 
-export type OrgPriorityCadence = Extract<PriorityCadence, 'weekly' | 'monthly'>;
+/** Weekly, monthly, and quarterly priorities are shared across the org. */
+export type OrgPriorityCadence = PriorityCadence;
 
 /**
- * Team rows are labels (pods, projects). Org-wide weekly/monthly priorities
- * live on one canonical team record — everyone reads and edits that list.
+ * Team rows are labels (pods, projects). Org-wide priorities live on one
+ * canonical team record — everyone reads and edits that list.
  */
 export async function resolveOrgPriorityTeamId(
   fallbackTeamId?: string | null,

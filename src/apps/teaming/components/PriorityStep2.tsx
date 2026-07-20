@@ -3,11 +3,8 @@ import { getCadence } from '@/apps/teaming/lib/cadenceConfig';
 import {
   buildPrioritiesPreview,
   fetchOrgPriorities,
-  fetchPrioritySet,
   saveOrgPriorities,
-  savePrioritySet,
 } from '@/apps/teaming/lib/api';
-import type { OrgPriorityCadence } from '@/apps/teaming/lib/org';
 import type { Cadence, PriorityItemInput } from '@/apps/teaming/lib/types';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import { StepBanner } from './StepBanner';
@@ -53,10 +50,6 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   }
 
   const priorityCadence = cadence as 'weekly' | 'monthly' | 'quarterly';
-  const orgShared =
-    priorityCadence === 'weekly' || priorityCadence === 'monthly'
-      ? (priorityCadence as OrgPriorityCadence)
-      : null;
   const [items, setItems] = useState<LocalItem[]>([emptyItem(0)]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -68,18 +61,16 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = orgShared
-        ? { items: await fetchOrgPriorities(orgShared, teamId) }
-        : await fetchPrioritySet(teamId, priorityCadence);
-      if (data?.items.length) {
-        setItems(toLocalItems(data.items));
+      const items = await fetchOrgPriorities(priorityCadence, teamId);
+      if (items.length) {
+        setItems(toLocalItems(items));
       } else {
         setItems([emptyItem(0)]);
       }
     } finally {
       setLoading(false);
     }
-  }, [teamId, priorityCadence, orgShared]);
+  }, [teamId, priorityCadence]);
 
   useEffect(() => {
     load();
@@ -87,12 +78,7 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
 
   async function persist(next: LocalItem[]) {
     try {
-      const payload = normalizeItems(next);
-      if (orgShared) {
-        await saveOrgPriorities(orgShared, payload, teamId);
-      } else {
-        await savePrioritySet(teamId, priorityCadence, payload);
-      }
+      await saveOrgPriorities(priorityCadence, normalizeItems(next), teamId);
       onSaved();
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Save failed');

@@ -353,7 +353,7 @@ export async function fetchPrioritySet(
   return { id: set.id, items: items ?? [] };
 }
 
-/** Shared weekly/monthly list for the whole org (one canonical storage team). */
+/** Shared weekly/monthly/quarterly list for the whole org (one canonical storage team). */
 export async function fetchOrgPriorities(
   cadence: OrgPriorityCadence,
   fallbackTeamId?: string | null,

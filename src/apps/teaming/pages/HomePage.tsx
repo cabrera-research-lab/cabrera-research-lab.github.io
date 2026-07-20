@@ -14,7 +14,6 @@ import { useUserSubmitted } from '@/apps/teaming/hooks/useUserSubmitted';
 import {
   buildUpdatePreview,
   fetchOrgPriorities,
-  fetchPrioritySet,
   formatTargetsText,
   submitUpdate,
 } from '@/apps/teaming/lib/api';
@@ -62,10 +61,7 @@ export function HomePage() {
     if (!parent || !team) return;
     const d = getCadence(cadence);
     try {
-      const items =
-        parent === 'weekly' || parent === 'monthly'
-          ? await fetchOrgPriorities(parent, team.id)
-          : (await fetchPrioritySet(team.id, parent))?.items ?? [];
+      const items = await fetchOrgPriorities(parent, team.id);
       setTargetsText(formatTargetsText(items, d.targetsEmpty ?? 'No goals yet.'));
     } catch {
       setTargetsText(d.targetsEmpty ?? '');
