@@ -18,7 +18,7 @@ import type {
   UpdateRating,
   UpdateRow,
 } from './types';
-import { resolveOrgPriorityTeamId } from './org';
+import { resolveOrgPriorityTeamId, type OrgPriorityCadence } from './org';
 import { periodRange, periodStartForCadence, periodStartForPriority } from './periods';
 
 function slugify(name: string): string {
@@ -353,25 +353,28 @@ export async function fetchPrioritySet(
   return { id: set.id, items: items ?? [] };
 }
 
-/** Shared weekly list for the whole org (one canonical storage team). */
-export async function fetchOrgWeeklyPriorities(
+/** Shared weekly/monthly list for the whole org (one canonical storage team). */
+export async function fetchOrgPriorities(
+  cadence: OrgPriorityCadence,
   fallbackTeamId?: string | null,
 ): Promise<PriorityItemInput[]> {
   try {
-    const teamId = await resolveOrgPriorityTeamId(fallbackTeamId);
-    const data = await fetchPrioritySet(teamId, 'weekly');
+    const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence);
+    const data = await fetchPrioritySet(teamId, cadence);
     return data?.items ?? [];
   } catch {
-    return fetchWeeklyPrioritiesMergedFallback();
+    return fetchOrgPrioritiesMergedFallback(cadence);
   }
 }
 
-async function fetchWeeklyPrioritiesMergedFallback(): Promise<PriorityItemInput[]> {
-  const period_start = periodStartForPriority('weekly');
+async function fetchOrgPrioritiesMergedFallback(
+  cadence: OrgPriorityCadence,
+): Promise<PriorityItemInput[]> {
+  const period_start = periodStartForPriority(cadence);
   const { data: sets, error } = await requireSupabase()
     .from('priority_sets')
     .select('id')
-    .eq('cadence', 'weekly')
+    .eq('cadence', cadence)
     .eq('period_start', period_start);
   if (error || !sets?.length) return [];
 
@@ -397,12 +400,26 @@ async function fetchWeeklyPrioritiesMergedFallback(): Promise<PriorityItemInput[
     }));
 }
 
+export async function saveOrgPriorities(
+  cadence: OrgPriorityCadence,
+  items: PriorityItemInput[],
+  fallbackTeamId?: string | null,
+): Promise<void> {
+  const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence);
+  await savePrioritySet(teamId, cadence, items);
+}
+
+export async function fetchOrgWeeklyPriorities(
+  fallbackTeamId?: string | null,
+): Promise<PriorityItemInput[]> {
+  return fetchOrgPriorities('weekly', fallbackTeamId);
+}
+
 export async function saveOrgWeeklyPriorities(
   items: PriorityItemInput[],
   fallbackTeamId?: string | null,
 ): Promise<void> {
-  const teamId = await resolveOrgPriorityTeamId(fallbackTeamId);
-  await savePrioritySet(teamId, 'weekly', items);
+  return saveOrgPriorities('weekly', items, fallbackTeamId);
 }
 
 export async function savePrioritySet(

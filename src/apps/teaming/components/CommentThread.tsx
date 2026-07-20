@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DeltaText } from '@/apps/teaming/lib/deltaText';
 import type { UpdateComment } from '@/apps/teaming/lib/types';
+import { AnswerBody } from './AnswerBody';
 
 interface Props {
   comments: UpdateComment[];
@@ -42,7 +43,7 @@ export function CommentThread({ comments, onSend, readOnly = false }: Props) {
             <div className="who">
               <DeltaText>{c.profiles?.display_name ?? 'Member'}</DeltaText>
             </div>
-            <DeltaText>{c.body}</DeltaText>
+            <AnswerBody text={c.body} />
           </div>
         ))
       )}

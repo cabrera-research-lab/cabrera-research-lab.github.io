@@ -1,26 +1,30 @@
 import { requireSupabase } from '@/shared/lib/supabase';
 import { periodStartForPriority } from './periods';
+import type { PriorityCadence } from './types';
 
 /** Slug for the shared org priority list (optional; see resolveOrgPriorityTeamId). */
 export const ORG_TEAM_SLUG = (import.meta.env.VITE_ORG_TEAM_SLUG as string | undefined)?.trim() || 'teaming';
 
+export type OrgPriorityCadence = Extract<PriorityCadence, 'weekly' | 'monthly'>;
+
 /**
- * Team rows are labels (pods, projects). Weekly priorities for the whole org
+ * Team rows are labels (pods, projects). Org-wide weekly/monthly priorities
  * live on one canonical team record — everyone reads and edits that list.
  */
 export async function resolveOrgPriorityTeamId(
   fallbackTeamId?: string | null,
+  cadence: OrgPriorityCadence = 'weekly',
 ): Promise<string> {
   const sb = requireSupabase();
 
   const { data: bySlug } = await sb.from('teams').select('id').eq('slug', ORG_TEAM_SLUG).maybeSingle();
   if (bySlug?.id) return bySlug.id;
 
-  const period_start = periodStartForPriority('weekly');
+  const period_start = periodStartForPriority(cadence);
   const { data: sets } = await sb
     .from('priority_sets')
     .select('team_id')
-    .eq('cadence', 'weekly')
+    .eq('cadence', cadence)
     .eq('period_start', period_start);
   const teamIds = [...new Set((sets ?? []).map((s) => s.team_id))];
   if (teamIds.length === 1) return teamIds[0];

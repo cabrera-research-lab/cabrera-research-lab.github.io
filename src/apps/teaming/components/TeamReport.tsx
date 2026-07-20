@@ -10,6 +10,7 @@ import { formatPeriodLabel } from '@/apps/teaming/lib/periods';
 import { requireSupabase } from '@/shared/lib/supabase';
 import type { Cadence, UpdateComment, UpdateRow } from '@/apps/teaming/lib/types';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { AnswerBody } from './AnswerBody';
 import { CommentThread } from './CommentThread';
 
 interface Props {
@@ -144,9 +145,7 @@ export function TeamReport({
                       {date}
                     </span>
                   </div>
-                  <div className="text">
-                    <DeltaText>{text || '—'}</DeltaText>
-                  </div>
+                  <AnswerBody text={text || '—'} />
                   {showThreads && qIdx === lastQuestionIndex && (
                     <CommentThread
                       comments={comments}
@@ -194,9 +193,7 @@ export function TeamReport({
             {answers.map((text, i) => (
               <div key={i} className="part">
                 <div className="small">{def.reportLabels[i] ?? 'Update'}</div>
-                <div className="text">
-                  <DeltaText>{text || '—'}</DeltaText>
-                </div>
+                <AnswerBody text={text || '—'} />
               </div>
             ))}
             {showThreads && (

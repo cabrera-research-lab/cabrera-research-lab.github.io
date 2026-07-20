@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCadence } from '@/apps/teaming/lib/cadenceConfig';
 import {
   buildPrioritiesPreview,
-  fetchOrgWeeklyPriorities,
+  fetchOrgPriorities,
   fetchPrioritySet,
-  saveOrgWeeklyPriorities,
+  saveOrgPriorities,
   savePrioritySet,
 } from '@/apps/teaming/lib/api';
+import type { OrgPriorityCadence } from '@/apps/teaming/lib/org';
 import type { Cadence, PriorityItemInput } from '@/apps/teaming/lib/types';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import { StepBanner } from './StepBanner';
@@ -52,6 +53,10 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   }
 
   const priorityCadence = cadence as 'weekly' | 'monthly' | 'quarterly';
+  const orgShared =
+    priorityCadence === 'weekly' || priorityCadence === 'monthly'
+      ? (priorityCadence as OrgPriorityCadence)
+      : null;
   const [items, setItems] = useState<LocalItem[]>([emptyItem(0)]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -63,10 +68,9 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data =
-        priorityCadence === 'weekly'
-          ? { items: await fetchOrgWeeklyPriorities(teamId) }
-          : await fetchPrioritySet(teamId, priorityCadence);
+      const data = orgShared
+        ? { items: await fetchOrgPriorities(orgShared, teamId) }
+        : await fetchPrioritySet(teamId, priorityCadence);
       if (data?.items.length) {
         setItems(toLocalItems(data.items));
       } else {
@@ -75,7 +79,7 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [teamId, priorityCadence]);
+  }, [teamId, priorityCadence, orgShared]);
 
   useEffect(() => {
     load();
@@ -84,8 +88,8 @@ export function PriorityStep2({ cadence, teamId, onSaved }: Props) {
   async function persist(next: LocalItem[]) {
     try {
       const payload = normalizeItems(next);
-      if (priorityCadence === 'weekly') {
-        await saveOrgWeeklyPriorities(payload, teamId);
+      if (orgShared) {
+        await saveOrgPriorities(orgShared, payload, teamId);
       } else {
         await savePrioritySet(teamId, priorityCadence, payload);
       }

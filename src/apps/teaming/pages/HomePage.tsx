@@ -13,7 +13,7 @@ import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import { useUserSubmitted } from '@/apps/teaming/hooks/useUserSubmitted';
 import {
   buildUpdatePreview,
-  fetchOrgWeeklyPriorities,
+  fetchOrgPriorities,
   fetchPrioritySet,
   formatTargetsText,
   submitUpdate,
@@ -63,8 +63,8 @@ export function HomePage() {
     const d = getCadence(cadence);
     try {
       const items =
-        parent === 'weekly'
-          ? await fetchOrgWeeklyPriorities(team.id)
+        parent === 'weekly' || parent === 'monthly'
+          ? await fetchOrgPriorities(parent, team.id)
           : (await fetchPrioritySet(team.id, parent))?.items ?? [];
       setTargetsText(formatTargetsText(items, d.targetsEmpty ?? 'No goals yet.'));
     } catch {

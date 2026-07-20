@@ -439,6 +439,64 @@ button {
   white-space: pre-wrap;
 }
 
+.inline-link {
+  color: var(--blue);
+  word-break: break-all;
+}
+
+.shared-links {
+  margin-top: 8px;
+}
+
+.shared-links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shared-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.shared-link-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.shared-link-action {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.shared-link-action:hover {
+  text-decoration: underline;
+}
+
+.bubble .text {
+  font-size: inherit;
+  line-height: inherit;
+}
+
 .rating-line {
   display: flex;
   align-items: center;
