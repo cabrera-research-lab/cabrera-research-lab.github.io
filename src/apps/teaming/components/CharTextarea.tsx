@@ -1,3 +1,4 @@
+import { CHAR_LIMIT } from '@/apps/teaming/lib/cadenceConfig';
 import { formatCounter } from '@/apps/teaming/hooks/useCharBand';
 
 interface Props {
@@ -12,10 +13,20 @@ export function CharTextarea({ question, index, value, onChange }: Props) {
   return (
     <>
       <div className="q">
-        {index + 1}. {question}
+        <span className="n">{String(index + 1).padStart(2, '0')}</span>
+        {question}
       </div>
-      <textarea value={value} onChange={(e) => onChange(e.target.value)} />
-      <div className={`counter ${counter.className}`}>{counter.text}</div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Type your response…"
+      />
+      <div className="counter">
+        <span className={`band ${counter.className}`}>{counter.label}</span>
+        <span className="counter-count">
+          {value.length} / {CHAR_LIMIT}
+        </span>
+      </div>
     </>
   );
 }

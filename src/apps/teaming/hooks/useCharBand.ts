@@ -3,18 +3,23 @@ import { CHAR_LIMIT } from '@/apps/teaming/lib/cadenceConfig';
 export type CharBandClass = 'anemic' | 'concise' | 'ideal' | 'long' | 'verbose';
 
 export function band(length: number): [CharBandClass, string] {
-  if (length <= 100) return ['anemic', 'anemic'];
-  if (length <= 350) return ['concise', 'concise'];
-  if (length <= CHAR_LIMIT) return ['ideal', 'ideal'];
-  if (length <= 700) return ['long', 'getting long'];
-  return ['verbose', 'too verbose'];
+  if (length < 60) return ['anemic', 'too thin'];
+  if (length < 200) return ['concise', 'concise'];
+  if (length <= 450) return ['ideal', 'ideal'];
+  if (length <= CHAR_LIMIT) return ['long', 'getting long'];
+  return ['verbose', 'over limit'];
 }
 
-export function formatCounter(length: number): { className: CharBandClass; text: string } {
+export function formatCounter(length: number): {
+  className: CharBandClass;
+  label: string;
+  text: string;
+} {
   const [cls, label] = band(length);
   return {
     className: cls,
-    text: `${length} / ${CHAR_LIMIT} chars · ${label}`,
+    label,
+    text: `${length} / ${CHAR_LIMIT} · ${label}`,
   };
 }
 

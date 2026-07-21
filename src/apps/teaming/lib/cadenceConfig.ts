@@ -1,6 +1,8 @@
-import type { Cadence } from './types';
+import type { Cadence, PriorityCadence } from './types';
 
 export const CHAR_LIMIT = 550;
+
+export type CadencePanelMode = 'standup' | 'priorities';
 
 export interface CadenceDefinition {
   id: Cadence;
@@ -10,26 +12,27 @@ export interface CadenceDefinition {
   subtitle: string;
   previewTitle: string;
   submitLabel: string;
-  targetsLabel?: string;
-  targetsEmpty?: string;
-  parentPriorityCadence?: 'weekly' | 'monthly' | 'quarterly';
-  /** Shared lead-in shown once above all Step 1 questions. */
+  /** How this cadence renders in the cascade slot. */
+  panelMode: CadencePanelMode;
+  /** Shared lead-in shown once above all standup questions. */
   questionsIntro?: string;
   questions: string[];
   reportLabels: string[];
+  /**
+   * Tooltip prompts for priority cadences ("for team consideration").
+   * Not saved — they guide conversation while priorities/metrics are edited.
+   */
+  considerationPrompts?: string[];
   /** Team report groups by question with all members' answers (monthly / quarterly). */
   groupReportByQuestion?: boolean;
   /** Per-update comment threads in the step 2 activity feed. */
   showResponseThreads?: boolean;
-  showStep2?: boolean;
   step1Label: string;
   step1Sub: string;
   step2Label: string;
   step2Sub: string;
   step3Label?: string;
   step3Sub?: string;
-  step2Title?: string;
-  step2Description?: string;
 }
 
 export const CADENCES: CadenceDefinition[] = [
@@ -40,110 +43,81 @@ export const CADENCES: CadenceDefinition[] = [
     formTitle: 'Daily Standup',
     subtitle: '',
     previewTitle: 'Daily Standup',
-    submitLabel: 'Submit Daily Update',
-    targetsLabel: "This Week's Targets",
-    targetsEmpty: 'No weekly priorities entered yet.',
-    parentPriorityCadence: 'weekly',
+    submitLabel: 'Submit daily update',
+    panelMode: 'standup',
     questions: [
       'What updates to share with team?',
       'What will I do today to meet our weekly priorities?',
-      'Blockers: What blockers, dependencies, or support do I need?',
+      'Blockers: what dependencies or support do I need?',
     ],
-    reportLabels: ['Updates', 'Today / Next', 'Blockers / Dependencies / Support'],
-    step1Label: 'STEP 1 • Individual Q/A',
+    reportLabels: ['Updates', 'Today / next', 'Blockers'],
+    step1Label: 'Daily Standup',
     step1Sub: 'Each person shares updates, priorities, and blockers.',
-    step2Label: 'STEP 2 • TE∆M Cross Chat',
+    step2Label: 'TE∆MING REPORT',
     step2Sub: 'Discuss updates, blockers, dependencies, and support needs.',
-    step3Label: 'STEP 3 • TE∆M Rating',
-    step3Sub:
-      'Each person rates the overall Daily update based on alignment to the Mission.',
+    step3Label: 'TE∆M Rating',
+    step3Sub: 'Rate the overall Daily update based on alignment to the Mission.',
   },
   {
     id: 'weekly',
     tabLabel: 'Weekly',
-    title: 'Weekly Priorities', 
+    title: 'Weekly Priorities',
     formTitle: 'Weekly Priorities',
-    subtitle: '',
-    previewTitle: 'Weekly Learning',
-    submitLabel: 'Submit Perspective on Data',
-    targetsLabel: "This Month's Targets",
-    targetsEmpty: 'No monthly priorities entered yet.',
-    parentPriorityCadence: 'monthly',
-    questionsIntro: 'After looking at the data,',
-    questions: [
-      'What is the top friction for users?',
+    subtitle: "Set the team's priorities and success metrics for this week.",
+    previewTitle: 'Weekly Priorities',
+    submitLabel: 'Save',
+    panelMode: 'priorities',
+    questions: [],
+    reportLabels: [],
+    considerationPrompts: [
+      'After looking at the data, what is the top friction for users?',
       'What is the top friction we should fix?',
     ],
-    reportLabels: ['Top User Friction', 'Top Friction to Fix'],
-    groupReportByQuestion: true,
-    showResponseThreads: false,
-    showStep2: true,
-    step1Label: 'STEP 1 • Individual Q/A',
-    step1Sub:
-      'Options: Automated or in-person',
-    step2Label: 'STEP 2 • TE∆M Synthesis',
-    step2Sub: 'Discuss bottlenecks, systems, and resources.',
-    step3Label: 'STEP 3 • TE∆M Priorities',
-    step3Sub: 'Convert team synthesis into weekly priorities.',
-    step2Title: 'Team Weekly Priorities',
-    step2Description:
-      'Complete together after reviewing the TE∆MING REPORT. These priorities roll down into the Daily tab.',
+    step1Label: 'Weekly Priorities',
+    step1Sub: "Set the team's priorities and success metrics for this week.",
+    step2Label: '',
+    step2Sub: '',
   },
   {
     id: 'monthly',
     tabLabel: 'Monthly',
     title: 'Monthly Priorities',
     formTitle: 'Monthly Priorities',
-    subtitle: '',
-    previewTitle: 'Monthly Systems',
-    submitLabel: 'Submit Perspective',
-    targetsLabel: "This Quarter's Targets",
-    targetsEmpty: 'No quarterly priorities entered yet.',
-    parentPriorityCadence: 'quarterly',
-    questions: [
+    subtitle: "Set the team's priorities and success metrics for this month.",
+    previewTitle: 'Monthly Priorities',
+    submitLabel: 'Save',
+    panelMode: 'priorities',
+    questions: [],
+    reportLabels: [],
+    considerationPrompts: [
       'What progress have we made?',
       'Is there anything that MUST be added to the existing scope?',
-      'Is there anything that is important that should go on backlog?',
+      'Is there anything important that should go on backlog?',
     ],
-    reportLabels: ['Progress', 'Must Add to Scope', 'Important Backlog'],
-    groupReportByQuestion: true,
-    showStep2: true,
-    step1Label: 'STEP 1 • Individual Q/A',
-    step1Sub:
-      'Optional: Use the automated prompts below, or simply have a team conversation around these questions before setting priorities.',
-    step2Label: 'STEP 2 • TE∆M Synthesis',
-    step2Sub: 'Discuss progress, scope changes, and backlog items.',
-    step3Label: 'STEP 3 • TE∆M Priorities',
-    step3Sub: 'Convert team synthesis into monthly priorities.',
-    step2Title: 'Team Monthly Priorities',
-    step2Description:
-      'Complete together after reviewing monthly systems. These priorities roll down into the Weekly tab.',
+    step1Label: 'Monthly Priorities',
+    step1Sub: "Set the team's priorities and success metrics for this month.",
+    step2Label: '',
+    step2Sub: '',
   },
   {
     id: 'quarterly',
     tabLabel: 'Quarterly',
     title: 'Quarterly Priorities',
     formTitle: 'Quarterly Priorities',
-    subtitle: '',
-    previewTitle: 'Quarterly Roadmap',
-    submitLabel: 'Submit Perspective',
-    questions: [
+    subtitle: "Set the team's priorities and success metrics for this quarter.",
+    previewTitle: 'Quarterly Priorities',
+    submitLabel: 'Save',
+    panelMode: 'priorities',
+    questions: [],
+    reportLabels: [],
+    considerationPrompts: [
       'What zoom in/out opportunity should we pursue?',
       'What zoom in/out improvement should we make?',
     ],
-    reportLabels: ['Zoom In/Out Opportunity', 'Zoom In/Out Improvement'],
-    groupReportByQuestion: true,
-    showStep2: true,
-    step1Label: 'STEP 1 • Individual Q/A',
-    step1Sub:
-      'Optional: Use the automated prompts below, or simply have a team conversation around these questions before setting priorities.',
-    step2Label: 'STEP 2 • TE∆M Synthesis',
-    step2Sub: 'Discuss zoom in/out opportunities and improvements.',
-    step3Label: 'STEP 3 • TE∆M Priorities',
-    step3Sub: 'Convert team synthesis into quarterly priorities.',
-    step2Title: 'Team Quarterly Priorities',
-    step2Description:
-      'Complete together after reviewing quarterly strategy. These priorities roll down into the Monthly tab.',
+    step1Label: 'Quarterly Priorities',
+    step1Sub: "Set the team's priorities and success metrics for this quarter.",
+    step2Label: '',
+    step2Sub: '',
   },
 ];
 
@@ -151,4 +125,8 @@ export function getCadence(id: Cadence): CadenceDefinition {
   const c = CADENCES.find((x) => x.id === id);
   if (!c) throw new Error(`Unknown cadence: ${id}`);
   return c;
+}
+
+export function isPriorityCadence(id: Cadence): id is PriorityCadence {
+  return id === 'weekly' || id === 'monthly' || id === 'quarterly';
 }

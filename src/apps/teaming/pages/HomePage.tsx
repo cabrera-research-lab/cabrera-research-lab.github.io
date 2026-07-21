@@ -1,268 +1,154 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CadenceTabs } from '@/apps/teaming/components/CadenceTabs';
-import { CharTextarea } from '@/apps/teaming/components/CharTextarea';
-import { DailyTeamRating } from '@/apps/teaming/components/DailyTeamRating';
-import { Onboarding } from '@/apps/teaming/components/Onboarding';
-import { PriorityStep2 } from '@/apps/teaming/components/PriorityStep2';
-import { StepBanner } from '@/apps/teaming/components/StepBanner';
-import { TargetsCard } from '@/apps/teaming/components/TargetsCard';
-import { ActivityFeed, type FeedView } from '@/apps/teaming/components/ActivityFeed';
-import { useAuth } from '@/shared/auth/AuthContext';
+import { Cascade, type CascadeId, CASCADE_RUNGS } from '@/apps/teaming/components/Cascade';
+import { CadencePanel } from '@/apps/teaming/components/CadencePanel';
+import { MissionMomentsPanel } from '@/apps/teaming/components/MissionMomentsPanel';
+import { MissionVisionHero } from '@/apps/teaming/components/MissionVisionHero';
+import { SettingsPanel } from '@/apps/teaming/components/SettingsPanel';
+import { ShowcasePanel } from '@/apps/teaming/components/ShowcasePanel';
+import { fetchOrgPriorities } from '@/apps/teaming/lib/api';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
-import { useUserSubmitted } from '@/apps/teaming/hooks/useUserSubmitted';
-import {
-  buildUpdatePreview,
-  fetchOrgPriorities,
-  formatTargetsText,
-  submitUpdate,
-} from '@/apps/teaming/lib/api';
-import { getCadence } from '@/apps/teaming/lib/cadenceConfig';
-import { cadenceToPriorityParent, isOrgWideFeedCadence } from '@/apps/teaming/lib/periods';
-import type { Cadence } from '@/apps/teaming/lib/types';
+import type { Cadence, PriorityCadence } from '@/apps/teaming/lib/types';
+import { useAuth } from '@/shared/auth/AuthContext';
+import '@/apps/teaming/styles/cascade.css';
 
-const VALID: Cadence[] = ['daily', 'weekly', 'monthly', 'quarterly'];
+const VALID_IDS = new Set(CASCADE_RUNGS.map((r) => r.id));
+const PRIORITY_IDS: PriorityCadence[] = ['quarterly', 'monthly', 'weekly'];
 
-function parseCadence(param: string | null): Cadence {
-  if (param && VALID.includes(param as Cadence)) return param as Cadence;
-  return 'daily';
+function parseInitialOpen(params: URLSearchParams): Set<CascadeId> {
+  const openParam = params.get('open');
+  if (openParam) {
+    const ids = openParam
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s): s is CascadeId => VALID_IDS.has(s as CascadeId));
+    if (ids.length) return new Set(ids);
+  }
+  const cadence = params.get('cadence');
+  if (cadence && VALID_IDS.has(cadence as CascadeId)) {
+    return new Set([cadence as CascadeId]);
+  }
+  return new Set<CascadeId>(['daily']);
+}
+
+function writeOpenParam(
+  ids: Set<CascadeId>,
+  searchParams: URLSearchParams,
+  setSearchParams: ReturnType<typeof useSearchParams>[1],
+) {
+  const ordered = CASCADE_RUNGS.map((r) => r.id).filter((id) => ids.has(id));
+  const next = new URLSearchParams();
+  if (searchParams.get('view') === 'settings') next.set('view', 'settings');
+  if (ordered.length === 0) {
+    setSearchParams(next);
+    return;
+  }
+  const primary = ordered.find((id) =>
+    (['daily', 'weekly', 'monthly', 'quarterly'] as Cadence[]).includes(id as Cadence),
+  );
+  next.set('open', ordered.join(','));
+  if (primary) next.set('cadence', primary);
+  setSearchParams(next);
+}
+
+function countLabel(n: number): string {
+  return n === 1 ? '1 priority' : `${n} priorities`;
 }
 
 export function HomePage() {
-  const { user, profile, team } = useAuth();
+  const { team } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const cadence = parseCadence(searchParams.get('cadence'));
-  const def = getCadence(cadence);
-  const orgWideFeed = isOrgWideFeedCadence(cadence);
-  const canSubmit = Boolean(team?.id);
-  const feedTeamId = orgWideFeed ? null : team?.id ?? null;
-
-  const [answers, setAnswers] = useState<string[]>(() => def.questions.map(() => ''));
-  const [targetsText, setTargetsText] = useState(def.targetsEmpty ?? '');
-  const [status, setStatus] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [reportKey, setReportKey] = useState(0);
-  const [priorityKey, setPriorityKey] = useState(0);
-  const [feedView, setFeedView] = useState<FeedView>('current');
-  const [step1Expanded, setStep1Expanded] = useState(true);
-  const showInputs = feedView === 'current';
-
-  const displayName = profile?.display_name?.trim() || 'Your Name';
+  const view = searchParams.get('view') === 'settings' ? 'settings' : 'teaming';
+  const initial = useMemo(() => parseInitialOpen(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [open, setOpen] = useState<Set<CascadeId>>(initial);
+  const [mounted, setMounted] = useState<Set<CascadeId>>(() => new Set(initial));
+  const [counts, setCounts] = useState<Partial<Record<PriorityCadence, number>>>({});
 
   useEffect(() => {
-    const d = getCadence(cadence);
-    setAnswers(d.questions.map(() => ''));
-    setTargetsText(d.targetsEmpty ?? '');
-    setStatus('');
-  }, [cadence]);
-
-  const loadParentTargets = useCallback(async () => {
-    const parent = cadenceToPriorityParent(cadence);
-    if (!parent || !team) return;
-    const d = getCadence(cadence);
-    try {
-      const items = await fetchOrgPriorities(parent, team.id);
-      setTargetsText(formatTargetsText(items, d.targetsEmpty ?? 'No goals yet.'));
-    } catch {
-      setTargetsText(d.targetsEmpty ?? '');
+    let cancelled = false;
+    async function loadCounts() {
+      const entries = await Promise.all(
+        PRIORITY_IDS.map(async (id) => {
+          const items = await fetchOrgPriorities(id, team?.id);
+          return [id, items.filter((i) => i.goal.trim()).length] as const;
+        }),
+      );
+      if (!cancelled) setCounts(Object.fromEntries(entries));
     }
-  }, [cadence, team]);
+    void loadCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [team?.id]);
 
-  useEffect(() => {
-    loadParentTargets();
-  }, [loadParentTargets, priorityKey]);
-
-  const copyText = useMemo(
-    () =>
-      buildUpdatePreview({
-        cadenceTitle: def.previewTitle,
-        name: displayName,
-        date: new Date().toLocaleDateString(),
-        questionsIntro: def.questionsIntro,
-        questions: def.questions,
-        answers,
-      }),
-    [def, displayName, answers],
-  );
-
-  const userSubmitted = useUserSubmitted(
-    user?.id,
-    team?.id,
-    cadence,
-    reportKey,
-    showInputs && canSubmit,
-  );
-
-  useEffect(() => {
-    setStep1Expanded(true);
-  }, [cadence]);
-
-  useEffect(() => {
-    if (!userSubmitted.loading && userSubmitted.submitted) {
-      setStep1Expanded(false);
-    }
-  }, [userSubmitted.loading, userSubmitted.submitted]);
-
-  function setCadence(c: Cadence) {
-    setSearchParams({ cadence: c });
-  }
-
-  function setAnswer(i: number, v: string) {
-    setAnswers((prev) => prev.map((a, idx) => (idx === i ? v : a)));
-  }
-
-  async function handleSubmit() {
-    if (!user || !team) return;
-    setSubmitting(true);
-    setStatus('');
-    try {
-      await submitUpdate({
-        teamId: team.id,
-        userId: user.id,
-        cadence,
-        answers: answers.map((a) => a.trim() || '—'),
-        selfMissionScore: null,
+  const toggle = useCallback(
+    (id: CascadeId) => {
+      setOpen((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else {
+          next.add(id);
+          setMounted((m) => new Set(m).add(id));
+        }
+        writeOpenParam(next, searchParams, setSearchParams);
+        return next;
       });
-      setStatus('Submitted to report.');
-      setStep1Expanded(false);
-      setReportKey((k) => k + 1);
-    } catch (e) {
-      setStatus(e instanceof Error ? e.message : 'Submit failed');
-    } finally {
-      setSubmitting(false);
-    }
-  }
+    },
+    [searchParams, setSearchParams],
+  );
 
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(copyText);
-      setStatus('Copied update.');
-    } catch {
-      setStatus('Copy failed.');
+  const metaById = useMemo(() => {
+    const meta: Partial<Record<CascadeId, string>> = {};
+    for (const id of PRIORITY_IDS) {
+      if (counts[id] != null) meta[id] = countLabel(counts[id]!);
     }
-  }
+    return meta;
+  }, [counts]);
 
-  const reportPill = orgWideFeed ? 'all teams · everyone' : 'cross-team discussion';
-  const step1Collapsed = userSubmitted.submitted && !step1Expanded;
-  const showStep1Form =
-    !userSubmitted.loading && (step1Expanded || !userSubmitted.submitted);
+  const onPriorityCountChange = useCallback((id: PriorityCadence, count: number) => {
+    setCounts((prev) => ({ ...prev, [id]: count }));
+  }, []);
 
   return (
     <div className="app">
-      <div className="kicker">{renderDeltaText('TE∆MING SYSTEM')}</div>
-      <h1>Build experiences people rave about and refer.</h1>
-      <div className="mini">
-        Daily Commune-ication. Weekly priorities. Monthly priorities. Quarterly priorities. Annual roadmap.
-      </div>
+      {view === 'settings' ? (
+        <SettingsPanel />
+      ) : (
+        <section className="view on" id="view-teaming">
+          <div className="eyebrow">
+            <span className="tick" />
+            {renderDeltaText('TE∆MING SYSTEM')}
+          </div>
+          <MissionVisionHero />
 
-      {!canSubmit && <Onboarding />}
-
-      <CadenceTabs active={cadence} onChange={setCadence} />
-
-      {showInputs && canSubmit ? (
-        <div className="card">
-          <StepBanner
-            label={def.step1Label}
-            sub={
-              step1Collapsed
-                ? `${def.step1Sub}`
-                : def.step1Sub
-            }
-            collapsed={step1Collapsed}
-            onToggle={
-              userSubmitted.submitted ? () => setStep1Expanded((v) => !v) : undefined
-            }
-          />
-          {showStep1Form && (
-            <>
-              <section className="form">
-                <h2>{def.formTitle}</h2>
-                <div className="sub">{def.subtitle}</div>
-                {def.targetsLabel && (
-                  <TargetsCard
-                    label={def.targetsLabel}
-                    text={targetsText}
-                    empty={def.targetsEmpty}
-                  />
-                )}
-                {def.questionsIntro ? (
-                  <div className="questions-intro">{def.questionsIntro}</div>
-                ) : null}
-                {def.questions.map((q, i) => (
-                  <CharTextarea
-                    key={i}
-                    index={i}
-                    question={q}
-                    value={answers[i] ?? ''}
-                    onChange={(v) => setAnswer(i, v)}
-                  />
-                ))}
-              </section>
-
-              <div className="actions">
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={handleCopy}
-                  title="Copy update"
-                >
-                  📋
-                </button>
-                <button
-                  type="button"
-                  className="btn primary"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                >
-                  {submitting ? 'Submitting…' : def.submitLabel}
-                </button>
-              </div>
-              {status && <div className="status-msg">{status}</div>}
-            </>
-          )}
-        </div>
-      ) : showInputs ? (
-        <div className="card mini" style={{ marginBottom: 10 }}>
-          Create or join a team above to submit {cadence} updates. Daily and weekly activity below
-          is visible to everyone.
-        </div>
-      ) : null}
-
-      <StepBanner label={def.step2Label} sub={def.step2Sub} />
-      <div className="section-title">
-        <h2>{renderDeltaText(orgWideFeed ? 'TE∆M ACTIVITY' : 'TE∆MING REPORT')}</h2>
-        <div className="pill">{reportPill}</div>
-      </div>
-      <ActivityFeed
-        cadence={cadence}
-        teamId={feedTeamId}
-        refreshKey={reportKey}
-        orgWide={orgWideFeed}
-        view={feedView}
-        onViewChange={setFeedView}
-      />
-
-      {showInputs && canSubmit && def.showStep2 && (
-        <PriorityStep2
-          cadence={cadence}
-          teamId={team!.id}
-          onSaved={() => {
-            setPriorityKey((k) => k + 1);
-            loadParentTargets();
-          }}
-        />
+          <Cascade open={open} mounted={mounted} onToggle={toggle} metaById={metaById}>
+            {(id) => {
+              if (id === 'missionmoments') return <MissionMomentsPanel />;
+              if (id === 'showcase') return <ShowcasePanel />;
+              return (
+                <CadencePanel
+                  cadence={id}
+                  onPriorityCountChange={
+                    PRIORITY_IDS.includes(id as PriorityCadence)
+                      ? (count) => onPriorityCountChange(id as PriorityCadence, count)
+                      : undefined
+                  }
+                />
+              );
+            }}
+          </Cascade>
+        </section>
       )}
 
-      {cadence === 'daily' && def.step3Label && def.step3Sub && showInputs && (
-        <div className="card">
-          <StepBanner label={def.step3Label} sub={def.step3Sub} />
-          <DailyTeamRating
-            teamId={feedTeamId}
-            refreshKey={reportKey}
-            orgWide={orgWideFeed}
-          />
+      <div className="foot">
+        <div className="copyright">
+          © 2026 GO
+          <svg className="d brand-delta" viewBox="0 0 24 24" aria-hidden>
+            <path d="M12 3 L22 21 L2 21 Z" />
+          </svg>
+          TWORKS
         </div>
-      )}
+      </div>
     </div>
   );
 }
