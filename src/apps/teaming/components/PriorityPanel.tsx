@@ -151,7 +151,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     document.body.classList.remove('is-reordering-priorities');
   }
 
-  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>, index: number) {
+  function handlePointerDown(event: React.PointerEvent<HTMLElement>, index: number) {
     if (!canEdit) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     event.preventDefault();
