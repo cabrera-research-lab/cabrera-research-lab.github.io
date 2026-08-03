@@ -10,6 +10,7 @@ import { fetchOrgPriorities } from '@/apps/teaming/lib/api';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import type { Cadence, PriorityCadence } from '@/apps/teaming/lib/types';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { requireSupabase } from '@/shared/lib/supabase';
 import '@/apps/teaming/styles/cascade.css';
 
 const VALID_IDS = new Set(CASCADE_RUNGS.map((r) => r.id));
@@ -76,8 +77,29 @@ export function HomePage() {
       if (!cancelled) setCounts(Object.fromEntries(entries));
     }
     void loadCounts();
+
+    const sb = requireSupabase();
+    const channel = sb
+      .channel('org-priority-counts')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'priority_items' },
+        () => {
+          void loadCounts();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'priority_sets' },
+        () => {
+          void loadCounts();
+        },
+      );
+    channel.subscribe();
+
     return () => {
       cancelled = true;
+      sb.removeChannel(channel);
     };
   }, [team?.id]);
 

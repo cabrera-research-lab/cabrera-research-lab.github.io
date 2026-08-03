@@ -332,8 +332,9 @@ export async function addComment(updateId: string, body: string) {
 export async function fetchPrioritySet(
   teamId: string,
   cadence: PriorityCadence,
+  periodStart?: string,
 ): Promise<{ id: string; items: PriorityItemInput[] } | null> {
-  const period_start = periodStartForPriority(cadence);
+  const period_start = periodStart ?? periodStartForPriority(cadence);
   const { data: set, error } = await requireSupabase()
     .from('priority_sets')
     .select('id')
@@ -346,31 +347,39 @@ export async function fetchPrioritySet(
 
   const { data: items, error: itemsErr } = await requireSupabase()
     .from('priority_items')
-    .select('sort_order, goal, owner, metric, action')
+    .select('id, sort_order, goal, owner, metric, action, completed')
     .eq('priority_set_id', set.id)
     .order('sort_order');
   if (itemsErr) throw itemsErr;
-  return { id: set.id, items: items ?? [] };
+  return {
+    id: set.id,
+    items: (items ?? []).map((item) => ({
+      ...item,
+      completed: Boolean(item.completed),
+    })),
+  };
 }
 
 /** Shared weekly/monthly/quarterly list for the whole org (one canonical storage team). */
 export async function fetchOrgPriorities(
   cadence: OrgPriorityCadence,
   fallbackTeamId?: string | null,
+  periodStart?: string,
 ): Promise<PriorityItemInput[]> {
   try {
     const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence);
-    const data = await fetchPrioritySet(teamId, cadence);
+    const data = await fetchPrioritySet(teamId, cadence, periodStart);
     return data?.items ?? [];
   } catch {
-    return fetchOrgPrioritiesMergedFallback(cadence);
+    return fetchOrgPrioritiesMergedFallback(cadence, periodStart);
   }
 }
 
 async function fetchOrgPrioritiesMergedFallback(
   cadence: OrgPriorityCadence,
+  periodStart?: string,
 ): Promise<PriorityItemInput[]> {
-  const period_start = periodStartForPriority(cadence);
+  const period_start = periodStart ?? periodStartForPriority(cadence);
   const { data: sets, error } = await requireSupabase()
     .from('priority_sets')
     .select('id')
@@ -380,7 +389,7 @@ async function fetchOrgPrioritiesMergedFallback(
 
   const { data: items, error: itemsErr } = await requireSupabase()
     .from('priority_items')
-    .select('sort_order, goal, owner, metric, action')
+    .select('id, sort_order, goal, owner, metric, action, completed')
     .in(
       'priority_set_id',
       sets.map((s) => s.id),
@@ -392,11 +401,13 @@ async function fetchOrgPrioritiesMergedFallback(
   return (items ?? [])
     .filter((i) => i.goal.trim())
     .map((i) => ({
+      id: i.id,
       sort_order: order++,
       goal: i.goal,
       owner: i.owner,
       metric: i.metric,
       action: i.action,
+      completed: Boolean(i.completed),
     }));
 }
 
@@ -404,9 +415,10 @@ export async function saveOrgPriorities(
   cadence: OrgPriorityCadence,
   items: PriorityItemInput[],
   fallbackTeamId?: string | null,
+  deleteIds: string[] = [],
 ): Promise<void> {
   const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence);
-  await savePrioritySet(teamId, cadence, items);
+  await savePrioritySet(teamId, cadence, items, deleteIds);
 }
 
 export async function fetchOrgWeeklyPriorities(
@@ -426,6 +438,7 @@ export async function savePrioritySet(
   teamId: string,
   cadence: PriorityCadence,
   items: PriorityItemInput[],
+  deleteIds: string[] = [],
 ) {
   const sb = requireSupabase();
   const period_start = periodStartForPriority(cadence);
@@ -448,19 +461,35 @@ export async function savePrioritySet(
     if (error) throw error;
     setId = created.id;
   } else {
-    await sb.from('priority_items').delete().eq('priority_set_id', setId);
+    await sb
+      .from('priority_sets')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', setId);
+  }
+
+  const uniqueDeleteIds = [...new Set(deleteIds.filter(Boolean))];
+  if (uniqueDeleteIds.length) {
+    const { error } = await sb
+      .from('priority_items')
+      .delete()
+      .eq('priority_set_id', setId)
+      .in('id', uniqueDeleteIds);
+    if (error) throw error;
   }
 
   if (items.length) {
-    const { error } = await sb.from('priority_items').insert(
+    const { error } = await sb.from('priority_items').upsert(
       items.map((item) => ({
+        id: item.id,
         priority_set_id: setId,
         sort_order: item.sort_order,
         goal: item.goal,
         owner: item.owner,
         metric: item.metric,
         action: item.action,
+        completed: Boolean(item.completed),
       })),
+      { onConflict: 'id' },
     );
     if (error) throw error;
   }
@@ -473,7 +502,8 @@ export function formatTargetsText(
   const lines: string[] = [];
   items.forEach((item, idx) => {
     if (!item.goal.trim()) return;
-    let line = `${idx + 1}. ${item.goal.trim()}`;
+    const mark = item.completed ? '✓ ' : '';
+    let line = `${idx + 1}. ${mark}${item.goal.trim()}`;
     if (item.metric.trim()) line += `\n   Metric: ${item.metric.trim()}`;
     lines.push(line);
   });
@@ -505,7 +535,7 @@ export function buildPrioritiesPreview(title: string, items: PriorityItemInput[]
   items.forEach((item, idx) => {
     if (!item.goal.trim()) return;
     hasContent = true;
-    out += `Priority ${idx + 1}\n`;
+    out += `Priority ${idx + 1}${item.completed ? ' (done)' : ''}\n`;
     out += `Goal: ${item.goal.trim()}\n`;
     out += `Success Metric: ${item.metric.trim() || '—'}\n\n`;
   });

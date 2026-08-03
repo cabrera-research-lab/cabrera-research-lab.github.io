@@ -414,6 +414,14 @@
 }
 
 /* Priority panel (template) */
+.priority-panel .feed-view-tabs {
+  margin-bottom: 10px;
+}
+
+.priority-panel .period-nav {
+  margin-bottom: 8px;
+}
+
 .priority-panel .step {
   margin-top: 4px;
 }
@@ -430,6 +438,22 @@
   padding: 9px 11px;
 }
 
+.prio-node.is-complete {
+  background: #f6f8f7;
+  border-color: #d5e5dc;
+}
+
+.prio-node.is-complete .prio-text {
+  text-decoration: line-through;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.prio-node.is-complete .f-metric,
+.prio-node.is-complete .mlabel {
+  opacity: 0.7;
+}
+
 .prio-node.dragging {
   opacity: 0.4;
   border-color: var(--signal);
@@ -442,7 +466,7 @@
 
 .prio-row {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto auto 1fr auto;
   gap: 9px;
   align-items: start;
 }
@@ -462,12 +486,36 @@
   cursor: grabbing;
 }
 
+.prio-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 9px;
+  cursor: pointer;
+}
+
+.prio-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+.prio-check input:disabled {
+  cursor: default;
+}
+
 .prio-num {
   font-weight: 800;
   font-size: 12px;
   color: var(--delta);
   padding-top: 10px;
   letter-spacing: 0.04em;
+}
+
+.prio-node.is-complete .prio-num {
+  color: var(--muted);
 }
 
 .prio-fields {
@@ -1042,7 +1090,7 @@
 
 @media (max-width: 560px) {
   .prio-row {
-    grid-template-columns: auto auto 1fr auto;
+    grid-template-columns: auto auto auto 1fr auto;
     gap: 6px;
   }
 

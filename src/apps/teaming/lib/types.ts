@@ -56,6 +56,7 @@ export interface PriorityItem {
   owner: string;
   metric: string;
   action: string;
+  completed?: boolean;
 }
 
 export interface PrioritySet {
@@ -67,9 +68,11 @@ export interface PrioritySet {
 }
 
 export interface PriorityItemInput {
+  id?: string;
   sort_order: number;
   goal: string;
   owner: string;
   metric: string;
   action: string;
+  completed?: boolean;
 }

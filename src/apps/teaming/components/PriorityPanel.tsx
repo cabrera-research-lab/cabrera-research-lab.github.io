@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConsiderationPrompts } from '@/apps/teaming/components/ConsiderationPrompts';
+import { FeedViewTabs, type FeedView } from '@/apps/teaming/components/FeedViewTabs';
 import { Onboarding } from '@/apps/teaming/components/Onboarding';
+import { PeriodNavigator } from '@/apps/teaming/components/PeriodNavigator';
 import { getCadence, isPriorityCadence } from '@/apps/teaming/lib/cadenceConfig';
 import { getConsiderationPrompts } from '@/apps/teaming/lib/orgSettings';
 import { fetchOrgPriorities, saveOrgPriorities } from '@/apps/teaming/lib/api';
+import {
+  formatPeriodLabel,
+  latestArchivePeriodStart,
+  periodStartForPriority,
+  shiftPeriodStart,
+} from '@/apps/teaming/lib/periods';
 import type { Cadence, PriorityItemInput } from '@/apps/teaming/lib/types';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useOrgSettings } from '@/apps/teaming/hooks/useOrgSettings';
+import { requireSupabase } from '@/shared/lib/supabase';
 
 type LocalItem = PriorityItemInput & { id: string };
 
@@ -15,7 +24,15 @@ function newId(): string {
 }
 
 function emptyItem(order: number): LocalItem {
-  return { id: newId(), sort_order: order, goal: '', owner: '', metric: '', action: '' };
+  return {
+    id: newId(),
+    sort_order: order,
+    goal: '',
+    owner: '',
+    metric: '',
+    action: '',
+    completed: false,
+  };
 }
 
 function normalizeItems(items: LocalItem[]): LocalItem[] {
@@ -25,13 +42,31 @@ function normalizeItems(items: LocalItem[]): LocalItem[] {
 function toLocalItems(items: PriorityItemInput[]): LocalItem[] {
   return items.map((item, index) => ({
     ...item,
-    id: newId(),
+    id: item.id ?? newId(),
     sort_order: index,
+    completed: Boolean(item.completed),
   }));
 }
 
 function filledCount(items: LocalItem[]): number {
   return items.filter((item) => item.goal.trim()).length;
+}
+
+/** Keep local edits for dirty rows; adopt remote for everything else. */
+function mergeRemoteItems(local: LocalItem[], remote: LocalItem[], dirtyIds: Set<string>): LocalItem[] {
+  const localById = new Map(local.map((item) => [item.id, item]));
+  const remoteIds = new Set(remote.map((item) => item.id));
+  const merged: LocalItem[] = remote.map((item) =>
+    dirtyIds.has(item.id) ? (localById.get(item.id) ?? item) : item,
+  );
+
+  for (const item of local) {
+    if (!remoteIds.has(item.id) && dirtyIds.has(item.id)) {
+      merged.push(item);
+    }
+  }
+
+  return normalizeItems(merged.length ? merged : [emptyItem(0)]);
 }
 
 interface Props {
@@ -43,12 +78,15 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const { team } = useAuth();
   const { settings } = useOrgSettings();
   const def = getCadence(cadence);
-  const canEdit = Boolean(team?.id);
   const priorityCadence = isPriorityCadence(cadence) ? cadence : null;
   const prompts = priorityCadence
     ? settings.prompts[priorityCadence] ?? getConsiderationPrompts(priorityCadence)
     : [];
 
+  const [view, setView] = useState<FeedView>('current');
+  const [archivePeriod, setArchivePeriod] = useState(() =>
+    priorityCadence ? latestArchivePeriodStart(priorityCadence) : '',
+  );
   const [items, setItems] = useState<LocalItem[]>([emptyItem(0)]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -59,32 +97,145 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const onCountChangeRef = useRef(onCountChange);
   onCountChangeRef.current = onCountChange;
 
-  const load = useCallback(async () => {
-    if (!priorityCadence) return;
-    setLoading(true);
-    try {
-      const loaded = await fetchOrgPriorities(priorityCadence, team?.id);
-      const next = loaded.length ? toLocalItems(loaded) : [emptyItem(0)];
-      setItems(next);
-      onCountChangeRef.current?.(filledCount(next));
-    } finally {
-      setLoading(false);
-    }
-  }, [team?.id, priorityCadence]);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const dirtyIdsRef = useRef<Set<string>>(new Set());
+  const deletedIdsRef = useRef<Set<string>>(new Set());
+  const savingRef = useRef(false);
+  const pendingRemoteReloadRef = useRef(false);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
+  const currentPeriod = priorityCadence ? periodStartForPriority(priorityCadence) : '';
+  const latestArchive = priorityCadence ? latestArchivePeriodStart(priorityCadence) : '';
+  const activePeriod = view === 'archive' ? archivePeriod : currentPeriod;
+  const canEdit = Boolean(team?.id) && view === 'current';
+  const hasGoals = items.some((item) => item.goal.trim());
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!priorityCadence) return;
+    setView('current');
+    setArchivePeriod(latestArchivePeriodStart(priorityCadence));
+  }, [priorityCadence]);
+
+  const clearPendingEdits = useCallback(() => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    dirtyIdsRef.current.clear();
+    deletedIdsRef.current.clear();
+    pendingRemoteReloadRef.current = false;
+  }, []);
+
+  const applyRemote = useCallback((remote: LocalItem[]) => {
+    const dirtyIds = dirtyIdsRef.current;
+    const next =
+      dirtyIds.size > 0
+        ? mergeRemoteItems(itemsRef.current, remote, dirtyIds)
+        : remote.length
+          ? remote
+          : [emptyItem(0)];
+    setItems(next);
+    if (viewRef.current === 'current') {
+      onCountChangeRef.current?.(filledCount(next));
+    }
+  }, []);
+
+  const load = useCallback(
+    async (opts?: { silent?: boolean; merge?: boolean; periodStart?: string }) => {
+      if (!priorityCadence) return;
+      if (!opts?.silent) setLoading(true);
+      try {
+        const periodStart = opts?.periodStart ?? activePeriod;
+        const loaded = await fetchOrgPriorities(priorityCadence, team?.id, periodStart);
+        const remote = loaded.length ? toLocalItems(loaded) : [];
+        if (opts?.merge && viewRef.current === 'current') {
+          applyRemote(remote);
+        } else {
+          const next =
+            remote.length > 0
+              ? remote
+              : viewRef.current === 'current'
+                ? [emptyItem(0)]
+                : [];
+          setItems(next);
+          if (viewRef.current === 'current') {
+            onCountChangeRef.current?.(filledCount(next));
+          }
+        }
+      } finally {
+        if (!opts?.silent) setLoading(false);
+      }
+    },
+    [team?.id, priorityCadence, activePeriod, applyRemote],
+  );
+
+  useEffect(() => {
+    clearPendingEdits();
+    void load();
+  }, [load, clearPendingEdits]);
+
+  useEffect(() => {
+    if (!priorityCadence || view !== 'current') return;
+
+    function onRemoteChange() {
+      if (savingRef.current || saveTimer.current) {
+        pendingRemoteReloadRef.current = true;
+        return;
+      }
+      void load({ silent: true, merge: true, periodStart: currentPeriod });
+    }
+
+    const sb = requireSupabase();
+    const channel = sb
+      .channel(`org-priorities-${priorityCadence}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'priority_sets',
+          filter: `cadence=eq.${priorityCadence}`,
+        },
+        onRemoteChange,
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'priority_items' },
+        onRemoteChange,
+      );
+    channel.subscribe();
+
+    return () => {
+      sb.removeChannel(channel);
+    };
+  }, [priorityCadence, view, load, currentPeriod]);
 
   async function persist(next: LocalItem[]) {
-    if (!priorityCadence || !team) return;
+    if (!priorityCadence || !team || viewRef.current !== 'current') return;
+    const dirtyIds = dirtyIdsRef.current;
+    const deleteIds = [...deletedIdsRef.current];
+    const normalized = normalizeItems(next);
+    const toUpsert = normalized.filter((item) => dirtyIds.has(item.id));
+    if (!toUpsert.length && !deleteIds.length) return;
+
+    savingRef.current = true;
     try {
-      await saveOrgPriorities(priorityCadence, normalizeItems(next), team.id);
-      onCountChangeRef.current?.(filledCount(next));
+      await saveOrgPriorities(priorityCadence, toUpsert, team.id, deleteIds);
+      for (const item of toUpsert) dirtyIds.delete(item.id);
+      deletedIdsRef.current.clear();
+      onCountChangeRef.current?.(filledCount(normalized));
       setStatus('Saved.');
       window.setTimeout(() => setStatus(''), 1600);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      savingRef.current = false;
+      if (pendingRemoteReloadRef.current) {
+        pendingRemoteReloadRef.current = false;
+        void load({ silent: true, merge: true, periodStart: currentPeriod });
+      }
     }
   }
 
@@ -92,6 +243,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     if (!canEdit) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
       void persist(next);
     }, 800);
   }
@@ -99,6 +251,19 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   function updateItem(index: number, field: 'goal' | 'metric', value: string) {
     setItems((prev) => {
       const next = prev.map((it, i) => (i === index ? { ...it, [field]: value } : it));
+      dirtyIdsRef.current.add(next[index].id);
+      scheduleSave(next);
+      return next;
+    });
+  }
+
+  function toggleCompleted(index: number) {
+    if (!canEdit) return;
+    setItems((prev) => {
+      const next = prev.map((it, i) =>
+        i === index ? { ...it, completed: !it.completed } : it,
+      );
+      dirtyIdsRef.current.add(next[index].id);
       scheduleSave(next);
       return next;
     });
@@ -106,7 +271,9 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
   function addItem() {
     setItems((prev) => {
-      const next = normalizeItems([...prev, emptyItem(prev.length)]);
+      const added = emptyItem(prev.length);
+      dirtyIdsRef.current.add(added.id);
+      const next = normalizeItems([...prev, added]);
       scheduleSave(next);
       return next;
     });
@@ -114,9 +281,17 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
   function deleteItem(index: number) {
     setItems((prev) => {
+      const removed = prev[index];
+      if (removed) deletedIdsRef.current.add(removed.id);
+      dirtyIdsRef.current.delete(removed?.id ?? '');
       const next = normalizeItems(
         prev.length <= 1 ? [emptyItem(0)] : prev.filter((_, i) => i !== index),
       );
+      if (prev.length <= 1) {
+        dirtyIdsRef.current.add(next[0].id);
+      } else {
+        for (const item of next) dirtyIdsRef.current.add(item.id);
+      }
       scheduleSave(next);
       return next;
     });
@@ -129,6 +304,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
       const [moved] = next.splice(fromIndex, 1);
       next.splice(toIndex, 0, moved);
       const normalized = normalizeItems(next);
+      for (const item of normalized) dirtyIdsRef.current.add(item.id);
       scheduleSave(normalized);
       return normalized;
     });
@@ -172,7 +348,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     const onEnd = (endEvent: PointerEvent) => {
       if (endEvent.pointerId !== event.pointerId) return;
       endEvent.preventDefault();
-      handle.releasePointerCapture(event.pointerId);
+      handle.releasePointerCapture(endEvent.pointerId);
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onEnd);
       document.removeEventListener('pointercancel', onEnd);
@@ -188,17 +364,40 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
   if (!priorityCadence) return null;
 
+  const archiveLabel = formatPeriodLabel(priorityCadence, archivePeriod);
+  const canGoNext = archivePeriod < latestArchive;
+
   return (
     <div className="priority-panel">
-      {!canEdit && <Onboarding />}
+      {!team?.id && <Onboarding />}
+
+      <FeedViewTabs
+        active={view}
+        currentLabel={formatPeriodLabel(priorityCadence, currentPeriod)}
+        onChange={setView}
+      />
+      {view === 'archive' && (
+        <PeriodNavigator
+          label={archiveLabel}
+          onPrev={() => setArchivePeriod((p) => shiftPeriodStart(priorityCadence, p, -1))}
+          onNext={() => setArchivePeriod((p) => shiftPeriodStart(priorityCadence, p, 1))}
+          canNext={canGoNext}
+        />
+      )}
 
       <div className="step">
         <div className="step-head">
-          <div className="step-sub">{def.subtitle || def.step1Sub}</div>
+          <div className="step-sub">
+            {view === 'archive'
+              ? `Archived priorities for ${archiveLabel}.`
+              : def.subtitle || def.step1Sub}
+          </div>
         </div>
 
         {loading ? (
           <div className="mini">Loading priorities…</div>
+        ) : view === 'archive' && !hasGoals ? (
+          <div className="mini">No archived priorities for {archiveLabel}.</div>
         ) : (
           <div className="card">
             {items.map((item, idx) => (
@@ -209,6 +408,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                 }}
                 className={[
                   'prio-node',
+                  item.completed ? 'is-complete' : '',
                   dragIndex === idx ? 'dragging' : '',
                   dropIndex === idx && dragIndex !== null && dragIndex !== idx
                     ? 'drop-target'
@@ -228,6 +428,19 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                   >
                     ⠿
                   </span>
+                  <label className="prio-check">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(item.completed)}
+                      disabled={!canEdit}
+                      aria-label={
+                        item.completed
+                          ? `Mark priority ${idx + 1} incomplete`
+                          : `Mark priority ${idx + 1} complete`
+                      }
+                      onChange={() => toggleCompleted(idx)}
+                    />
+                  </label>
                   <span className="prio-num">{String(idx + 1).padStart(2, '0')}</span>
                   <div className="prio-fields">
                     <input
@@ -271,7 +484,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
               </button>
             ) : null}
 
-            <ConsiderationPrompts prompts={prompts} />
+            {view === 'current' ? <ConsiderationPrompts prompts={prompts} /> : null}
             {status ? <div className="status-msg">{status}</div> : null}
           </div>
         )}
