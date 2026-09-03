@@ -117,7 +117,7 @@ Mission Moments nested routes (in `apps/mission-moments/routes.tsx`):
 SEO & GEO nested routes (in `apps/seo-geo/routes.tsx`):
 
 - `/seo-geo` — property portfolio
-- `/seo-geo/:propertyId` — checks and history (`practice`, `stsi-pro`, `camp`, `jost`)
+- `/seo-geo/:propertyId` — checks and history (`practice`, `stsi-pro`, `camp`, `jost`, `cabreralab`, `evidence`)
 
 ## Authentication
 

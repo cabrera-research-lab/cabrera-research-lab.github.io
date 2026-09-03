@@ -45,6 +45,21 @@ const PROPERTIES = [
     sitemap: 'https://jost.science/sitemap.xml',
     llms: 'https://jost.science/llms.txt',
   },
+  {
+    id: 'cabreralab',
+    home: 'https://cabreralab.science/',
+    aliasHome: 'https://www.cabreralab.science/',
+    robots: 'https://cabreralab.science/robots.txt',
+    sitemap: 'https://cabreralab.science/sitemap.xml',
+    llms: 'https://cabreralab.science/llms.txt',
+  },
+  {
+    id: 'evidence',
+    home: 'https://evidence.cabreralab.science/',
+    robots: 'https://evidence.cabreralab.science/robots.txt',
+    sitemap: 'https://evidence.cabreralab.science/sitemap.xml',
+    llms: 'https://evidence.cabreralab.science/llms.txt',
+  },
 ];
 
 const dryRun = process.argv.includes('--dry-run');

@@ -25,7 +25,7 @@ export const INTERNAL_TOOLS: InternalTool[] = [
     id: 'seo-geo',
     label: 'SEO & GEO',
     title: 'Search & generative health',
-    description: 'SEO and GEO QC for practice.stsi.pro, stsi.pro, Camp, and JOST.',
+    description: 'SEO and GEO QC for STSI, C∆MP, JOST, and Cabrera Lab properties.',
     path: '/seo-geo',
   },
 ];

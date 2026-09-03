@@ -1,4 +1,4 @@
-export type PropertyId = 'practice' | 'stsi-pro' | 'camp' | 'jost';
+export type PropertyId = 'practice' | 'stsi-pro' | 'camp' | 'jost' | 'cabreralab' | 'evidence';
 
 export type Platform = 'django' | 'wix' | 'mighty-networks' | 'open-science';
 

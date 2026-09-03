@@ -79,7 +79,7 @@ Internal QC applet for reviewing B2B cohort setup before go-live — belt paths,
 
 ## SEO & GEO
 
-Internal QC for search and generative-engine health on **practice.stsi.pro** (`stsi.tools`), **stsi.pro** (Wix), **camp.stsi.pro** (Mighty Networks), and **jost.science**.
+Internal QC for search and generative-engine health on **practice.stsi.pro** (`stsi.tools`), **stsi.pro**, **camp.stsi.pro**, **jost.science**, **cabreralab.science**, and **evidence.cabreralab.science**.
 
 - Route: `/seo-geo`
 - Soft auth gate: snapshots require sign-in

@@ -398,7 +398,7 @@ function geoChecks(property: Property, snapshot: ParsedSnapshot): HealthCheck[] 
   if (llms?.hasSubstance) {
     const mentions =
       rubric === 'practice-app'
-        ? /practice\.stsi\.pro|stsi|systems thinking/i.test(llms.body)
+        ? /practice\.stsi\.pro/i.test(llms.body) && /systems thinking|thinkquery|dsrp/i.test(llms.body)
         : true;
     checks.push(
       check(
@@ -407,7 +407,7 @@ function geoChecks(property: Property, snapshot: ParsedSnapshot): HealthCheck[] 
         mentions ? 'pass' : 'warn',
         mentions
           ? `llms.txt is live (${llms.body.trim().length} chars).`
-          : 'llms.txt exists but does not mention STSI / Practice. Add a short machine-readable product blurb.',
+          : 'llms.txt exists but does not name practice.stsi.pro or describe systems thinking / DSRP / ThinkQuery.',
         'geo',
         2,
       ),

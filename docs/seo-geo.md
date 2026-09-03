@@ -6,14 +6,16 @@ Internal QC applet for search-engine and generative-engine readiness across STSI
 
 ## Product summary
 
-The dashboard reports **SEO** (classic crawl/index health) and **GEO** (generative-engine crawl and extractability) for four properties. Each property has its own rubric so a login-gated community is not scored like a marketing site.
+The dashboard reports **SEO** (classic crawl/index health) and **GEO** (generative-engine crawl and extractability) for six properties. Each property has its own rubric so a login-gated community is not scored like a marketing site.
 
 | Property | Live fetch | Platform | Rubric |
 |----------|------------|----------|--------|
-| **practice.stsi.pro** | `stsi.tools` (+ alias `practice.stsi.pro`) | Django | Practice app — public story indexable; `/admin/`, `/accounts/`, and attempt URLs must stay out of the sitemap |
+| **practice.stsi.pro** | `stsi.tools` (+ alias `practice.stsi.pro`) | Django | Practice app — public story indexable; `/llms.txt` names practice.stsi.pro; `/admin/`, `/accounts/`, and attempt URLs must stay out of the sitemap |
 | **stsi.pro** | `stsi.pro` | Wix | Marketing site — primary SEO/GEO surface. Fixes happen in Wix |
 | **camp.stsi.pro** | `camp.stsi.pro` | Mighty Networks | Community — score the public landing/join page; member spaces behind login are healthy |
 | **jost.science** | `jost.science` | Open science | Web SEO plus scholarly/AI citability |
+| **cabreralab.science** | `cabreralab.science` (+ `www`) | Open science | Cabrera Research Lab public science site |
+| **evidence.cabreralab.science** | `evidence.cabreralab.science` | Open science | DSRP / O-Theory living evidence compendium |
 
 GEO here means **Generative Engine Optimization** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, `llms.txt`, extractable HTML, entity JSON-LD) — not visitor geography.
 
@@ -21,10 +23,10 @@ GEO here means **Generative Engine Optimization** (GPTBot, ClaudeBot, Perplexity
 
 | Path | Page | Description |
 |------|------|-------------|
-| `/seo-geo` | `PortfolioPage` | Four properties with latest SEO + GEO scores |
+| `/seo-geo` | `PortfolioPage` | Six properties with latest SEO + GEO scores |
 | `/seo-geo/:propertyId` | `PropertyPage` | Checks, facts, and score history |
 
-`propertyId` is one of `practice`, `stsi-pro`, `camp`, `jost`.
+`propertyId` is one of `practice`, `stsi-pro`, `camp`, `jost`, `cabreralab`, `evidence`.
 
 Route helpers: `src/apps/seo-geo/constants.ts`
 
@@ -66,7 +68,7 @@ JOST: ScholarlyArticle/Article schema and DOI signals.
 
 ### GEO checks
 
-AI crawler access, `llms.txt`, JSON-LD entity markup, extractable HTML (not an empty JS shell). JOST and stsi.pro fail closed if GPTBot/ClaudeBot/PerplexityBot are blocked.
+AI crawler access, `llms.txt`, JSON-LD entity markup, extractable HTML (not an empty JS shell). Open-science and marketing sites fail closed if GPTBot/ClaudeBot/PerplexityBot are blocked.
 
 ## Database
 
@@ -76,7 +78,7 @@ AI crawler access, `llms.txt`, JSON-LD entity markup, extractable HTML (not an e
 
 **Table:** `seo_geo_snapshots`
 
-- `property_id` — `practice` \| `stsi-pro` \| `camp` \| `jost`
+- `property_id` — `practice` \| `stsi-pro` \| `camp` \| `jost` \| `cabreralab` \| `evidence`
 - `fetched_at`
 - `payload` — raw fetch JSON
 - `seo_score` / `geo_score` — optional; the UI always re-scores from `payload`

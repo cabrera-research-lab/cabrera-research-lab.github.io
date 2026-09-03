@@ -49,6 +49,31 @@ export const PROPERTIES: Property[] = [
     description:
       'Journal of Systems Thinking (jost.science redirects to ScienceOpen). Web SEO plus scholarly and AI citability of open research.',
   },
+  {
+    id: 'cabreralab',
+    label: 'cabreralab.science',
+    hosts: ['cabreralab.science', 'www.cabreralab.science'],
+    canonicalHost: 'cabreralab.science',
+    fetchUrl: 'https://cabreralab.science/',
+    aliasUrl: 'https://www.cabreralab.science/',
+    platform: 'open-science',
+    platformLabel: 'Cabrera Lab · Science',
+    rubric: 'open-science',
+    description:
+      'Cabrera Research Lab — DSRP / O-Theory science partner of STSI. Public lab story, research, and contact.',
+  },
+  {
+    id: 'evidence',
+    label: 'evidence.cabreralab.science',
+    hosts: ['evidence.cabreralab.science'],
+    canonicalHost: 'evidence.cabreralab.science',
+    fetchUrl: 'https://evidence.cabreralab.science/',
+    platform: 'open-science',
+    platformLabel: 'Cabrera Lab · Evidence',
+    rubric: 'open-science',
+    description:
+      'Living DSRP / O-Theory evidence compendium. Indexable open science; AI crawlers should be able to quote the public record.',
+  },
 ];
 
 export const PROPERTY_IDS = PROPERTIES.map((property) => property.id);
