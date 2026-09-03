@@ -1,6 +1,6 @@
 # Hosting — GitHub Pages + Supabase (free tier)
 
-One deployment serves **both apps** (Teaming at `/`, Mission Moments at `/mission-moments`). See [Architecture](./architecture.md).
+One deployment serves **all apps** (Teaming at `/`, Mission Moments at `/mission-moments`, SEO & GEO at `/seo-geo`). See [Architecture](./architecture.md).
 
 ## Architecture
 
@@ -27,6 +27,7 @@ Users sign in with **email and password** (real addresses, e.g. work email).
 1. Settings → Secrets → Actions:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY` (service role / secret key — collector only, never a Vite env)
 2. Settings → Pages → Build and deployment → Source: **GitHub Actions** (not “Deploy from branch”).
    - If Source is set to `main` / `/`, GitHub serves raw repo files and the browser loads `/src/main.tsx` with the wrong MIME type (`application/octet-stream`).
 3. After the first deploy, the site is live at **https://cabrera-research-lab.github.io/** (org Pages site from `cabrera-research-lab.github.io` repo).
@@ -44,6 +45,18 @@ npm run dev
 ## Deploy
 
 Push to `main`. The workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) builds and publishes `dist/` to GitHub Pages.
+
+## SEO & GEO collector
+
+The dashboard cannot crawl third-party sites from the browser. A second workflow [`.github/workflows/seo-geo-collect.yml`](../.github/workflows/seo-geo-collect.yml) fetches public pages nightly and writes `seo_geo_snapshots`.
+
+1. Run migration `20260903180000_seo_geo_snapshots.sql` in the Supabase SQL editor.
+2. Add GitHub secret `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY`.
+3. Actions → **Collect SEO & GEO** → Run workflow (or wait for 06:00 UTC).
+
+Local dry-run: `npm run collect:seo-geo -- --dry-run`
+
+See [SEO & GEO](./seo-geo.md).
 
 ## Free-tier limits
 

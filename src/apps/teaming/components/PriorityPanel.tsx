@@ -5,7 +5,7 @@ import { Onboarding } from '@/apps/teaming/components/Onboarding';
 import { PeriodNavigator } from '@/apps/teaming/components/PeriodNavigator';
 import { getCadence, isPriorityCadence } from '@/apps/teaming/lib/cadenceConfig';
 import { getConsiderationPrompts } from '@/apps/teaming/lib/orgSettings';
-import { fetchOrgPriorities, saveOrgPriorities } from '@/apps/teaming/lib/api';
+import { fetchOrgPriorities, listOrgPriorityArchivePeriods, saveOrgPriorities } from '@/apps/teaming/lib/api';
 import {
   formatPeriodLabel,
   latestArchivePeriodStart,
@@ -87,6 +87,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const [archivePeriod, setArchivePeriod] = useState(() =>
     priorityCadence ? latestArchivePeriodStart(priorityCadence) : '',
   );
+  const [archivePeriods, setArchivePeriods] = useState<string[]>([]);
   const [items, setItems] = useState<LocalItem[]>([emptyItem(0)]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -112,11 +113,33 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const canEdit = Boolean(team?.id) && view === 'current';
   const hasGoals = items.some((item) => item.goal.trim());
 
+  const refreshArchivePeriods = useCallback(async () => {
+    if (!priorityCadence) return [] as string[];
+    try {
+      const periods = await listOrgPriorityArchivePeriods(priorityCadence);
+      setArchivePeriods(periods);
+      return periods;
+    } catch {
+      setArchivePeriods([]);
+      return [] as string[];
+    }
+  }, [priorityCadence]);
+
   useEffect(() => {
     if (!priorityCadence) return;
     setView('current');
     setArchivePeriod(latestArchivePeriodStart(priorityCadence));
-  }, [priorityCadence]);
+    void refreshArchivePeriods();
+  }, [priorityCadence, refreshArchivePeriods]);
+
+  async function handleViewChange(next: FeedView) {
+    if (next === 'archive') {
+      const periods = await refreshArchivePeriods();
+      const preferred = periods[0] ?? latestArchivePeriodStart(priorityCadence!);
+      setArchivePeriod(preferred);
+    }
+    setView(next);
+  }
 
   const clearPendingEdits = useCallback(() => {
     if (saveTimer.current) {
@@ -226,6 +249,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
       for (const item of toUpsert) dirtyIds.delete(item.id);
       deletedIdsRef.current.clear();
       onCountChangeRef.current?.(filledCount(normalized));
+      void refreshArchivePeriods();
       setStatus('Saved.');
       window.setTimeout(() => setStatus(''), 1600);
     } catch (e) {
@@ -364,8 +388,27 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
   if (!priorityCadence) return null;
 
-  const archiveLabel = formatPeriodLabel(priorityCadence, archivePeriod);
-  const canGoNext = archivePeriod < latestArchive;
+  const archiveCadence = priorityCadence;
+  const archiveLabel = formatPeriodLabel(archiveCadence, archivePeriod || latestArchive);
+  const archiveIndex = archivePeriods.indexOf(archivePeriod);
+  const canGoNext =
+    archiveIndex > 0 || (archiveIndex === -1 && archivePeriod < latestArchive);
+
+  function goArchivePrev() {
+    if (archiveIndex >= 0 && archiveIndex < archivePeriods.length - 1) {
+      setArchivePeriod(archivePeriods[archiveIndex + 1]);
+      return;
+    }
+    setArchivePeriod((p) => shiftPeriodStart(archiveCadence, p || latestArchive, -1));
+  }
+
+  function goArchiveNext() {
+    if (archiveIndex > 0) {
+      setArchivePeriod(archivePeriods[archiveIndex - 1]);
+      return;
+    }
+    setArchivePeriod((p) => shiftPeriodStart(archiveCadence, p || latestArchive, 1));
+  }
 
   return (
     <div className="priority-panel">
@@ -374,13 +417,15 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
       <FeedViewTabs
         active={view}
         currentLabel={formatPeriodLabel(priorityCadence, currentPeriod)}
-        onChange={setView}
+        onChange={(next) => {
+          void handleViewChange(next);
+        }}
       />
       {view === 'archive' && (
         <PeriodNavigator
           label={archiveLabel}
-          onPrev={() => setArchivePeriod((p) => shiftPeriodStart(priorityCadence, p, -1))}
-          onNext={() => setArchivePeriod((p) => shiftPeriodStart(priorityCadence, p, 1))}
+          onPrev={goArchivePrev}
+          onNext={goArchiveNext}
           canNext={canGoNext}
         />
       )}
@@ -389,7 +434,9 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
         <div className="step-head">
           <div className="step-sub">
             {view === 'archive'
-              ? `Archived priorities for ${archiveLabel}.`
+              ? archivePeriods.length || hasGoals
+                ? `Archived priorities for ${archiveLabel}.`
+                : `No archived ${priorityCadence} priorities yet. Past periods appear here after a new ${priorityCadence === 'weekly' ? 'week' : priorityCadence === 'monthly' ? 'month' : 'quarter'} starts.`
               : def.subtitle || def.step1Sub}
           </div>
         </div>

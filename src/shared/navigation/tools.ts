@@ -21,6 +21,13 @@ export const INTERNAL_TOOLS: InternalTool[] = [
     description: 'Cohort setup review, belt paths, and go-live checks.',
     path: '/mission-moments',
   },
+  {
+    id: 'seo-geo',
+    label: 'SEO & GEO',
+    title: 'Search & generative health',
+    description: 'SEO and GEO QC for practice.stsi.pro, stsi.pro, Camp, and JOST.',
+    path: '/seo-geo',
+  },
 ];
 
 export function isToolActive(tool: InternalTool, pathname: string): boolean {
@@ -28,6 +35,7 @@ export function isToolActive(tool: InternalTool, pathname: string): boolean {
   if (tool.id === 'mission-moments') {
     return pathname.startsWith('/mission-moments') || pathname.startsWith('/b2b-qc');
   }
+  if (tool.id === 'seo-geo') return pathname.startsWith('/seo-geo');
   return pathname.startsWith(tool.path);
 }
 

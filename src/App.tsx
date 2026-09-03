@@ -5,6 +5,7 @@ import { ResetPasswordPage } from '@/shared/auth/pages/ResetPasswordPage';
 import { ActivityNotificationListener } from '@/shared/notifications/ActivityNotificationListener';
 import { SiteNav } from '@/shared/navigation/SiteNav';
 import { missionMomentsRoutes } from '@/apps/mission-moments/routes';
+import { seoGeoRoutes } from '@/apps/seo-geo/routes';
 import { teamingRoutes } from '@/apps/teaming/routes';
 
 function AppRoutes() {
@@ -13,6 +14,7 @@ function AppRoutes() {
       <Route path="/login" element={<AuthPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       {missionMomentsRoutes}
+      {seoGeoRoutes}
       {teamingRoutes}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

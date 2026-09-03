@@ -367,12 +367,13 @@ export async function fetchOrgPriorities(
   periodStart?: string,
 ): Promise<PriorityItemInput[]> {
   try {
-    const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence);
+    const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence, periodStart);
     const data = await fetchPrioritySet(teamId, cadence, periodStart);
-    return data?.items ?? [];
+    if (data?.items?.length) return data.items;
   } catch {
-    return fetchOrgPrioritiesMergedFallback(cadence, periodStart);
+    // fall through to merge across teams
   }
+  return fetchOrgPrioritiesMergedFallback(cadence, periodStart);
 }
 
 async function fetchOrgPrioritiesMergedFallback(
@@ -409,6 +410,30 @@ async function fetchOrgPrioritiesMergedFallback(
       action: i.action,
       completed: Boolean(i.completed),
     }));
+}
+
+/** Past period starts that have a priority set (newest first), excluding the current period. */
+export async function listOrgPriorityArchivePeriods(
+  cadence: OrgPriorityCadence,
+): Promise<string[]> {
+  const current = periodStartForPriority(cadence);
+  const { data, error } = await requireSupabase()
+    .from('priority_sets')
+    .select('period_start')
+    .eq('cadence', cadence)
+    .lt('period_start', current)
+    .order('period_start', { ascending: false });
+  if (error || !data?.length) return [];
+
+  const seen = new Set<string>();
+  const periods: string[] = [];
+  for (const row of data) {
+    const start = String(row.period_start).slice(0, 10);
+    if (!start || seen.has(start)) continue;
+    seen.add(start);
+    periods.push(start);
+  }
+  return periods;
 }
 
 export async function saveOrgPriorities(
