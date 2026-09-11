@@ -66,16 +66,11 @@ export async function listPropertyHistory(propertyId: PropertyId, limit = 30): P
 }
 
 export async function refreshProperty(propertyId: PropertyId | 'all'): Promise<void> {
-  const { data, error } = await requireSupabase().functions.invoke('seo-geo-collect', {
-    body: { propertyId },
+  const { data, error } = await requireSupabase().rpc('seo_geo_collect', {
+    property_id: propertyId,
   });
   if (error) {
-    const missing = /not found|404|failed to send/i.test(error.message);
-    throw new Error(
-      missing
-        ? 'Refresh is not deployed yet. Deploy the seo-geo-collect Edge Function, then try again.'
-        : error.message,
-    );
+    throw new Error(error.message || 'Refresh failed');
   }
   if (data && typeof data === 'object' && 'error' in data && data.error) {
     throw new Error(String(data.error));

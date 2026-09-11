@@ -49,11 +49,11 @@ Sign in with redirect:
 The GitHub Pages app **cannot** crawl third-party domains (CORS). Collection runs server-side.
 
 ```
-Refresh in /seo-geo  →  Edge Function seo-geo-collect  →  upsert seo_geo_snapshots (1 row / property / UTC day)
-Nightly GitHub Action Collect SEO & GEO             ↗
+Refresh in /seo-geo  →  RPC seo_geo_collect  →  upsert seo_geo_snapshots (1 row / property / UTC day)
+Nightly GitHub Action Collect SEO & GEO          ↗
 ```
 
-1. `scripts/collect-seo-geo.mjs` (and the Edge Function) fetch homepage, optional alias, `robots.txt`, sitemap, and `llms.txt`.
+1. `scripts/collect-seo-geo.mjs` (and `seo_geo_collect`) fetch homepage, optional alias, `robots.txt`, sitemap, and `llms.txt`.
 2. Raw bodies (truncated) are stored as JSON `payload`.
 3. Same-day Refresh **updates** that day's snapshot instead of inserting another history bar.
 4. The UI parses with `parseSnapshot.ts` and scores with `healthScore.ts`. Historical rows are re-scored with the current rubric.
@@ -78,6 +78,7 @@ AI crawler access, `llms.txt`, JSON-LD entity markup, extractable HTML (not an e
 |-----------|---------|
 | `20260903180000_seo_geo_snapshots.sql` | Snapshot table + authenticated SELECT |
 | `20260911143000_seo_geo_one_snapshot_per_day.sql` | `snapshot_date` + unique `(property_id, snapshot_date)` so Refresh upserts today |
+| `20260911160000_seo_geo_collect_rpc.sql` | Authenticated `seo_geo_collect` RPC (Postgres fetches public pages) |
 
 **Table:** `seo_geo_snapshots`
 
@@ -87,20 +88,13 @@ AI crawler access, `llms.txt`, JSON-LD entity markup, extractable HTML (not an e
 - `payload` — raw fetch JSON
 - `seo_score` / `geo_score` — optional; the UI always re-scores from `payload`
 
-RLS: `authenticated` can SELECT. Inserts/upserts use the Supabase **service role** from the collector or Edge Function (bypasses RLS). The publishable key cannot write.
+RLS: `authenticated` can SELECT. Nightly collector writes with the **service role**. Dashboard Refresh uses security-definer RPC `seo_geo_collect` (authenticated only). The publishable key cannot write rows directly.
 
 ## Refresh from the dashboard
 
-Signed-in users can click **Refresh** on a property (or **Refresh all**) at `/seo-geo`. That calls Edge Function `seo-geo-collect`, which fetches live pages and upserts today's row.
+Signed-in users can click **Refresh** on a property (or **Refresh all**) at `/seo-geo`. That calls RPC `seo_geo_collect`, which fetches live pages and upserts today's row.
 
-Deploy once:
-
-```bash
-# SQL editor: run supabase/migrations/20260911143000_seo_geo_one_snapshot_per_day.sql
-supabase functions deploy seo-geo-collect
-```
-
-The function uses the project's built-in `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Only authenticated TEAMING users can invoke it.
+Apply `supabase/migrations/20260911160000_seo_geo_collect_rpc.sql` in the SQL editor if the function is missing. Only authenticated TEAMING users can run it.
 
 ## Collector
 
@@ -137,6 +131,6 @@ Apply both snapshot migrations in the Supabase SQL editor before the first colle
 | Portfolio | `src/apps/seo-geo/pages/PortfolioPage.tsx` |
 | Detail | `src/apps/seo-geo/pages/PropertyPage.tsx` |
 | Collector | `scripts/collect-seo-geo.mjs` |
-| Edge Function | `supabase/functions/seo-geo-collect/` |
+| Refresh RPC | `supabase/migrations/20260911160000_seo_geo_collect_rpc.sql` |
 
 Do not import Teaming or Mission Moments modules from this app.
