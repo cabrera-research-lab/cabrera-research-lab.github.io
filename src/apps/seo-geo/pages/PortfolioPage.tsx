@@ -4,10 +4,12 @@ import { useAuth } from '@/shared/auth/AuthContext';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 import { SeoGeoHeader } from '@/apps/seo-geo/components/SeoGeoHeader';
 import { ScoreRing } from '@/apps/seo-geo/components/ScoreRing';
+import { RefreshButton } from '@/apps/seo-geo/components/RefreshButton';
 import { seoGeoLoginPath, seoGeoPath } from '@/apps/seo-geo/constants';
 import { PROPERTIES } from '@/apps/seo-geo/lib/properties';
 import { scoreStatusClass } from '@/apps/seo-geo/lib/healthScore';
-import { listLatestSnapshots, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
+import { listLatestSnapshots, refreshProperty, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
+import type { PropertyId } from '@/apps/seo-geo/lib/types';
 
 function formatWhen(iso: string): string {
   const date = new Date(iso);
@@ -20,20 +22,21 @@ export function PortfolioPage() {
   const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshingId, setRefreshingId] = useState<PropertyId | 'all' | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (quiet = false) => {
     if (!session || !isSupabaseConfigured) {
       setSnapshots([]);
       return;
     }
-    setLoading(true);
+    if (!quiet) setLoading(true);
     setError(null);
     try {
       setSnapshots(await listLatestSnapshots());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load snapshots');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [session]);
 
@@ -41,6 +44,23 @@ export function PortfolioPage() {
     if (authLoading) return;
     load().catch(console.error);
   }, [authLoading, load]);
+
+  const onRefresh = useCallback(
+    async (propertyId: PropertyId | 'all') => {
+      if (!session) return;
+      setRefreshingId(propertyId);
+      setError(null);
+      try {
+        await refreshProperty(propertyId);
+        await load(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Refresh failed');
+      } finally {
+        setRefreshingId(null);
+      }
+    },
+    [session, load],
+  );
 
   const byId = new Map(snapshots.map((row) => [row.propertyId, row]));
 
@@ -53,10 +73,13 @@ export function PortfolioPage() {
           <div>
             <h2>Properties</h2>
             <p className="seo-geo-small">
-              Nightly collector stores public HTML, robots.txt, sitemaps, and llms.txt. Scores use a
-              platform-specific rubric — Camp is not graded like a marketing site.
+              Refresh re-fetches live HTML, robots.txt, sitemaps, and llms.txt. Same-day refreshes
+              update today&apos;s scores instead of adding another history bar.
             </p>
           </div>
+          {session && (
+            <RefreshButton propertyId="all" busy={refreshingId === 'all'} onRefresh={onRefresh} />
+          )}
         </div>
 
         {!authLoading && !isSupabaseConfigured && (
@@ -84,7 +107,7 @@ export function PortfolioPage() {
             const geo = row?.health.geo.score ?? null;
             const overall = row?.health.overallStatus ?? 'No data';
             return (
-              <li key={property.id}>
+              <li key={property.id} className="seo-geo-property-item">
                 <button
                   type="button"
                   className="seo-geo-property-card"
@@ -104,10 +127,19 @@ export function PortfolioPage() {
                     <ScoreRing label="SEO" score={seo} status={row?.health.seo.status} />
                     <ScoreRing label="GEO" score={geo} status={row?.health.geo.status} />
                   </div>
-                  <span className="seo-geo-small">
-                    {row ? `Checked ${formatWhen(row.fetchedAt)}` : 'No snapshot yet — run Collect SEO & GEO'}
-                  </span>
                 </button>
+                <div className="seo-geo-property-actions">
+                  <span className="seo-geo-small">
+                    {row ? `Checked ${formatWhen(row.fetchedAt)}` : 'No snapshot yet'}
+                  </span>
+                  {session && (
+                    <RefreshButton
+                      propertyId={property.id}
+                      busy={refreshingId === property.id || refreshingId === 'all'}
+                      onRefresh={onRefresh}
+                    />
+                  )}
+                </div>
               </li>
             );
           })}

@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      property_id:
+        description: 'Property id (practice, stsi-pro, camp, jost, cabreralab, evidence) or all'
+        required: false
+        default: 'all'
 
 permissions:
   contents: read
@@ -26,4 +31,10 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SEO_GEO_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEO_GEO_SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/collect-seo-geo.mjs
+          PROPERTY_ID: ${{ github.event.inputs.property_id || 'all' }}
+        run: |
+          if [ "$PROPERTY_ID" != "" ] && [ "$PROPERTY_ID" != "all" ]; then
+            node scripts/collect-seo-geo.mjs --property "$PROPERTY_ID"
+          else
+            node scripts/collect-seo-geo.mjs
+          fi

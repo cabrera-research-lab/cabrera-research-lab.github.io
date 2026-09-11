@@ -64,3 +64,36 @@ export async function listPropertyHistory(propertyId: PropertyId, limit = 30): P
     .map(formatRow)
     .filter((row): row is SnapshotRow => row != null);
 }
+
+export async function refreshProperty(propertyId: PropertyId | 'all'): Promise<void> {
+  const { data, error } = await requireSupabase().functions.invoke('seo-geo-collect', {
+    body: { propertyId },
+  });
+  if (error) {
+    const missing = /not found|404|failed to send/i.test(error.message);
+    throw new Error(
+      missing
+        ? 'Refresh is not deployed yet. Deploy the seo-geo-collect Edge Function, then try again.'
+        : error.message,
+    );
+  }
+  if (data && typeof data === 'object' && 'error' in data && data.error) {
+    throw new Error(String(data.error));
+  }
+}
+
+/** Keep the newest snapshot for each local calendar day (one pair of bars per day). */
+export function latestSnapshotPerDay(rows: SnapshotRow[]): SnapshotRow[] {
+  const byDay = new Map<string, SnapshotRow>();
+  for (const row of rows) {
+    const when = new Date(row.fetchedAt);
+    const key = Number.isNaN(when.getTime())
+      ? row.fetchedAt.slice(0, 10)
+      : `${when.getFullYear()}-${String(when.getMonth() + 1).padStart(2, '0')}-${String(when.getDate()).padStart(2, '0')}`;
+    const existing = byDay.get(key);
+    if (!existing || row.fetchedAt > existing.fetchedAt) {
+      byDay.set(key, row);
+    }
+  }
+  return [...byDay.values()].sort((a, b) => (a.fetchedAt < b.fetchedAt ? 1 : -1));
+}

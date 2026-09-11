@@ -83,6 +83,7 @@ Internal QC for search and generative-engine health on **practice.stsi.pro** (`s
 
 - Route: `/seo-geo`
 - Soft auth gate: snapshots require sign-in
-- Nightly GitHub Action collector writes `seo_geo_snapshots`
+- **Refresh** on each property (and Refresh all) re-fetches live pages; same-day runs update today’s bars
+- Nightly GitHub Action still writes `seo_geo_snapshots`
 
 Built from the TE∆MING SYSTEM prototype. Stack: **Vite + React + TypeScript**, **Supabase**, deployed on **GitHub Pages** at [cabrera-research-lab.github.io](https://cabrera-research-lab.github.io/).

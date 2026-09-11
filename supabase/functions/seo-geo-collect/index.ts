@@ -1,22 +1,28 @@
 /**
- * Nightly SEO & GEO collector.
- * Fetches public HTML / robots / sitemap / llms.txt and stores raw snapshots in Supabase.
- *
- *   node scripts/collect-seo-geo.mjs
- *   node scripts/collect-seo-geo.mjs --dry-run
- *   node scripts/collect-seo-geo.mjs --property practice
- *
- * Env:
- *   VITE_SUPABASE_URL
- *   SEO_GEO_SUPABASE_SERVICE_ROLE_KEY  (service role — never expose to Vite)
+ * Authenticated refresh of one (or all) SEO/GEO properties.
+ * Fetches public pages server-side and upserts today's snapshot.
  */
+const corsHeaders: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const HTML_LIMIT = 80_000;
 const TEXT_LIMIT = 20_000;
 const SITEMAP_LIMIT = 80_000;
 
-const PROPERTIES = [
+type PropertySpec = {
+  id: string;
+  home: string;
+  aliasHome?: string;
+  robots: string;
+  sitemap: string;
+  llms: string;
+};
+
+const PROPERTIES: PropertySpec[] = [
   {
     id: 'practice',
     home: 'https://stsi.tools/',
@@ -63,11 +69,14 @@ const PROPERTIES = [
   },
 ];
 
-const dryRun = process.argv.includes('--dry-run');
-const propertyFlag = process.argv.indexOf('--property');
-const propertyFilter = propertyFlag >= 0 ? process.argv[propertyFlag + 1] : null;
+function json(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
 
-async function fetchDoc(url, limit = HTML_LIMIT) {
+async function fetchDoc(url: string, limit = HTML_LIMIT) {
   try {
     const res = await fetch(url, {
       redirect: 'follow',
@@ -102,11 +111,11 @@ async function fetchDoc(url, limit = HTML_LIMIT) {
   }
 }
 
-function sitemapUrlsFromRobots(body) {
+function sitemapUrlsFromRobots(body: string) {
   return [...body.matchAll(/^sitemap:\s*(\S+)/gim)].map((match) => match[1].trim());
 }
 
-async function collectProperty(property) {
+async function collectProperty(property: PropertySpec) {
   const [home, aliasHome, robots, llms] = await Promise.all([
     fetchDoc(property.home),
     property.aliasHome ? fetchDoc(property.aliasHome) : Promise.resolve(null),
@@ -131,7 +140,7 @@ async function collectProperty(property) {
   };
 }
 
-async function upsertSnapshot(url, serviceKey, payload) {
+async function upsertSnapshot(url: string, serviceKey: string, payload: { propertyId: string; fetchedAt: string }) {
   const snapshotDate = payload.fetchedAt.slice(0, 10);
   const res = await fetch(
     `${url.replace(/\/$/, '')}/rest/v1/seo_geo_snapshots?on_conflict=property_id,snapshot_date`,
@@ -157,54 +166,63 @@ async function upsertSnapshot(url, serviceKey, payload) {
   }
 }
 
-async function main() {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SEO_GEO_SUPABASE_URL;
-  const serviceKey = process.env.SEO_GEO_SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!dryRun && (!supabaseUrl || !serviceKey)) {
-    console.error(
-      'Set VITE_SUPABASE_URL and SEO_GEO_SUPABASE_SERVICE_ROLE_KEY (or pass --dry-run).',
-    );
-    process.exit(1);
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+  if (req.method !== 'POST') {
+    return json(405, { error: 'Use POST' });
   }
 
-  const selected = propertyFilter
-    ? PROPERTIES.filter((item) => item.id === propertyFilter)
-    : PROPERTIES;
-  if (propertyFilter && !selected.length) {
-    console.error(`Unknown property: ${propertyFilter}`);
-    process.exit(1);
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!supabaseUrl || !serviceKey || !anonKey) {
+    return json(500, { error: 'Function is missing Supabase secrets' });
+  }
+
+  const auth = req.headers.get('Authorization');
+  if (!auth) return json(401, { error: 'Sign in to refresh scores' });
+
+  const userRes = await fetch(`${supabaseUrl.replace(/\/$/, '')}/auth/v1/user`, {
+    headers: { Authorization: auth, apikey: anonKey },
+  });
+  if (!userRes.ok) return json(401, { error: 'Sign in to refresh scores' });
+
+  let propertyId = 'all';
+  try {
+    const body = (await req.json()) as { propertyId?: string };
+    if (typeof body?.propertyId === 'string' && body.propertyId.trim()) {
+      propertyId = body.propertyId.trim();
+    }
+  } catch {
+    /* empty body is refresh-all */
+  }
+
+  const selected =
+    propertyId === 'all'
+      ? PROPERTIES
+      : PROPERTIES.filter((item) => item.id === propertyId);
+
+  if (!selected.length) {
+    return json(400, { error: `Unknown property: ${propertyId}` });
   }
 
   const results = [];
-  for (const property of selected) {
-    console.log(`Collecting ${property.id}…`);
-    const payload = await collectProperty(property);
-    results.push({
-      id: property.id,
-      home: payload.home?.status,
-      alias: payload.aliasHome?.status ?? null,
-      robots: payload.robots?.status,
-      sitemap: payload.sitemap?.status,
-      llms: payload.llms?.status,
-    });
-    if (!dryRun) {
+  try {
+    for (const property of selected) {
+      const payload = await collectProperty(property);
       await upsertSnapshot(supabaseUrl, serviceKey, payload);
-      console.log(`  stored ${property.id} (${payload.fetchedAt.slice(0, 10)})`);
-    } else {
-      console.log(`  dry-run ${property.id}`, {
+      results.push({
+        id: property.id,
         home: payload.home?.status,
-        robots: payload.robots?.status,
         sitemap: payload.sitemap?.status,
         llms: payload.llms?.status,
       });
     }
+  } catch (err) {
+    return json(500, { error: err instanceof Error ? err.message : String(err) });
   }
 
-  console.log('Done.', results);
-}
-
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
+  return json(200, { ok: true, results });
 });

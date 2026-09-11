@@ -33,7 +33,7 @@ This document describes how three product surfaces coexist in one repository wit
 
 All three apps deploy as **one static bundle**. They are separate products with separate UI, styles, API modules, and database tables — not separate npm packages.
 
-SEO & GEO snapshots are **written** by a GitHub Action (service role), not by the browser.
+SEO & GEO snapshots are **written** by a GitHub Action or the `seo-geo-collect` Edge Function (service role), not by the browser. Same-day collects **upsert** today's row so the trend chart stays one bar per day.
 
 ## Directory structure
 

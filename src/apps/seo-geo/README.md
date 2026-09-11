@@ -17,6 +17,7 @@ Internal health dashboard for search and generative-engine readiness across STSI
 | Scoring (pure) | `lib/healthScore.ts` |
 | Supabase API | `lib/snapshotApi.ts` |
 | Collector | `scripts/collect-seo-geo.mjs` |
+| Edge Function | `../../supabase/functions/seo-geo-collect/` |
 | Styles | `styles/seo-geo.css` |
 
 ## Documentation

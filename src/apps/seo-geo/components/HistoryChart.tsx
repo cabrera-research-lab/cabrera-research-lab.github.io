@@ -1,9 +1,9 @@
-import type { SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
+import { latestSnapshotPerDay, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
 
 export function HistoryChart({ rows }: { rows: SnapshotRow[] }) {
-  const chronological = [...rows].reverse();
+  const chronological = [...latestSnapshotPerDay(rows)].reverse();
   if (chronological.length === 0) {
-    return <p className="seo-geo-small">No snapshots yet. Run the collector workflow to start the trend.</p>;
+    return <p className="seo-geo-small">No snapshots yet. Refresh this property to start the trend.</p>;
   }
 
   return (
@@ -14,7 +14,7 @@ export function HistoryChart({ rows }: { rows: SnapshotRow[] }) {
           ? row.fetchedAt
           : when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         return (
-          <div key={row.id} className="seo-geo-history-col" title={`${label} · SEO ${row.health.seo.score} · GEO ${row.health.geo.score}`}>
+          <div key={label} className="seo-geo-history-col" title={`${label} · SEO ${row.health.seo.score} · GEO ${row.health.geo.score}`}>
             <div className="seo-geo-bars">
               <span className="seo-geo-bar seo" style={{ height: `${row.health.seo.score}%` }} />
               <span className="seo-geo-bar geo" style={{ height: `${row.health.geo.score}%` }} />

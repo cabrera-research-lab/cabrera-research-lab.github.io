@@ -48,11 +48,12 @@ Push to `main`. The workflow [`.github/workflows/deploy.yml`](../.github/workflo
 
 ## SEO & GEO collector
 
-The dashboard cannot crawl third-party sites from the browser. A second workflow [`.github/workflows/seo-geo-collect.yml`](../.github/workflows/seo-geo-collect.yml) fetches public pages nightly and writes `seo_geo_snapshots`.
+The dashboard cannot crawl third-party sites from the browser. Signed-in **Refresh** calls Edge Function `seo-geo-collect`. A GitHub Action [`.github/workflows/seo-geo-collect.yml`](../.github/workflows/seo-geo-collect.yml) still fetches nightly.
 
-1. Run migration `20260903180000_seo_geo_snapshots.sql` in the Supabase SQL editor.
-2. Add GitHub secret `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY`.
-3. Actions → **Collect SEO & GEO** → Run workflow (or wait for 06:00 UTC).
+1. Run migrations `20260903180000_seo_geo_snapshots.sql` and `20260911143000_seo_geo_one_snapshot_per_day.sql` in the Supabase SQL editor.
+2. Deploy `supabase functions deploy seo-geo-collect`.
+3. Add GitHub secret `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY` (nightly Action only).
+4. In `/seo-geo`, click **Refresh** on a property (or wait for 06:00 UTC).
 
 Local dry-run: `npm run collect:seo-geo -- --dry-run`
 

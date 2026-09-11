@@ -8,7 +8,9 @@ import { CheckList } from '@/apps/seo-geo/components/CheckList';
 import { HistoryChart } from '@/apps/seo-geo/components/HistoryChart';
 import { SEO_GEO_BASE, seoGeoLoginPath, seoGeoPath } from '@/apps/seo-geo/constants';
 import { getProperty, isPropertyId } from '@/apps/seo-geo/lib/properties';
-import { listPropertyHistory, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
+import { listPropertyHistory, refreshProperty, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
+import { RefreshButton } from '@/apps/seo-geo/components/RefreshButton';
+import type { PropertyId } from '@/apps/seo-geo/lib/types';
 
 function formatWhen(iso: string): string {
   const date = new Date(iso);
@@ -30,22 +32,40 @@ export function PropertyPage() {
   const [rows, setRows] = useState<SnapshotRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (quiet = false) => {
     if (!session || !isSupabaseConfigured || !isPropertyId(propertyId)) {
       setRows([]);
       return;
     }
-    setLoading(true);
+    if (!quiet) setLoading(true);
     setError(null);
     try {
       setRows(await listPropertyHistory(propertyId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load history');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [session, propertyId]);
+
+  const onRefresh = useCallback(
+    async (id: PropertyId | 'all') => {
+      if (!session || id === 'all') return;
+      setRefreshing(true);
+      setError(null);
+      try {
+        await refreshProperty(id);
+        await load(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Refresh failed');
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    [session, load],
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -69,9 +89,14 @@ export function PropertyPage() {
         <Link to={seoGeoPath()} className="seo-geo-back">
           ← All properties
         </Link>
-        <a className="seo-geo-link" href={property.fetchUrl} target="_blank" rel="noreferrer">
-          Open {property.label}
-        </a>
+        <div className="seo-geo-detail-actions">
+          {session && (
+            <RefreshButton propertyId={property.id} busy={refreshing} onRefresh={onRefresh} />
+          )}
+          <a className="seo-geo-link" href={property.fetchUrl} target="_blank" rel="noreferrer">
+            Open {property.label}
+          </a>
+        </div>
       </div>
 
       <section className="seo-geo-card seo-geo-detail-title">
@@ -96,9 +121,7 @@ export function PropertyPage() {
         <section className="seo-geo-card">
           <h2>No snapshots yet</h2>
           <p className="seo-geo-small">
-            Apply the <code>seo_geo_snapshots</code> migration, add the{' '}
-            <code>SEO_GEO_SUPABASE_SERVICE_ROLE_KEY</code> GitHub secret, then run the{' '}
-            <strong>Collect SEO &amp; GEO</strong> workflow (or <code>npm run collect:seo-geo</code> locally).
+            Use <strong>Refresh</strong> above to collect the first snapshot for this property.
           </p>
         </section>
       )}
@@ -161,7 +184,7 @@ export function PropertyPage() {
 
           <section className="seo-geo-card">
             <h2>Trend</h2>
-            <p className="seo-geo-small">Blue is SEO. Orange is GEO. Re-scored with the current rubric.</p>
+            <p className="seo-geo-small">Blue is SEO. Orange is GEO. One pair of bars per day; Refresh updates today.</p>
             <HistoryChart rows={rows} />
           </section>
         </>
