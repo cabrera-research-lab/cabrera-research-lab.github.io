@@ -33,7 +33,7 @@ export function PropertyKeywordsStrip({
           {!enabled ? 'Not enabled' : connectionLabel(stat?.connection ?? null)}
         </span>
       </div>
-      {enabled ? (
+      {enabled && (
         <>
           <div className="seo-geo-card-keywords-metrics">
             <span>
@@ -61,8 +61,6 @@ export function PropertyKeywordsStrip({
             Open keywords
           </button>
         </>
-      ) : (
-        <p className="seo-geo-small">Keyword rankings are on stsi.pro first.</p>
       )}
     </div>
   );

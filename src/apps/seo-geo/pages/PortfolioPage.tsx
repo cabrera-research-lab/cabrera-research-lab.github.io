@@ -102,7 +102,7 @@ export function PortfolioPage() {
             <h2>Properties</h2>
             <p className="seo-geo-small">
               Refresh re-fetches live HTML, robots.txt, sitemaps, and llms.txt. Keyword rankings
-              show on each card; open stsi.pro for the full table.
+              show on each card.
             </p>
           </div>
           {session && (
