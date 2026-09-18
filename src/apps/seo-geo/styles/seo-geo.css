@@ -143,6 +143,45 @@
   padding: 0 18px 16px;
 }
 
+.seo-geo-card-keywords {
+  margin: 0 18px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f7f8fc;
+  display: grid;
+  gap: 10px;
+}
+
+.seo-geo-card-keywords-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.seo-geo-card-keywords-top strong {
+  font-size: 13px;
+}
+
+.seo-geo-card-keywords-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: #737684;
+}
+
+.seo-geo-card-keywords-metrics b {
+  color: var(--goat-slate);
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.seo-geo-card-keywords .seo-geo-refresh {
+  justify-self: start;
+}
+
 .seo-geo-detail-actions {
   display: flex;
   align-items: center;

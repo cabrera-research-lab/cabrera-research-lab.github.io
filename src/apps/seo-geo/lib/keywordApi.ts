@@ -42,6 +42,14 @@ function formatConnection(row: ConnectionDb): GscConnection {
   };
 }
 
+export async function listGscConnections(): Promise<GscConnection[]> {
+  const { data, error } = await requireSupabase()
+    .from('seo_geo_gsc_connections')
+    .select('property_id, gsc_site_url, status, last_synced_at, last_error, last_row_count');
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as ConnectionDb[]).map(formatConnection);
+}
+
 export async function getGscConnection(propertyId: PropertyId): Promise<GscConnection | null> {
   const { data, error } = await requireSupabase()
     .from('seo_geo_gsc_connections')

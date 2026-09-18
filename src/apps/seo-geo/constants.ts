@@ -9,3 +9,7 @@ export function seoGeoPath(suffix = ''): string {
 export function seoGeoLoginPath(next = SEO_GEO_BASE): string {
   return `/login?next=${encodeURIComponent(next)}`;
 }
+
+export function seoGeoKeywordsPath(propertyId: string): string {
+  return `${seoGeoPath(propertyId)}?tab=keywords`;
+}

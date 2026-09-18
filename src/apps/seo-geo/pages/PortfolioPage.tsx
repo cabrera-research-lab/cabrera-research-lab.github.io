@@ -7,7 +7,11 @@ import { ScoreRing } from '@/apps/seo-geo/components/ScoreRing';
 import { RefreshButton } from '@/apps/seo-geo/components/RefreshButton';
 import { seoGeoLoginPath, seoGeoPath } from '@/apps/seo-geo/constants';
 import { PROPERTIES } from '@/apps/seo-geo/lib/properties';
-import { hasKeywordDashboard } from '@/apps/seo-geo/lib/keywordConfig';
+import { KEYWORD_DASHBOARD_PROPERTY_IDS } from '@/apps/seo-geo/lib/keywordConfig';
+import { listGscConnections, listQueryDaily } from '@/apps/seo-geo/lib/keywordApi';
+import { rollupQueries, totals } from '@/apps/seo-geo/lib/keywordScore';
+import type { KeywordCardStat } from '@/apps/seo-geo/lib/keywordTypes';
+import { PropertyKeywordsStrip } from '@/apps/seo-geo/components/PropertyKeywordsStrip';
 import { scoreStatusClass } from '@/apps/seo-geo/lib/healthScore';
 import { listLatestSnapshots, refreshProperty, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
 import type { PropertyId } from '@/apps/seo-geo/lib/types';
@@ -21,6 +25,7 @@ export function PortfolioPage() {
   const navigate = useNavigate();
   const { session, loading: authLoading } = useAuth();
   const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
+  const [keywordStats, setKeywordStats] = useState<Record<string, KeywordCardStat>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<PropertyId | 'all' | null>(null);
@@ -28,12 +33,34 @@ export function PortfolioPage() {
   const load = useCallback(async (quiet = false) => {
     if (!session || !isSupabaseConfigured) {
       setSnapshots([]);
+      setKeywordStats({});
       return;
     }
     if (!quiet) setLoading(true);
     setError(null);
     try {
-      setSnapshots(await listLatestSnapshots());
+      const [nextSnapshots, connections, querySets] = await Promise.all([
+        listLatestSnapshots(),
+        listGscConnections(),
+        Promise.all(
+          KEYWORD_DASHBOARD_PROPERTY_IDS.map(async (id) => ({
+            id,
+            rows: await listQueryDaily(id),
+          })),
+        ),
+      ]);
+      const connectionById = new Map(connections.map((item) => [item.propertyId, item]));
+      const nextStats: Record<string, KeywordCardStat> = {};
+      for (const id of KEYWORD_DASHBOARD_PROPERTY_IDS) {
+        const querySet = querySets.find((item) => item.id === id);
+        nextStats[id] = {
+          propertyId: id,
+          connection: connectionById.get(id) ?? null,
+          totals: querySet ? totals(rollupQueries(querySet.rows)) : null,
+        };
+      }
+      setSnapshots(nextSnapshots);
+      setKeywordStats(nextStats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load snapshots');
     } finally {
@@ -74,8 +101,8 @@ export function PortfolioPage() {
           <div>
             <h2>Properties</h2>
             <p className="seo-geo-small">
-              Refresh re-fetches live HTML, robots.txt, sitemaps, and llms.txt. Same-day refreshes
-              update today&apos;s scores instead of adding another history bar.
+              Refresh re-fetches live HTML, robots.txt, sitemaps, and llms.txt. Keyword rankings
+              show on each card; open stsi.pro for the full table.
             </p>
           </div>
           {session && (
@@ -129,10 +156,14 @@ export function PortfolioPage() {
                     <ScoreRing label="GEO" score={geo} status={row?.health.geo.status} />
                   </div>
                 </button>
+                <PropertyKeywordsStrip
+                  propertyId={property.id}
+                  stat={keywordStats[property.id] ?? null}
+                  onOpen={(path) => navigate(path)}
+                />
                 <div className="seo-geo-property-actions">
                   <span className="seo-geo-small">
                     {row ? `Checked ${formatWhen(row.fetchedAt)}` : 'No snapshot yet'}
-                    {hasKeywordDashboard(property.id) ? ' · Keywords available' : ''}
                   </span>
                   {session && (
                     <RefreshButton

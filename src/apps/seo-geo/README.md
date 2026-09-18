@@ -13,6 +13,7 @@ Internal health dashboard for search and generative-engine readiness across STSI
 | Portfolio | `pages/PortfolioPage.tsx` |
 | Property detail | `pages/PropertyPage.tsx` |
 | Keywords tab | `components/KeywordsPanel.tsx` |
+| Keywords card strip | `components/PropertyKeywordsStrip.tsx` |
 | Properties | `lib/properties.ts` |
 | Fetch parsers | `lib/parseSnapshot.ts` |
 | Scoring (pure) | `lib/healthScore.ts` |

@@ -150,6 +150,7 @@ GSC data is 1–3 days behind. Average position is impression-weighted over the 
 | API | `src/apps/seo-geo/lib/snapshotApi.ts` |
 | Keywords API | `src/apps/seo-geo/lib/keywordApi.ts` |
 | Portfolio | `src/apps/seo-geo/pages/PortfolioPage.tsx` |
+| Keywords card strip | `src/apps/seo-geo/components/PropertyKeywordsStrip.tsx` |
 | Detail | `src/apps/seo-geo/pages/PropertyPage.tsx` |
 | Collector | `scripts/collect-seo-geo.mjs` |
 | GSC collector | `scripts/collect-gsc-queries.mjs` |

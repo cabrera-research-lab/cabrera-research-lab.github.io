@@ -38,3 +38,17 @@ export type QueryRollup = {
   pages: Set<string>;
   brand: boolean;
 };
+
+export type KeywordCardTotals = {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  queries: number;
+};
+
+export type KeywordCardStat = {
+  propertyId: string;
+  connection: GscConnection | null;
+  totals: KeywordCardTotals | null;
+};
