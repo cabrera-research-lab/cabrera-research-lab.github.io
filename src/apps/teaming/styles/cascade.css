@@ -583,6 +583,40 @@
   background: #f2faf6;
 }
 
+.prio-meta {
+  display: grid;
+  grid-template-columns: minmax(132px, 168px) 1fr;
+  gap: 8px;
+}
+
+.f-owner {
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.prio-carry {
+  border: 0;
+  background: none;
+  color: var(--signal-700);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 0 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: fit-content;
+}
+
+.prio-carry:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.prio-carry:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .prio-del {
   border: 1px solid var(--line-strong);
   background: #fff;
@@ -1092,6 +1126,10 @@
   .prio-row {
     grid-template-columns: auto auto auto 1fr auto;
     gap: 6px;
+  }
+
+  .prio-meta {
+    grid-template-columns: 1fr;
   }
 
   .rung[data-c='monthly'],

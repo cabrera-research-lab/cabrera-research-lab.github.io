@@ -19,7 +19,12 @@ import type {
   UpdateRow,
 } from './types';
 import { resolveOrgPriorityTeamId, type OrgPriorityCadence } from './org';
-import { periodRange, periodStartForCadence, periodStartForPriority } from './periods';
+import {
+  carryForwardPeriodStart,
+  periodRange,
+  periodStartForCadence,
+  periodStartForPriority,
+} from './periods';
 
 function slugify(name: string): string {
   return name
@@ -441,9 +446,10 @@ export async function saveOrgPriorities(
   items: PriorityItemInput[],
   fallbackTeamId?: string | null,
   deleteIds: string[] = [],
+  periodStart?: string,
 ): Promise<void> {
-  const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence);
-  await savePrioritySet(teamId, cadence, items, deleteIds);
+  const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence, periodStart);
+  await savePrioritySet(teamId, cadence, items, deleteIds, periodStart);
 }
 
 export async function fetchOrgWeeklyPriorities(
@@ -464,9 +470,10 @@ export async function savePrioritySet(
   cadence: PriorityCadence,
   items: PriorityItemInput[],
   deleteIds: string[] = [],
+  periodStart?: string,
 ) {
   const sb = requireSupabase();
-  const period_start = periodStartForPriority(cadence);
+  const period_start = periodStart ?? periodStartForPriority(cadence);
 
   const { data: existing } = await sb
     .from('priority_sets')
@@ -520,6 +527,41 @@ export async function savePrioritySet(
   }
 }
 
+/** Copy a priority onto the next (or current, if viewing archive) period. */
+export async function carryOrgPriorityForward(
+  cadence: OrgPriorityCadence,
+  sourcePeriodStart: string,
+  item: PriorityItemInput,
+  fallbackTeamId?: string | null,
+): Promise<{ periodStart: string; alreadyPresent: boolean }> {
+  const goal = item.goal.trim();
+  if (!goal) throw new Error('Add a priority before carrying it forward.');
+
+  const periodStart = carryForwardPeriodStart(cadence, sourcePeriodStart);
+  const teamId = await resolveOrgPriorityTeamId(fallbackTeamId, cadence, periodStart);
+  const existing = await fetchPrioritySet(teamId, cadence, periodStart);
+  const destItems = (existing?.items ?? []).filter((row) => row.goal.trim());
+  const alreadyPresent = destItems.some(
+    (row) => row.goal.trim().toLowerCase() === goal.toLowerCase(),
+  );
+  if (alreadyPresent) return { periodStart, alreadyPresent: true };
+
+  const emptyIds = (existing?.items ?? [])
+    .filter((row) => !row.goal.trim() && row.id)
+    .map((row) => row.id as string);
+  const copy: PriorityItemInput = {
+    id: crypto.randomUUID(),
+    sort_order: destItems.length,
+    goal: item.goal,
+    owner: item.owner,
+    metric: item.metric,
+    action: item.action,
+    completed: false,
+  };
+  await savePrioritySet(teamId, cadence, [copy], emptyIds, periodStart);
+  return { periodStart, alreadyPresent: false };
+}
+
 export function formatTargetsText(
   items: PriorityItemInput[],
   empty: string,
@@ -529,6 +571,7 @@ export function formatTargetsText(
     if (!item.goal.trim()) return;
     const mark = item.completed ? '✓ ' : '';
     let line = `${idx + 1}. ${mark}${item.goal.trim()}`;
+    if (item.owner.trim()) line += `\n   Owner: ${item.owner.trim()}`;
     if (item.metric.trim()) line += `\n   Metric: ${item.metric.trim()}`;
     lines.push(line);
   });

@@ -95,6 +95,23 @@ export function latestArchivePeriodStart(cadence: Cadence, date = new Date()): s
   return shiftPeriodStart(cadence, periodStartForCadence(cadence, date), -1);
 }
 
+export function periodNoun(cadence: PriorityCadence): 'week' | 'month' | 'quarter' {
+  if (cadence === 'weekly') return 'week';
+  if (cadence === 'monthly') return 'month';
+  return 'quarter';
+}
+
+/** Past items land on the current period; current items go to the next one. */
+export function carryForwardPeriodStart(
+  cadence: PriorityCadence,
+  sourcePeriodStart: string,
+  date = new Date(),
+): string {
+  const current = periodStartForPriority(cadence, date);
+  if (sourcePeriodStart < current) return current;
+  return shiftPeriodStart(cadence, sourcePeriodStart, 1);
+}
+
 export function cadenceToPriorityParent(cadence: Cadence): PriorityCadence | null {
   if (cadence === 'daily') return 'weekly';
   if (cadence === 'weekly') return 'monthly';

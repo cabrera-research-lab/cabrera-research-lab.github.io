@@ -5,13 +5,21 @@ import { Onboarding } from '@/apps/teaming/components/Onboarding';
 import { PeriodNavigator } from '@/apps/teaming/components/PeriodNavigator';
 import { getCadence, isPriorityCadence } from '@/apps/teaming/lib/cadenceConfig';
 import { getConsiderationPrompts } from '@/apps/teaming/lib/orgSettings';
-import { fetchOrgPriorities, listOrgPriorityArchivePeriods, saveOrgPriorities } from '@/apps/teaming/lib/api';
 import {
+  carryOrgPriorityForward,
+  fetchOrgPriorities,
+  listOrgPriorityArchivePeriods,
+  saveOrgPriorities,
+} from '@/apps/teaming/lib/api';
+import {
+  carryForwardPeriodStart,
   formatPeriodLabel,
   latestArchivePeriodStart,
+  periodNoun,
   periodStartForPriority,
   shiftPeriodStart,
 } from '@/apps/teaming/lib/periods';
+import { ownerOptions } from '@/apps/teaming/lib/teamRoster';
 import type { Cadence, PriorityItemInput } from '@/apps/teaming/lib/types';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useOrgSettings } from '@/apps/teaming/hooks/useOrgSettings';
@@ -93,6 +101,8 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const [loading, setLoading] = useState(true);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [carriedIds, setCarriedIds] = useState<Set<string>>(new Set());
+  const [carryingId, setCarryingId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const onCountChangeRef = useRef(onCountChange);
@@ -111,7 +121,17 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const latestArchive = priorityCadence ? latestArchivePeriodStart(priorityCadence) : '';
   const activePeriod = view === 'archive' ? archivePeriod : currentPeriod;
   const canEdit = Boolean(team?.id) && view === 'current';
+  const canCarry = Boolean(team?.id && priorityCadence);
   const hasGoals = items.some((item) => item.goal.trim());
+  const destPeriod =
+    priorityCadence && activePeriod
+      ? carryForwardPeriodStart(priorityCadence, activePeriod)
+      : '';
+  const destIsCurrent = Boolean(destPeriod && destPeriod === currentPeriod);
+  const carryNoun = priorityCadence ? periodNoun(priorityCadence) : 'week';
+  const carryLabel = destIsCurrent
+    ? `Carry forward to this ${carryNoun}`
+    : `Carry forward to next ${carryNoun}`;
 
   const refreshArchivePeriods = useCallback(async () => {
     if (!priorityCadence) return [] as string[];
@@ -196,6 +216,8 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
   useEffect(() => {
     clearPendingEdits();
+    setCarriedIds(new Set());
+    setCarryingId(null);
     void load();
   }, [load, clearPendingEdits]);
 
@@ -245,7 +267,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
     savingRef.current = true;
     try {
-      await saveOrgPriorities(priorityCadence, toUpsert, team.id, deleteIds);
+      await saveOrgPriorities(priorityCadence, toUpsert, team.id, deleteIds, currentPeriod);
       for (const item of toUpsert) dirtyIds.delete(item.id);
       deletedIdsRef.current.clear();
       onCountChangeRef.current?.(filledCount(normalized));
@@ -272,13 +294,58 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     }, 800);
   }
 
-  function updateItem(index: number, field: 'goal' | 'metric', value: string) {
+  function updateItem(index: number, field: 'goal' | 'metric' | 'owner', value: string) {
     setItems((prev) => {
       const next = prev.map((it, i) => (i === index ? { ...it, [field]: value } : it));
       dirtyIdsRef.current.add(next[index].id);
       scheduleSave(next);
       return next;
     });
+  }
+
+  function markCarried(id: string) {
+    setCarriedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }
+
+  async function carryForward(index: number) {
+    if (!priorityCadence || !team || !canCarry) return;
+    const item = items[index];
+    if (!item?.goal.trim() || carryingId) return;
+    setCarryingId(item.id);
+    try {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        await persist(itemsRef.current);
+      }
+      const result = await carryOrgPriorityForward(
+        priorityCadence,
+        activePeriod,
+        item,
+        team.id,
+      );
+      markCarried(item.id);
+      const label = formatPeriodLabel(priorityCadence, result.periodStart);
+      if (result.alreadyPresent) {
+        setStatus(`Already on ${label}.`);
+      } else {
+        setStatus(
+          destIsCurrent
+            ? `Carried forward to this ${carryNoun}.`
+            : `Carried forward to next ${carryNoun}.`,
+        );
+      }
+      window.setTimeout(() => setStatus(''), 2200);
+      void refreshArchivePeriods();
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : 'Carry forward failed');
+    } finally {
+      setCarryingId(null);
+    }
   }
 
   function toggleCompleted(index: number) {
@@ -498,17 +565,53 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                       disabled={!canEdit}
                       onChange={(e) => updateItem(idx, 'goal', e.target.value)}
                     />
-                    <div className="metric-wrap">
-                      <span className="mlabel">Success metric</span>
-                      <input
-                        className="f-in f-metric"
-                        placeholder="How we'll know it worked"
-                        aria-label="Success metric"
-                        value={item.metric}
-                        disabled={!canEdit}
-                        onChange={(e) => updateItem(idx, 'metric', e.target.value)}
-                      />
+                    <div className="prio-meta">
+                      <div className="metric-wrap">
+                        <span className="mlabel">Owner</span>
+                        <select
+                          className="f-in f-owner"
+                          aria-label={`Owner for priority ${idx + 1}`}
+                          value={item.owner}
+                          disabled={!canEdit}
+                          onChange={(e) => updateItem(idx, 'owner', e.target.value)}
+                        >
+                          <option value="">Unassigned</option>
+                          {ownerOptions(item.owner).map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="metric-wrap">
+                        <span className="mlabel">Success metric</span>
+                        <input
+                          className="f-in f-metric"
+                          placeholder="How we'll know it worked"
+                          aria-label="Success metric"
+                          value={item.metric}
+                          disabled={!canEdit}
+                          onChange={(e) => updateItem(idx, 'metric', e.target.value)}
+                        />
+                      </div>
                     </div>
+                    {canCarry && item.goal.trim() ? (
+                      <button
+                        type="button"
+                        className="prio-carry"
+                        disabled={carryingId === item.id || carriedIds.has(item.id)}
+                        title={carryLabel}
+                        onClick={() => {
+                          void carryForward(idx);
+                        }}
+                      >
+                        {carriedIds.has(item.id)
+                          ? 'Carried forward'
+                          : carryingId === item.id
+                            ? 'Carrying…'
+                            : carryLabel}
+                      </button>
+                    ) : null}
                   </div>
                   {canEdit ? (
                     <button
