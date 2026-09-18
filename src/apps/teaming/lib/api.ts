@@ -571,7 +571,7 @@ export function formatTargetsText(
     if (!item.goal.trim()) return;
     const mark = item.completed ? '✓ ' : '';
     let line = `${idx + 1}. ${mark}${item.goal.trim()}`;
-    if (item.owner.trim()) line += `\n   Owner: ${item.owner.trim()}`;
+    if (item.owner.trim()) line += `\n   Driver: ${item.owner.trim()}`;
     if (item.metric.trim()) line += `\n   Metric: ${item.metric.trim()}`;
     lines.push(line);
   });

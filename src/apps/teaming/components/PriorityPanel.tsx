@@ -612,10 +612,10 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                     />
                     <div className="prio-meta">
                       <div className="metric-wrap">
-                        <span className="mlabel">Owner</span>
+                        <span className="mlabel">Driver</span>
                         <select
                           className="f-in f-owner"
-                          aria-label={`Owner for priority ${idx + 1}`}
+                          aria-label={`Driver for priority ${idx + 1}`}
                           value={item.owner}
                           disabled={!canEdit}
                           onChange={(e) => updateItem(idx, 'owner', e.target.value)}

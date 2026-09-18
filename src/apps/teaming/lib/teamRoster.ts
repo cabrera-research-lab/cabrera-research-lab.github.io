@@ -1,4 +1,4 @@
-/** Named owners for weekly, monthly, and quarterly priorities. */
+/** Named drivers for weekly, monthly, and quarterly priorities. */
 export const TEAM_ROSTER = ['Dave', 'Derek', 'Elena', 'Laura', 'Sree'] as const;
 
 export type TeamRosterName = (typeof TEAM_ROSTER)[number];
