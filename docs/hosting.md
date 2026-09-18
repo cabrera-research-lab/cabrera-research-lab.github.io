@@ -28,6 +28,7 @@ Users sign in with **email and password** (real addresses, e.g. work email).
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
    - `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY` (service role / secret key — collector only, never a Vite env)
+   - `GSC_SERVICE_ACCOUNT_JSON` (optional; Google service account JSON for stsi.pro keyword collect)
 2. Settings → Pages → Build and deployment → Source: **GitHub Actions** (not “Deploy from branch”).
    - If Source is set to `main` / `/`, GitHub serves raw repo files and the browser loads `/src/main.tsx` with the wrong MIME type (`application/octet-stream`).
 3. After the first deploy, the site is live at **https://cabrera-research-lab.github.io/** (org Pages site from `cabrera-research-lab.github.io` repo).
@@ -50,9 +51,10 @@ Push to `main`. The workflow [`.github/workflows/deploy.yml`](../.github/workflo
 
 The dashboard cannot crawl third-party sites from the browser. Signed-in **Refresh** calls Postgres function `seo_geo_collect`. A GitHub Action [`.github/workflows/seo-geo-collect.yml`](../.github/workflows/seo-geo-collect.yml) still fetches nightly.
 
-1. Run migrations `20260903180000_seo_geo_snapshots.sql`, `20260911143000_seo_geo_one_snapshot_per_day.sql`, and `20260911160000_seo_geo_collect_rpc.sql` in the Supabase SQL editor.
+1. Run migrations `20260903180000_seo_geo_snapshots.sql`, `20260911143000_seo_geo_one_snapshot_per_day.sql`, `20260911160000_seo_geo_collect_rpc.sql`, and `20260918000000_seo_geo_gsc_queries.sql` in the Supabase SQL editor.
 2. Add GitHub secret `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY` (nightly Action only).
-3. In `/seo-geo`, click **Refresh** on a property (or wait for 06:00 UTC).
+3. For stsi.pro keywords, add GitHub secret `GSC_SERVICE_ACCOUNT_JSON` (Search Console service account JSON) and the same value as an Edge Function secret on `seo-geo-collect-gsc`.
+4. In `/seo-geo`, click **Refresh** on a property (or wait for 06:00 UTC). Keywords: `/seo-geo/stsi-pro?tab=keywords`.
 
 Local dry-run: `npm run collect:seo-geo -- --dry-run`
 

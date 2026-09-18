@@ -59,6 +59,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full separation guide
 | `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
 | `npm run collect:seo-geo` | Fetch public pages and store SEO/GEO snapshots |
+| `npm run collect:gsc` | Fetch Google Search Console queries for stsi.pro |
 
 ## Teaming (TE∆M)
 
@@ -84,6 +85,7 @@ Internal QC for search and generative-engine health on **practice.stsi.pro** (`s
 - Route: `/seo-geo`
 - Soft auth gate: snapshots require sign-in
 - **Refresh** on each property (and Refresh all) re-fetches live pages; same-day runs update today’s bars
-- Nightly GitHub Action still writes `seo_geo_snapshots`
+- **Keywords** tab on stsi.pro shows Google Search Console query rankings (separate from health scores)
+- Nightly GitHub Action still writes `seo_geo_snapshots` and, when configured, GSC query rows
 
 Built from the TE∆MING SYSTEM prototype. Stack: **Vite + React + TypeScript**, **Supabase**, deployed on **GitHub Pages** at [cabrera-research-lab.github.io](https://cabrera-research-lab.github.io/).

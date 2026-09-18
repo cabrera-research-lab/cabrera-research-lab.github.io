@@ -496,6 +496,150 @@
   font-size: 12px;
 }
 
+.seo-geo-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.seo-geo-tab {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--goat-slate);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.seo-geo-tab.active {
+  border-color: var(--pst-blue);
+  background: #eef0ff;
+  color: var(--pst-blue);
+}
+
+.seo-geo-keyword-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0 8px;
+}
+
+.seo-geo-setup {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #555;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.seo-geo-setup li + li {
+  margin-top: 6px;
+}
+
+.seo-geo-filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.seo-geo-filter {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--goat-slate);
+}
+
+.seo-geo-filter.active {
+  border-color: var(--pst-blue);
+  background: #eef0ff;
+  color: var(--pst-blue);
+}
+
+.seo-geo-scorecards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.seo-geo-scorecard {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.seo-geo-scorecard dt {
+  margin: 0 0 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #70737d;
+}
+
+.seo-geo-scorecard dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.seo-geo-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.seo-geo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.seo-geo-table th,
+.seo-geo-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.seo-geo-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #70737d;
+  font-weight: 800;
+}
+
+.seo-geo-page-cell {
+  max-width: 240px;
+  word-break: break-all;
+  color: #555;
+}
+
+.seo-geo-mini-chip {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #eef0ff;
+  color: var(--pst-blue);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
 .seo-geo code {
   font-size: 12px;
   background: #eef0f4;
@@ -507,7 +651,8 @@
   .seo-geo-portfolio,
   .seo-geo-grid,
   .seo-geo-score-row,
-  .seo-geo-property-scores {
+  .seo-geo-property-scores,
+  .seo-geo-scorecards {
     grid-template-columns: 1fr;
   }
 

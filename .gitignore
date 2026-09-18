@@ -14,8 +14,13 @@ dev-dist/
 .vite/
 *.tsbuildinfo
 
+# Google Search Console service account keys (never commit)
+seo-geo-gsc.json
+*-gsc.json
+
 # Supabase CLI local state
 .supabase/
+supabase/.temp/
 
 # Logs
 *.log

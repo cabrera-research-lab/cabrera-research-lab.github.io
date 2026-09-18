@@ -38,3 +38,20 @@ jobs:
           else
             node scripts/collect-seo-geo.mjs
           fi
+
+      - name: Fetch Google Search Console queries for stsi.pro
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SEO_GEO_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEO_GEO_SUPABASE_SERVICE_ROLE_KEY }}
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          PROPERTY_ID: ${{ github.event.inputs.property_id || 'all' }}
+        run: |
+          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ]; then
+            echo "Skipping GSC collect; GSC_SERVICE_ACCOUNT_JSON is not set."
+            exit 0
+          fi
+          if [ "$PROPERTY_ID" != "" ] && [ "$PROPERTY_ID" != "all" ] && [ "$PROPERTY_ID" != "stsi-pro" ]; then
+            echo "Skipping GSC collect; keywords are stsi.pro only."
+            exit 0
+          fi
+          node scripts/collect-gsc-queries.mjs --property stsi-pro

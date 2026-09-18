@@ -7,6 +7,7 @@ import { ScoreRing } from '@/apps/seo-geo/components/ScoreRing';
 import { RefreshButton } from '@/apps/seo-geo/components/RefreshButton';
 import { seoGeoLoginPath, seoGeoPath } from '@/apps/seo-geo/constants';
 import { PROPERTIES } from '@/apps/seo-geo/lib/properties';
+import { hasKeywordDashboard } from '@/apps/seo-geo/lib/keywordConfig';
 import { scoreStatusClass } from '@/apps/seo-geo/lib/healthScore';
 import { listLatestSnapshots, refreshProperty, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
 import type { PropertyId } from '@/apps/seo-geo/lib/types';
@@ -131,6 +132,7 @@ export function PortfolioPage() {
                 <div className="seo-geo-property-actions">
                   <span className="seo-geo-small">
                     {row ? `Checked ${formatWhen(row.fetchedAt)}` : 'No snapshot yet'}
+                    {hasKeywordDashboard(property.id) ? ' · Keywords available' : ''}
                   </span>
                   {session && (
                     <RefreshButton

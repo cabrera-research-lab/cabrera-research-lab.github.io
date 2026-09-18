@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 import { SeoGeoHeader } from '@/apps/seo-geo/components/SeoGeoHeader';
 import { ScoreRing } from '@/apps/seo-geo/components/ScoreRing';
 import { CheckList } from '@/apps/seo-geo/components/CheckList';
 import { HistoryChart } from '@/apps/seo-geo/components/HistoryChart';
+import { KeywordsPanel } from '@/apps/seo-geo/components/KeywordsPanel';
 import { SEO_GEO_BASE, seoGeoLoginPath, seoGeoPath } from '@/apps/seo-geo/constants';
 import { getProperty, isPropertyId } from '@/apps/seo-geo/lib/properties';
+import { hasKeywordDashboard } from '@/apps/seo-geo/lib/keywordConfig';
 import { listPropertyHistory, refreshProperty, type SnapshotRow } from '@/apps/seo-geo/lib/snapshotApi';
 import { RefreshButton } from '@/apps/seo-geo/components/RefreshButton';
 import type { PropertyId } from '@/apps/seo-geo/lib/types';
@@ -28,11 +30,13 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 export function PropertyPage() {
   const { propertyId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { session, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<SnapshotRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const tab = searchParams.get('tab') === 'keywords' ? 'keywords' : 'health';
 
   const load = useCallback(async (quiet = false) => {
     if (!session || !isSupabaseConfigured || !isPropertyId(propertyId)) {
@@ -80,6 +84,10 @@ export function PropertyPage() {
   const latest = rows[0] ?? null;
   const page = latest?.parsed.home;
   const robots = latest?.parsed.robots;
+  const showKeywords = hasKeywordDashboard(property.id);
+  const onTab = (next: 'health' | 'keywords') => {
+    setSearchParams(next === 'keywords' ? { tab: 'keywords' } : {}, { replace: true });
+  };
 
   return (
     <div className="seo-geo">
@@ -103,21 +111,41 @@ export function PropertyPage() {
         <p className="seo-geo-kicker">{property.platformLabel}</p>
         <h2>{property.label}</h2>
         <p className="seo-geo-small">{property.description}</p>
+        {showKeywords && (
+          <div className="seo-geo-tabs">
+            <button
+              type="button"
+              className={`seo-geo-tab${tab === 'health' ? ' active' : ''}`}
+              onClick={() => onTab('health')}
+            >
+              Health
+            </button>
+            <button
+              type="button"
+              className={`seo-geo-tab${tab === 'keywords' ? ' active' : ''}`}
+              onClick={() => onTab('keywords')}
+            >
+              Keywords
+            </button>
+          </div>
+        )}
       </section>
 
       {!authLoading && isSupabaseConfigured && !session && (
         <p className="seo-geo-signin-prompt">
           Sign in to view checks and history.{' '}
-          <Link to={seoGeoLoginPath(seoGeoPath(propertyId))} className="seo-geo-link">
+          <Link to={seoGeoLoginPath(seoGeoPath(propertyId) + (tab === 'keywords' ? '?tab=keywords' : ''))} className="seo-geo-link">
             Sign in
           </Link>
         </p>
       )}
 
-      {loading && <p className="seo-geo-small">Loading snapshots…</p>}
-      {error && <p className="seo-geo-error">{error}</p>}
+      {showKeywords && tab === 'keywords' && session && <KeywordsPanel propertyId={property.id} />}
 
-      {session && !loading && !latest && (
+      {tab === 'health' && loading && <p className="seo-geo-small">Loading snapshots…</p>}
+      {tab === 'health' && error && <p className="seo-geo-error">{error}</p>}
+
+      {tab === 'health' && session && !loading && !latest && (
         <section className="seo-geo-card">
           <h2>No snapshots yet</h2>
           <p className="seo-geo-small">
@@ -126,7 +154,7 @@ export function PropertyPage() {
         </section>
       )}
 
-      {latest && (
+      {tab === 'health' && latest && (
         <>
           <section className="seo-geo-card">
             <div className="seo-geo-score-row">

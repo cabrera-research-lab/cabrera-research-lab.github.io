@@ -118,6 +118,7 @@ SEO & GEO nested routes (in `apps/seo-geo/routes.tsx`):
 
 - `/seo-geo` — property portfolio
 - `/seo-geo/:propertyId` — checks and history (`practice`, `stsi-pro`, `camp`, `jost`, `cabreralab`, `evidence`)
+- `/seo-geo/stsi-pro?tab=keywords` — GSC keyword rankings for the marketing site
 
 ## Authentication
 
@@ -143,7 +144,7 @@ Migrations live in `supabase/migrations/`. Tables are namespaced by app:
 
 **Mission Moments:** `mission_moments_cohorts`, `mission_moments_cohort_activity`
 
-**SEO & GEO:** `seo_geo_snapshots` (authenticated SELECT; collector inserts with the service role)
+**SEO & GEO:** `seo_geo_snapshots`, `seo_geo_gsc_connections`, `seo_geo_target_keywords`, `seo_geo_query_daily` (authenticated SELECT; collectors insert with the service role)
 
 All use `auth.users` and `profiles`. No cross-app foreign keys.
 
