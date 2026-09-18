@@ -180,6 +180,12 @@
   margin: 0 0 12px;
 }
 
+.seo-geo-notice {
+  color: var(--warn);
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
 .seo-geo-portfolio {
   list-style: none;
   margin: 18px 0 0;

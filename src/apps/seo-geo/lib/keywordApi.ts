@@ -90,14 +90,31 @@ export async function listQueryDaily(propertyId: PropertyId, since = windowStart
   }));
 }
 
-export async function refreshKeywords(propertyId: PropertyId = 'stsi-pro'): Promise<void> {
-  const { data, error } = await requireSupabase().functions.invoke('seo-geo-collect-gsc', {
-    body: { propertyId },
-  });
-  if (error) {
-    throw new Error(error.message || 'Keyword refresh failed');
+export async function refreshKeywords(propertyId: PropertyId = 'stsi-pro'): Promise<'live' | 'stored'> {
+  try {
+    const { data, error } = await requireSupabase().functions.invoke('seo-geo-collect-gsc', {
+      body: { propertyId },
+    });
+    if (error) {
+      if (isEdgeFunctionUnavailable(error)) return 'stored';
+      throw new Error(error.message || 'Keyword refresh failed');
+    }
+    if (data && typeof data === 'object' && 'error' in data && data.error) {
+      throw new Error(String(data.error));
+    }
+    return 'live';
+  } catch (err) {
+    if (isEdgeFunctionUnavailable(err)) return 'stored';
+    throw err;
   }
-  if (data && typeof data === 'object' && 'error' in data && data.error) {
-    throw new Error(String(data.error));
-  }
+}
+
+function isEdgeFunctionUnavailable(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  const name = error instanceof Error ? error.name : '';
+  return (
+    name === 'FunctionsFetchError' ||
+    /Failed to send a request to the Edge Function/i.test(message) ||
+    /Edge Function returned a non-2xx status code/i.test(message)
+  );
 }

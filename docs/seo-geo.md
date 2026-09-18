@@ -132,7 +132,8 @@ Keyword rankings are **not** part of the health score. They live on the Keywords
 2. Create a Google Cloud service account, enable **Search Console API**, and add the service-account email as a user on that GSC property.
 3. Store the JSON key as `GSC_SERVICE_ACCOUNT_JSON` (GitHub Actions secret and Edge Function secret `seo-geo-collect-gsc`).
 4. Apply `20260918000000_seo_geo_gsc_queries.sql`.
-5. Run `npm run collect:gsc` or **Refresh keywords** on `/seo-geo/stsi-pro?tab=keywords`.
+5. Run `npm run collect:gsc` or wait for the nightly GitHub Action. **Refresh keywords** reloads stored rows.
+6. Optional in-app live pull: deploy Edge Function `seo-geo-collect-gsc` (`npx supabase functions deploy seo-geo-collect-gsc`) and set secret `GSC_SERVICE_ACCOUNT_JSON`. Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run workflow **Deploy GSC Edge Function**.
 
 Tables: `seo_geo_gsc_connections`, `seo_geo_target_keywords`, `seo_geo_query_daily`. RLS: authenticated SELECT; collector writes with the service role.
 

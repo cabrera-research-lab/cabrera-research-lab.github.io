@@ -43,6 +43,7 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(
     async (quiet = false) => {
@@ -73,15 +74,18 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setError(null);
+    setNotice(null);
     try {
-      await refreshKeywords(propertyId);
+      const mode = await refreshKeywords(propertyId);
       await load(true);
+      if (mode === 'stored') {
+        setNotice(
+          'Reloaded the last stored Search Console snapshot. In-app live pull is not deployed yet; nightly GitHub collect is the live source.',
+        );
+      }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Keyword refresh failed. Deploy seo-geo-collect-gsc and set GSC_SERVICE_ACCOUNT_JSON.',
-      );
+      setError(err instanceof Error ? err.message : 'Keyword refresh failed.');
+      await load(true).catch(() => undefined);
     } finally {
       setRefreshing(false);
     }
@@ -105,7 +109,8 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
             <h2>Keywords · last 28 days</h2>
             <p className="seo-geo-small">
               Google Search Console queries for stsi.pro. Average position is impression-weighted.
-              Recent days can still be unfinalized.
+              Recent days can still be unfinalized. Refresh reloads stored rows; live GSC collect
+              runs nightly on GitHub.
             </p>
           </div>
           <button type="button" className="seo-geo-refresh" disabled={refreshing} onClick={onRefresh}>
@@ -119,6 +124,7 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
         </div>
 
         {loading && <p className="seo-geo-small">Loading keyword rows…</p>}
+        {notice && <p className="seo-geo-notice">{notice}</p>}
         {error && <p className="seo-geo-error">{error}</p>}
         {connection?.lastError && connection.status !== 'connected' && (
           <p className="seo-geo-error">{connection.lastError}</p>
