@@ -60,6 +60,22 @@ function filledCount(items: LocalItem[]): number {
   return items.filter((item) => item.goal.trim()).length;
 }
 
+function goalKey(goal: string): string {
+  return goal.trim().toLowerCase();
+}
+
+function carriedIdsFromDest(localItems: LocalItem[], destItems: PriorityItemInput[]): Set<string> {
+  const destGoals = new Set(destItems.map((item) => goalKey(item.goal)).filter(Boolean));
+  return new Set(
+    localItems
+      .filter((item) => {
+        const key = goalKey(item.goal);
+        return Boolean(key) && destGoals.has(key);
+      })
+      .map((item) => item.id),
+  );
+}
+
 /** Keep local edits for dirty rows; adopt remote for everything else. */
 function mergeRemoteItems(local: LocalItem[], remote: LocalItem[], dirtyIds: Set<string>): LocalItem[] {
   const localById = new Map(local.map((item) => [item.id, item]));
@@ -110,6 +126,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const destItemsRef = useRef<PriorityItemInput[]>([]);
   const dirtyIdsRef = useRef<Set<string>>(new Set());
   const deletedIdsRef = useRef<Set<string>>(new Set());
   const savingRef = useRef(false);
@@ -171,7 +188,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     pendingRemoteReloadRef.current = false;
   }, []);
 
-  const applyRemote = useCallback((remote: LocalItem[]) => {
+  const applyRemote = useCallback((remote: LocalItem[]): LocalItem[] => {
     const dirtyIds = dirtyIdsRef.current;
     const next =
       dirtyIds.size > 0
@@ -183,6 +200,12 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     if (viewRef.current === 'current') {
       onCountChangeRef.current?.(filledCount(next));
     }
+    return next;
+  }, []);
+
+  const syncCarried = useCallback((localItems: LocalItem[], destItems?: PriorityItemInput[]) => {
+    if (destItems) destItemsRef.current = destItems;
+    setCarriedIds(carriedIdsFromDest(localItems, destItemsRef.current));
   }, []);
 
   const load = useCallback(
@@ -191,10 +214,17 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
       if (!opts?.silent) setLoading(true);
       try {
         const periodStart = opts?.periodStart ?? activePeriod;
-        const loaded = await fetchOrgPriorities(priorityCadence, team?.id, periodStart);
+        const destStart = destPeriod && destPeriod !== periodStart ? destPeriod : '';
+        const [loaded, destLoaded] = await Promise.all([
+          fetchOrgPriorities(priorityCadence, team?.id, periodStart),
+          destStart
+            ? fetchOrgPriorities(priorityCadence, team?.id, destStart)
+            : Promise.resolve([] as PriorityItemInput[]),
+        ]);
         const remote = loaded.length ? toLocalItems(loaded) : [];
         if (opts?.merge && viewRef.current === 'current') {
-          applyRemote(remote);
+          const next = applyRemote(remote);
+          syncCarried(next, destStart ? destLoaded : undefined);
         } else {
           const next =
             remote.length > 0
@@ -203,6 +233,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                 ? [emptyItem(0)]
                 : [];
           setItems(next);
+          syncCarried(next, destStart ? destLoaded : undefined);
           if (viewRef.current === 'current') {
             onCountChangeRef.current?.(filledCount(next));
           }
@@ -211,12 +242,11 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
         if (!opts?.silent) setLoading(false);
       }
     },
-    [team?.id, priorityCadence, activePeriod, applyRemote],
+    [team?.id, priorityCadence, activePeriod, destPeriod, applyRemote, syncCarried],
   );
 
   useEffect(() => {
     clearPendingEdits();
-    setCarriedIds(new Set());
     setCarryingId(null);
     void load();
   }, [load, clearPendingEdits]);
@@ -299,6 +329,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
       const next = prev.map((it, i) => (i === index ? { ...it, [field]: value } : it));
       dirtyIdsRef.current.add(next[index].id);
       scheduleSave(next);
+      if (field === 'goal') syncCarried(next);
       return next;
     });
   }
@@ -329,6 +360,19 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
         team.id,
       );
       markCarried(item.id);
+      try {
+        const destItems = await fetchOrgPriorities(
+          priorityCadence,
+          team.id,
+          result.periodStart,
+        );
+        const next = carriedIdsFromDest(itemsRef.current, destItems);
+        next.add(item.id);
+        destItemsRef.current = destItems;
+        setCarriedIds(next);
+      } catch {
+        // Keep the optimistic mark if the destination list cannot be reloaded.
+      }
       const label = formatPeriodLabel(priorityCadence, result.periodStart);
       if (result.alreadyPresent) {
         setStatus(`Already on ${label}.`);
@@ -523,6 +567,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                 className={[
                   'prio-node',
                   item.completed ? 'is-complete' : '',
+                  carriedIds.has(item.id) ? 'is-carried' : '',
                   dragIndex === idx ? 'dragging' : '',
                   dropIndex === idx && dragIndex !== null && dragIndex !== idx
                     ? 'drop-target'
@@ -596,21 +641,25 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                       </div>
                     </div>
                     {canCarry && item.goal.trim() ? (
-                      <button
-                        type="button"
-                        className="prio-carry"
-                        disabled={carryingId === item.id || carriedIds.has(item.id)}
-                        title={carryLabel}
-                        onClick={() => {
-                          void carryForward(idx);
-                        }}
-                      >
-                        {carriedIds.has(item.id)
-                          ? 'Carried forward'
-                          : carryingId === item.id
-                            ? 'Carrying…'
-                            : carryLabel}
-                      </button>
+                      carriedIds.has(item.id) ? (
+                        <span className="prio-carry is-done">
+                          {destIsCurrent
+                            ? `Carried forward to this ${carryNoun}`
+                            : `Carried forward to next ${carryNoun}`}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="prio-carry"
+                          disabled={carryingId === item.id}
+                          title={carryLabel}
+                          onClick={() => {
+                            void carryForward(idx);
+                          }}
+                        >
+                          {carryingId === item.id ? 'Carrying…' : carryLabel}
+                        </button>
+                      )
                     ) : null}
                   </div>
                   {canEdit ? (

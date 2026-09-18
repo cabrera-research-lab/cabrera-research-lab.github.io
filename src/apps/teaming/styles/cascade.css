@@ -617,6 +617,17 @@
   cursor: default;
 }
 
+.prio-carry.is-done {
+  opacity: 1;
+  color: var(--green);
+  cursor: default;
+  text-decoration: none;
+}
+
+.prio-node.is-carried {
+  border-color: #cfe9de;
+}
+
 .prio-del {
   border: 1px solid var(--line-strong);
   background: #fff;
