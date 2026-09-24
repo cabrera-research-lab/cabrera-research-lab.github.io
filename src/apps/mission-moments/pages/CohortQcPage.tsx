@@ -503,6 +503,13 @@ export function CohortQcPage() {
             >
               Download QC Record
             </button>
+            <button
+              type="button"
+              className="tertiary"
+              onClick={() => showToast('Activity report generation is not connected yet')}
+            >
+              Generate activity report
+            </button>
           </div>
         </section>
 
