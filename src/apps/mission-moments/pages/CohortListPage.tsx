@@ -19,6 +19,12 @@ export function CohortListPage() {
   const [cohorts, setCohorts] = useState<CohortSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2000);
+  }, []);
 
   const loadCohorts = useCallback(async () => {
     if (!session || !isSupabaseConfigured) {
@@ -82,7 +88,7 @@ export function CohortListPage() {
         {cohorts.length > 0 && (
           <ul className="b2b-qc-list">
             {cohorts.map((cohort) => (
-              <li key={cohort.id}>
+              <li key={cohort.id} className="b2b-qc-list-row">
                 <button
                   type="button"
                   className="b2b-qc-list-item"
@@ -109,6 +115,13 @@ export function CohortListPage() {
                     <span className="b2b-qc-small">Updated {cohort.updated_at}</span>
                   </div>
                 </button>
+                <button
+                  type="button"
+                  className="tertiary b2b-qc-list-report"
+                  onClick={() => showToast('Activity report generation is not connected yet')}
+                >
+                  Generate activity report
+                </button>
               </li>
             ))}
           </ul>
@@ -116,6 +129,7 @@ export function CohortListPage() {
       </section>
 
       <div className="b2b-qc-footer">©2026 GO∆TNET Internal Private and Confidential</div>
+      {toast && <div className="b2b-qc-toast">{toast}</div>}
     </div>
   );
 }
