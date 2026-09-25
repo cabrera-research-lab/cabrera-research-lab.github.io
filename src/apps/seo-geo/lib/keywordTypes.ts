@@ -36,7 +36,27 @@ export type QueryRollup = {
   position: number;
   ctr: number;
   pages: Set<string>;
+  /** Landing page with the most impressions for this query. */
+  topPage: string;
   brand: boolean;
+};
+
+export type KeywordActionKind = 'snippet' | 'rank' | 'gap';
+
+export type KeywordAction = {
+  id: string;
+  kind: KeywordActionKind;
+  query: string;
+  brand: boolean;
+  page: string | null;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  position: number;
+  /** Typical CTR for this average position. Used only to rank snippet rewrites. */
+  expectedCtr: number;
+  missedClicks: number;
+  impact: number;
 };
 
 export type KeywordCardTotals = {

@@ -2,13 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getGscConnection, listQueryDaily, listTargetKeywords, refreshKeywords } from '@/apps/seo-geo/lib/keywordApi';
 import { getProperty } from '@/apps/seo-geo/lib/properties';
 import {
+  buildKeywordActions,
   connectionLabel,
   matchTargets,
   rollupQueries,
   totals,
   type KeywordFilter,
 } from '@/apps/seo-geo/lib/keywordScore';
-import type { GscConnection, QueryDailyRow, TargetKeyword } from '@/apps/seo-geo/lib/keywordTypes';
+import type {
+  GscConnection,
+  KeywordAction,
+  QueryDailyRow,
+  QueryRollup,
+  TargetKeyword,
+} from '@/apps/seo-geo/lib/keywordTypes';
 import type { PropertyId } from '@/apps/seo-geo/lib/types';
 
 function formatWhen(iso: string | null): string {
@@ -25,15 +32,54 @@ function formatPos(value: number): string {
   return value > 0 ? value.toFixed(1) : '—';
 }
 
-function pageLabel(pages: Set<string>): string {
-  const list = [...pages];
-  if (!list.length) return '—';
+function pagePath(url: string): string {
   try {
-    const path = new URL(list[0]).pathname;
-    return list.length > 1 ? `${path} +${list.length - 1}` : path || list[0];
+    const path = new URL(url).pathname;
+    return path && path !== '/' ? path : 'homepage';
   } catch {
-    return list[0];
+    return url;
   }
+}
+
+function pageLabel(row: QueryRollup): string {
+  if (!row.topPage) return '—';
+  const extra = Math.max(0, row.pages.size - 1);
+  const label = pagePath(row.topPage);
+  return extra ? `${label} +${extra}` : label;
+}
+
+const ACTION_KIND_LABEL: Record<KeywordAction['kind'], string> = {
+  snippet: 'Rewrite the snippet',
+  rank: 'Strengthen the page',
+  gap: 'Cover this phrase',
+};
+
+function actionImpact(action: KeywordAction): string {
+  if (action.kind === 'snippet') return `~${Math.round(action.missedClicks).toLocaleString()} clicks`;
+  if (action.kind === 'rank') return `pos ${formatPos(action.position)}`;
+  return 'no impressions';
+}
+
+function actionDetail(action: KeywordAction): string {
+  const pos = formatPos(action.position);
+  const impressions = action.impressions.toLocaleString();
+  const ctr = formatPct(action.ctr);
+  const expected = formatPct(action.expectedCtr);
+  const missed = Math.round(action.missedClicks).toLocaleString();
+  const where = action.page ? ` on ${pagePath(action.page)}` : '';
+
+  if (action.kind === 'snippet') {
+    return `Ranks at ${pos}${where} with ${impressions} impressions and ${ctr} CTR. A typical result near that rank earns about ${expected}, so the title and description are leaving about ${missed} clicks unclaimed.`;
+  }
+  if (action.kind === 'rank') {
+    const lead = action.page ? `${pagePath(action.page)} already appears` : 'The site already appears';
+    const move =
+      action.position > 10
+        ? 'A tighter page on this phrase can move it onto the first page.'
+        : 'A tighter page on this phrase can push it higher on the first page.';
+    return `${lead} for this query around position ${pos}, with ${impressions} impressions. ${move}`;
+  }
+  return 'This target phrase earned no impressions in the last 28 days. Publish a page, or retitle an existing one, so search can match it.';
 }
 
 export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
@@ -93,12 +139,15 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
   }, [load, propertyId]);
 
   const property = getProperty(propertyId);
+  const allRollups = useMemo(() => rollupQueries(rows, 'all'), [rows]);
   const rollups = useMemo(() => rollupQueries(rows, filter), [rows, filter]);
   const summary = useMemo(() => totals(rollups), [rollups]);
-  const targetRows = useMemo(
-    () => matchTargets(targets, rollupQueries(rows, 'all')),
-    [targets, rows],
+  const targetRows = useMemo(() => matchTargets(targets, allRollups), [targets, allRollups]);
+  const actions = useMemo(
+    () => buildKeywordActions(allRollups, targets, filter),
+    [allRollups, targets, filter],
   );
+  const showActions = connection?.status === 'connected' || rows.length > 0;
 
   const statusClass =
     connection?.status === 'connected' ? 'ready' : connection?.status === 'error' ? 'bad' : 'neutral';
@@ -177,6 +226,97 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
         </div>
       </section>
 
+      {showActions && (
+        <section className="seo-geo-card">
+          <h2>What to do next</h2>
+          <p className="seo-geo-small">
+            Highest-leverage edits from the last 28 days
+            {filter === 'brand' ? ' for brand queries' : filter === 'nonbrand' ? ' for non-brand queries' : ''}.
+            Snippet ideas compare click-through rate with a typical result at that position.
+          </p>
+          {actions.length === 0 ? (
+            <p className="seo-geo-empty">
+              Nothing stands out yet. Once a query has enough impressions, this list names a title rewrite, a
+              page to strengthen, or a target phrase that still has no visibility.
+            </p>
+          ) : (
+            <ol className="seo-geo-actions">
+              {actions.map((action) => (
+                <li key={action.id} className="seo-geo-action">
+                  <div className="seo-geo-action-top">
+                    <span className={`seo-geo-action-kind ${action.kind}`}>{ACTION_KIND_LABEL[action.kind]}</span>
+                    <span className="seo-geo-action-impact">{actionImpact(action)}</span>
+                  </div>
+                  <strong>
+                    {action.query}
+                    {action.brand ? <span className="seo-geo-mini-chip">brand</span> : null}
+                  </strong>
+                  <p>{actionDetail(action)}</p>
+                  {action.page && (
+                    <a className="seo-geo-link" href={action.page} target="_blank" rel="noreferrer">
+                      Open {pagePath(action.page)}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
+
+      <section className="seo-geo-card">
+        <h2>Queries Google already sends</h2>
+        <p className="seo-geo-small">
+          Sorted by impressions. The page link is the URL that earned the most impressions for that query.
+        </p>
+        <div className="seo-geo-table-wrap">
+          <table className="seo-geo-table">
+            <thead>
+              <tr>
+                <th>Query</th>
+                <th>Clicks</th>
+                <th>Impressions</th>
+                <th>CTR</th>
+                <th>Avg pos</th>
+                <th>Page</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rollups.slice(0, 50).map((row) => (
+                <tr key={row.query}>
+                  <td>
+                    {row.query || '(anonymized)'}
+                    {row.brand ? <span className="seo-geo-mini-chip">brand</span> : null}
+                  </td>
+                  <td>{row.clicks.toLocaleString()}</td>
+                  <td>{row.impressions.toLocaleString()}</td>
+                  <td>{formatPct(row.ctr)}</td>
+                  <td>{formatPos(row.position)}</td>
+                  <td className="seo-geo-page-cell">
+                    {row.topPage ? (
+                      <a className="seo-geo-link" href={row.topPage} target="_blank" rel="noreferrer">
+                        {pageLabel(row)}
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {!rollups.length && (
+                <tr>
+                  <td colSpan={6}>
+                    {connection?.status === 'connected'
+                      ? 'GSC is connected but there are no query rows in the last 28 days.'
+                      : 'No query rows yet. Connect GSC and refresh.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="seo-geo-card">
         <h2>Target phrases</h2>
         <p className="seo-geo-small">
@@ -209,49 +349,6 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
               {!targetRows.length && (
                 <tr>
                   <td colSpan={6}>No target phrases yet.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="seo-geo-card">
-        <h2>Queries Google already sends</h2>
-        <p className="seo-geo-small">Sorted by impressions. Landing page is the top URL for that query.</p>
-        <div className="seo-geo-table-wrap">
-          <table className="seo-geo-table">
-            <thead>
-              <tr>
-                <th>Query</th>
-                <th>Clicks</th>
-                <th>Impressions</th>
-                <th>CTR</th>
-                <th>Avg pos</th>
-                <th>Page</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rollups.slice(0, 50).map((row) => (
-                <tr key={row.query}>
-                  <td>
-                    {row.query || '(anonymized)'}
-                    {row.brand ? <span className="seo-geo-mini-chip">brand</span> : null}
-                  </td>
-                  <td>{row.clicks.toLocaleString()}</td>
-                  <td>{row.impressions.toLocaleString()}</td>
-                  <td>{formatPct(row.ctr)}</td>
-                  <td>{formatPos(row.position)}</td>
-                  <td className="seo-geo-page-cell">{pageLabel(row.pages)}</td>
-                </tr>
-              ))}
-              {!rollups.length && (
-                <tr>
-                  <td colSpan={6}>
-                    {connection?.status === 'connected'
-                      ? 'GSC is connected but there are no query rows in the last 28 days.'
-                      : 'No query rows yet. Connect GSC and refresh.'}
-                  </td>
                 </tr>
               )}
             </tbody>

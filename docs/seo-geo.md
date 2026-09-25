@@ -129,6 +129,8 @@ Apply the snapshot and GSC migrations in the Supabase SQL editor before the firs
 
 Keyword rankings are **not** part of the health score. Every property has a Keywords tab. Rankings come from Google Search Console (queries that already received impressions). A card stays on **Set up keywords** until that site is visible to the service account.
 
+Once a site has query rows, the tab lists up to eight next edits: rewrite a page-one snippet whose click-through rate lags a typical result at that rank, strengthen a query sitting between positions 8 and 20, or cover a target phrase that still has no impressions. Each item names the query, the landing page, and the numbers behind the suggestion. The brand / non-brand filter applies to that list as well as the scorecards.
+
 Search Console setup is per site. The service account is shared.
 
 1. Apply `20260918000000_seo_geo_gsc_queries.sql` and `20260925120000_seo_geo_gsc_all_properties.sql`.
