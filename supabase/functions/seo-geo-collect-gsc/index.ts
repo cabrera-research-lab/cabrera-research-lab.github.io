@@ -1,6 +1,7 @@
 /**
- * Authenticated GSC keyword refresh for stsi.pro.
+ * Authenticated GSC keyword refresh for one SEO/GEO property.
  * Requires secret GSC_SERVICE_ACCOUNT_JSON (service account JSON).
+ * Hosts stay in sync with src/apps/seo-geo/lib/properties.ts.
  */
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -11,8 +12,15 @@ const corsHeaders: Record<string, string> = {
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SITES_URL = 'https://www.googleapis.com/webmasters/v3/sites';
 const SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
-const PROPERTY_ID = 'stsi-pro';
-const HOST = 'stsi.pro';
+
+const GSC_PROPERTIES: { id: string; hosts: string[] }[] = [
+  { id: 'practice', hosts: ['practice.stsi.pro', 'stsi.tools', 'www.stsi.tools'] },
+  { id: 'stsi-pro', hosts: ['stsi.pro', 'www.stsi.pro'] },
+  { id: 'camp', hosts: ['camp.stsi.pro'] },
+  { id: 'jost', hosts: ['jost.science', 'www.jost.science'] },
+  { id: 'cabreralab', hosts: ['cabreralab.science', 'www.cabreralab.science'] },
+  { id: 'evidence', hosts: ['evidence.cabreralab.science'] },
+];
 
 type ServiceAccount = { client_email: string; private_key: string };
 
@@ -104,14 +112,45 @@ async function listGscSites(accessToken: string): Promise<string[]> {
   return (body.siteEntry ?? []).map((entry) => entry.siteUrl);
 }
 
-function pickSiteUrl(siteUrls: string[], host: string): string | null {
-  const matches = siteUrls.filter((url) => url.toLowerCase().includes(host.toLowerCase()));
-  return (
-    matches.find((url) => url.startsWith('sc-domain:')) ||
-    matches.find((url) => url === `https://${host}/`) ||
-    matches[0] ||
-    null
-  );
+function normalizeSiteKey(url: string): string {
+  return url.toLowerCase().replace(/\/$/, '');
+}
+
+function resolveGscSites(siteUrls: string[], hosts: string[]): string[] {
+  const normalizedHosts = hosts.map((host) => host.toLowerCase());
+  const sites = siteUrls.map((raw) => ({ raw, key: normalizeSiteKey(raw) }));
+  const chosen: { raw: string; key: string }[] = [];
+  const covered = new Set<string>();
+
+  for (const host of normalizedHosts) {
+    const domain = sites.find((site) => site.key === `sc-domain:${host}`);
+    const prefix = sites.find((site) => site.key === `https://${host}` || site.key === `http://${host}`);
+    const match = domain || prefix;
+    if (!match) continue;
+    covered.add(host);
+    if (!chosen.some((item) => item.key === match.key)) chosen.push(match);
+  }
+
+  for (const host of normalizedHosts) {
+    if (covered.has(host)) continue;
+    const parent = sites
+      .filter((site) => site.key.startsWith('sc-domain:'))
+      .map((site) => ({ ...site, domain: site.key.slice('sc-domain:'.length) }))
+      .filter((site) => host.endsWith(`.${site.domain}`))
+      .sort((a, b) => b.domain.length - a.domain.length)[0];
+    if (parent && !chosen.some((item) => item.key === parent.key)) chosen.push(parent);
+  }
+
+  return chosen.map((site) => site.raw);
+}
+
+function pageMatchesHosts(page: string, hosts: string[]): boolean {
+  try {
+    const hostname = new URL(page).hostname.toLowerCase();
+    return hosts.some((host) => hostname === host.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 type GscRow = { keys?: string[]; clicks?: number; impressions?: number; ctr?: number; position?: number };
@@ -172,13 +211,14 @@ async function supabaseRequest(
 async function markConnection(
   url: string,
   serviceKey: string,
+  propertyId: string,
   fields: Record<string, unknown>,
 ) {
   await supabaseRequest(url, serviceKey, 'seo_geo_gsc_connections?on_conflict=property_id', {
     method: 'POST',
     prefer: 'resolution=merge-duplicates,return=minimal',
     body: {
-      property_id: PROPERTY_ID,
+      property_id: propertyId,
       updated_at: new Date().toISOString(),
       ...fields,
     },
@@ -204,9 +244,23 @@ Deno.serve(async (req) => {
   });
   if (!userRes.ok) return json(401, { error: 'Sign in to refresh keywords' });
 
+  let requestedId = 'stsi-pro';
+  try {
+    const body = (await req.json()) as { propertyId?: string };
+    if (body?.propertyId) requestedId = body.propertyId;
+  } catch {
+    // Empty body keeps the stsi.pro default.
+  }
+  const property = GSC_PROPERTIES.find((item) => item.id === requestedId);
+  if (!property) {
+    return json(400, {
+      error: `Unknown property: ${requestedId}. Expected ${GSC_PROPERTIES.map((item) => item.id).join(', ')}.`,
+    });
+  }
+
   if (!gscJson) {
     const message = 'Set Edge Function secret GSC_SERVICE_ACCOUNT_JSON.';
-    await markConnection(supabaseUrl, serviceKey, { status: 'missing', last_error: message });
+    await markConnection(supabaseUrl, serviceKey, property.id, { status: 'missing', last_error: message });
     return json(500, { error: message });
   }
 
@@ -214,32 +268,52 @@ Deno.serve(async (req) => {
     const account = parseServiceAccount(gscJson);
     const accessToken = await gscAccessToken(account);
     const sites = await listGscSites(accessToken);
-    const siteUrl = pickSiteUrl(sites, HOST);
-    if (!siteUrl) {
-      throw new Error(
-        `No GSC property matches ${HOST}. Add the service account to Search Console. Sites visible: ${sites.join(', ') || 'none'}.`,
-      );
+    const siteUrls = resolveGscSites(sites, property.hosts);
+    if (!siteUrls.length) {
+      const message =
+        `No Search Console property matches ${property.hosts.join(', ')}. ` +
+        `Add that site and the service account in Search Console. ` +
+        `Sites visible: ${sites.join(', ') || 'none'}.`;
+      await markConnection(supabaseUrl, serviceKey, property.id, {
+        status: 'missing',
+        last_error: message,
+        gsc_site_url: null,
+      });
+      return json(200, { ok: false, status: 'missing' });
     }
+
     const endDate = gscDate(1);
     const startDate = gscDate(28);
-    const rawRows = await fetchAllQueryRows(accessToken, siteUrl, startDate, endDate);
-    const mapped = rawRows.map((row) => {
-      const keys = row.keys ?? [];
-      return {
-        property_id: PROPERTY_ID,
-        date: keys[0] ?? endDate,
-        query: keys[1] ?? '',
-        page: keys[2] ?? '',
-        clicks: Math.round(row.clicks ?? 0),
-        impressions: Math.round(row.impressions ?? 0),
-        ctr: row.ctr ?? 0,
-        position: row.position ?? 0,
-      };
-    });
+    const mapped = [];
+    for (const siteUrl of siteUrls) {
+      const rawRows = await fetchAllQueryRows(accessToken, siteUrl, startDate, endDate);
+      for (const row of rawRows) {
+        const keys = row.keys ?? [];
+        const page = keys[2] ?? '';
+        if (!pageMatchesHosts(page, property.hosts)) continue;
+        mapped.push({
+          property_id: property.id,
+          date: keys[0] ?? endDate,
+          query: keys[1] ?? '',
+          page,
+          clicks: Math.round(row.clicks ?? 0),
+          impressions: Math.round(row.impressions ?? 0),
+          ctr: row.ctr ?? 0,
+          position: row.position ?? 0,
+        });
+      }
+    }
 
+    const deduped = [...new Map(mapped.map((row) => [`${row.date}\0${row.query}\0${row.page}`, row])).values()];
+    await supabaseRequest(
+      supabaseUrl,
+      serviceKey,
+      `seo_geo_query_daily?property_id=eq.${encodeURIComponent(property.id)}&date=gte.${startDate}&date=lte.${endDate}`,
+      { method: 'DELETE', prefer: 'return=minimal' },
+    );
     const chunkSize = 500;
-    for (let i = 0; i < mapped.length; i += chunkSize) {
-      const chunk = mapped.slice(i, i + chunkSize);
+    for (let i = 0; i < deduped.length; i += chunkSize) {
+      const chunk = deduped.slice(i, i + chunkSize);
       await supabaseRequest(
         supabaseUrl,
         serviceKey,
@@ -252,18 +326,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    await markConnection(supabaseUrl, serviceKey, {
-      gsc_site_url: siteUrl,
+    await markConnection(supabaseUrl, serviceKey, property.id, {
+      gsc_site_url: siteUrls.join(', '),
       status: 'connected',
       last_synced_at: new Date().toISOString(),
       last_error: null,
-      last_row_count: mapped.length,
+      last_row_count: deduped.length,
     });
 
-    return json(200, { ok: true, siteUrl, startDate, endDate, rows: mapped.length });
+    return json(200, {
+      ok: true,
+      propertyId: property.id,
+      siteUrl: siteUrls.join(', '),
+      startDate,
+      endDate,
+      rows: deduped.length,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    await markConnection(supabaseUrl, serviceKey, { status: 'error', last_error: message });
+    await markConnection(supabaseUrl, serviceKey, property.id, { status: 'error', last_error: message });
     return json(500, { error: message });
   }
 });

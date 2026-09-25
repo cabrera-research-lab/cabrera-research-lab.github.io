@@ -70,11 +70,56 @@ export async function listGscSites(accessToken) {
   return (body.siteEntry ?? []).map((entry) => entry.siteUrl);
 }
 
+function normalizeSiteKey(url) {
+  return url.toLowerCase().replace(/\/$/, '');
+}
+
+/**
+ * Search Console sites that cover these hosts.
+ * Exact domain or URL-prefix properties win. A parent domain property
+ * (sc-domain:stsi.pro for camp.stsi.pro) is used only when that host has no exact property.
+ * Callers must filter page rows with pageMatchesHosts so subdomain traffic stays on its own property.
+ */
+export function resolveGscSites(siteUrls, hosts) {
+  const normalizedHosts = hosts.map((host) => host.toLowerCase());
+  const sites = siteUrls.map((raw) => ({ raw, key: normalizeSiteKey(raw) }));
+  const chosen = [];
+  const covered = new Set();
+
+  for (const host of normalizedHosts) {
+    const domain = sites.find((site) => site.key === `sc-domain:${host}`);
+    const prefix = sites.find((site) => site.key === `https://${host}` || site.key === `http://${host}`);
+    const match = domain || prefix;
+    if (!match) continue;
+    covered.add(host);
+    if (!chosen.some((item) => item.key === match.key)) chosen.push(match);
+  }
+
+  for (const host of normalizedHosts) {
+    if (covered.has(host)) continue;
+    const parent = sites
+      .filter((site) => site.key.startsWith('sc-domain:'))
+      .map((site) => ({ ...site, domain: site.key.slice('sc-domain:'.length) }))
+      .filter((site) => host.endsWith(`.${site.domain}`))
+      .sort((a, b) => b.domain.length - a.domain.length)[0];
+    if (parent && !chosen.some((item) => item.key === parent.key)) chosen.push(parent);
+  }
+
+  return chosen.map((site) => site.raw);
+}
+
+export function pageMatchesHosts(page, hosts) {
+  try {
+    const hostname = new URL(page).hostname.toLowerCase();
+    return hosts.some((host) => hostname === host.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 export function pickSiteUrl(siteUrls, host) {
-  const matches = siteUrls.filter((url) => url.toLowerCase().includes(host.toLowerCase()));
-  const domain = matches.find((url) => url.startsWith('sc-domain:'));
-  const apex = matches.find((url) => url === `https://${host}/` || url === `http://${host}/`);
-  return domain || apex || matches[0] || null;
+  const hosts = Array.isArray(host) ? host : [host];
+  return resolveGscSites(siteUrls, hosts)[0] ?? null;
 }
 
 export async function querySearchAnalytics(accessToken, siteUrl, requestBody) {

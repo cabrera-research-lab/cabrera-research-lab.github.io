@@ -118,7 +118,7 @@ SEO & GEO nested routes (in `apps/seo-geo/routes.tsx`):
 
 - `/seo-geo` — property portfolio
 - `/seo-geo/:propertyId` — checks and history (`practice`, `stsi-pro`, `camp`, `jost`, `cabreralab`, `evidence`)
-- `/seo-geo/stsi-pro?tab=keywords` — GSC keyword rankings for the marketing site
+- `/seo-geo/:propertyId?tab=keywords` — GSC keyword rankings once that site is added in Search Console
 
 ## Authentication
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getGscConnection, listQueryDaily, listTargetKeywords, refreshKeywords } from '@/apps/seo-geo/lib/keywordApi';
+import { getProperty } from '@/apps/seo-geo/lib/properties';
 import {
   connectionLabel,
   matchTargets,
@@ -91,6 +92,7 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
     }
   }, [load, propertyId]);
 
+  const property = getProperty(propertyId);
   const rollups = useMemo(() => rollupQueries(rows, filter), [rows, filter]);
   const summary = useMemo(() => totals(rollups), [rollups]);
   const targetRows = useMemo(
@@ -108,9 +110,9 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
           <div>
             <h2>Keywords · last 28 days</h2>
             <p className="seo-geo-small">
-              Google Search Console queries for stsi.pro. Average position is impression-weighted.
-              Recent days can still be unfinalized. Refresh reloads stored rows; live GSC collect
-              runs nightly on GitHub.
+              Google Search Console queries for {property.label}. Average position is impression-weighted.
+              Recent days can still be unfinalized. Rankings stay empty until this site is added in
+              Search Console and the service account can read it.
             </p>
           </div>
           <button type="button" className="seo-geo-refresh" disabled={refreshing} onClick={onRefresh}>
@@ -133,18 +135,21 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
         {connection?.status !== 'connected' && !loading && (
           <ol className="seo-geo-setup">
             <li>
-              Apply <code>supabase/migrations/20260918000000_seo_geo_gsc_queries.sql</code> in the
-              Supabase SQL editor.
-            </li>
-            <li>Verify the domain <code>stsi.pro</code> in Google Search Console.</li>
-            <li>Create a Google Cloud service account and enable the Search Console API.</li>
-            <li>
-              Add the service-account email as a user on that GSC property (Full or Restricted).
+              Apply <code>supabase/migrations/20260918000000_seo_geo_gsc_queries.sql</code> and{' '}
+              <code>20260925120000_seo_geo_gsc_all_properties.sql</code> in the Supabase SQL editor.
             </li>
             <li>
-              Set <code>GSC_SERVICE_ACCOUNT_JSON</code> for the collector (GitHub secret and Edge
-              Function secret), then Refresh keywords or run{' '}
-              <code>npm run collect:gsc</code>.
+              In Google Search Console, add <code>{property.hosts.join(', ')}</code>. A domain property
+              or URL-prefix property both work. A parent domain property covers its subdomains.
+            </li>
+            <li>
+              Use the same Google Cloud service account as stsi.pro (Search Console API enabled). Add
+              that email as a user on this Search Console property.
+            </li>
+            <li>
+              Keep <code>GSC_SERVICE_ACCOUNT_JSON</code> set for the collector, then Refresh keywords
+              or run <code>npm run collect:gsc</code>. Nightly collect skips a site until Search
+              Console lists it.
             </li>
           </ol>
         )}
@@ -175,7 +180,8 @@ export function KeywordsPanel({ propertyId }: { propertyId: PropertyId }) {
       <section className="seo-geo-card">
         <h2>Target phrases</h2>
         <p className="seo-geo-small">
-          Curated list for stsi.pro. No impressions means a content gap, not a health-card fail.
+          Curated list for {property.label}. No impressions means a content gap, or Search Console is
+          not set up for this site yet. It is not a health-card fail.
         </p>
         <div className="seo-geo-table-wrap">
           <table className="seo-geo-table">

@@ -102,7 +102,7 @@ export function PortfolioPage() {
             <h2>Properties</h2>
             <p className="seo-geo-small">
               Refresh re-fetches live HTML, robots.txt, sitemaps, and llms.txt. Keyword rankings
-              show on each card.
+              show on each card after that site is added in Google Search Console.
             </p>
           </div>
           {session && (

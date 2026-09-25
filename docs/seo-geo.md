@@ -25,7 +25,7 @@ GEO here means **Generative Engine Optimization** (GPTBot, ClaudeBot, Perplexity
 |------|------|-------------|
 | `/seo-geo` | `PortfolioPage` | Six properties with latest SEO + GEO scores |
 | `/seo-geo/:propertyId` | `PropertyPage` | Checks, facts, and score history |
-| `/seo-geo/stsi-pro?tab=keywords` | Keywords tab | Google Search Console query rankings for stsi.pro |
+| `/seo-geo/:propertyId?tab=keywords` | Keywords tab | Google Search Console query rankings. Each site stays empty until it is added in Search Console |
 
 `propertyId` is one of `practice`, `stsi-pro`, `camp`, `jost`, `cabreralab`, `evidence`.
 
@@ -80,7 +80,8 @@ AI crawler access, `llms.txt`, JSON-LD entity markup, extractable HTML (not an e
 | `20260903180000_seo_geo_snapshots.sql` | Snapshot table + authenticated SELECT |
 | `20260911143000_seo_geo_one_snapshot_per_day.sql` | `snapshot_date` + unique `(property_id, snapshot_date)` so Refresh upserts today |
 | `20260911160000_seo_geo_collect_rpc.sql` | Authenticated `seo_geo_collect` RPC (Postgres fetches public pages) |
-| `20260918000000_seo_geo_gsc_queries.sql` | GSC connections, target keywords, and daily query rows (stsi.pro first) |
+| `20260918000000_seo_geo_gsc_queries.sql` | GSC connections, target keywords, and daily query rows |
+| `20260925120000_seo_geo_gsc_all_properties.sql` | Connection rows and target phrases for the other five properties |
 
 **Table:** `seo_geo_snapshots`
 
@@ -108,7 +109,7 @@ GitHub Actions: [`.github/workflows/seo-geo-collect.yml`](../.github/workflows/s
 Repo secrets (in addition to the existing Vite secrets):
 
 - `SEO_GEO_SUPABASE_SERVICE_ROLE_KEY` — Dashboard → API Keys → secret / service role
-- `GSC_SERVICE_ACCOUNT_JSON` — Google Cloud service account JSON (Search Console API, read-only). Required for stsi.pro keywords.
+- `GSC_SERVICE_ACCOUNT_JSON` — Google Cloud service account JSON (Search Console API, read-only). One account reads every property it is granted on.
 
 Local:
 
@@ -124,16 +125,25 @@ npm run collect:gsc -- --dry-run
 
 Apply the snapshot and GSC migrations in the Supabase SQL editor before the first collect.
 
-## Keywords (stsi.pro)
+## Keywords
 
-Keyword rankings are **not** part of the health score. They live on the Keywords tab for stsi.pro and come from Google Search Console (queries that already received impressions).
+Keyword rankings are **not** part of the health score. Every property has a Keywords tab. Rankings come from Google Search Console (queries that already received impressions). A card stays on **Set up keywords** until that site is visible to the service account.
 
-1. Verify the domain `stsi.pro` in [Google Search Console](https://search.google.com/search-console).
-2. Create a Google Cloud service account, enable **Search Console API**, and add the service-account email as a user on that GSC property.
-3. Store the JSON key as `GSC_SERVICE_ACCOUNT_JSON` (GitHub Actions secret and Edge Function secret `seo-geo-collect-gsc`).
-4. Apply `20260918000000_seo_geo_gsc_queries.sql`.
-5. Run `npm run collect:gsc` or wait for the nightly GitHub Action. **Refresh keywords** reloads stored rows.
-6. Optional in-app live pull: deploy Edge Function `seo-geo-collect-gsc` (`npx supabase functions deploy seo-geo-collect-gsc`) and set secret `GSC_SERVICE_ACCOUNT_JSON`. Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run workflow **Deploy GSC Edge Function**.
+Search Console setup is per site. The service account is shared.
+
+1. Apply `20260918000000_seo_geo_gsc_queries.sql` and `20260925120000_seo_geo_gsc_all_properties.sql`.
+2. In [Google Search Console](https://search.google.com/search-console), add each site as a domain property or URL-prefix property:
+   - `stsi.pro` (already connected)
+   - `practice.stsi.pro` and/or `stsi.tools`
+   - `camp.stsi.pro`
+   - `jost.science`
+   - `cabreralab.science`
+   - `evidence.cabreralab.science`
+3. A parent domain property covers its subdomains. `sc-domain:stsi.pro` can supply `camp.stsi.pro` and `practice.stsi.pro`. `sc-domain:cabreralab.science` can supply `evidence.cabreralab.science`. `stsi.tools` and `jost.science` are separate domains.
+4. Create one Google Cloud service account, enable **Search Console API**, and add that email as a user on each Search Console property.
+5. Store the JSON key as `GSC_SERVICE_ACCOUNT_JSON` (GitHub Actions secret and Edge Function secret `seo-geo-collect-gsc`).
+6. Run `npm run collect:gsc` or wait for the nightly GitHub Action. Sites that are not in Search Console yet are skipped. **Refresh keywords** on a property pulls that site when the Edge Function is deployed.
+7. Optional in-app live pull: deploy Edge Function `seo-geo-collect-gsc` (`npx supabase functions deploy seo-geo-collect-gsc`) and set secret `GSC_SERVICE_ACCOUNT_JSON`. Or add GitHub secret `SUPABASE_ACCESS_TOKEN` and run workflow **Deploy GSC Edge Function**.
 
 Tables: `seo_geo_gsc_connections`, `seo_geo_target_keywords`, `seo_geo_query_daily`. RLS: authenticated SELECT; collector writes with the service role.
 

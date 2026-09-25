@@ -1,5 +1,6 @@
 import { isBrandQuery } from '@/apps/seo-geo/lib/keywordConfig';
 import type { GscConnection, QueryDailyRow, QueryRollup, TargetKeyword } from '@/apps/seo-geo/lib/keywordTypes';
+import type { PropertyId } from '@/apps/seo-geo/lib/types';
 
 export type KeywordFilter = 'all' | 'brand' | 'nonbrand';
 
@@ -13,7 +14,7 @@ export function windowStartDate(end = new Date()): string {
 export function rollupQueries(rows: QueryDailyRow[], filter: KeywordFilter = 'all'): QueryRollup[] {
   const byQuery = new Map<string, Omit<QueryRollup, 'ctr' | 'position'>>();
   for (const row of rows) {
-    const brand = isBrandQuery(row.query);
+    const brand = isBrandQuery(row.query, row.propertyId as PropertyId);
     if (filter === 'brand' && !brand) continue;
     if (filter === 'nonbrand' && brand) continue;
     const existing = byQuery.get(row.query);

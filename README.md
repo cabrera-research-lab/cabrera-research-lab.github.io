@@ -59,7 +59,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full separation guide
 | `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
 | `npm run collect:seo-geo` | Fetch public pages and store SEO/GEO snapshots |
-| `npm run collect:gsc` | Fetch Google Search Console queries for stsi.pro |
+| `npm run collect:gsc` | Fetch Google Search Console queries for every property the service account can read |
 
 ## Teaming (TE∆M)
 

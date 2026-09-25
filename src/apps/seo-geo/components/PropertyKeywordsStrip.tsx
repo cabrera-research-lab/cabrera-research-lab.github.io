@@ -58,7 +58,7 @@ export function PropertyKeywordsStrip({
               onOpen(seoGeoKeywordsPath(propertyId));
             }}
           >
-            Open keywords
+            {connected ? 'Open keywords' : 'Set up keywords'}
           </button>
         </>
       )}

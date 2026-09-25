@@ -1,9 +1,12 @@
 /**
- * Pull Google Search Console query/page rows for stsi.pro and store them in Supabase.
+ * Pull Google Search Console query/page rows and store them in Supabase.
  *
  *   node scripts/collect-gsc-queries.mjs
  *   node scripts/collect-gsc-queries.mjs --dry-run
- *   node scripts/collect-gsc-queries.mjs --property stsi-pro
+ *   node scripts/collect-gsc-queries.mjs --property practice
+ *
+ * Hosts stay in sync with src/apps/seo-geo/lib/properties.ts.
+ * A parent domain property is reused for subdomains, then page rows are filtered to that host.
  *
  * Env:
  *   VITE_SUPABASE_URL
@@ -19,15 +22,18 @@ import {
   gscDate,
   listGscSites,
   mapGscRows,
+  pageMatchesHosts,
   parseServiceAccount,
-  pickSiteUrl,
+  resolveGscSites,
 } from './lib/gsc-client.mjs';
 
 const PROPERTIES = [
-  {
-    id: 'stsi-pro',
-    host: 'stsi.pro',
-  },
+  { id: 'practice', hosts: ['practice.stsi.pro', 'stsi.tools', 'www.stsi.tools'] },
+  { id: 'stsi-pro', hosts: ['stsi.pro', 'www.stsi.pro'] },
+  { id: 'camp', hosts: ['camp.stsi.pro'] },
+  { id: 'jost', hosts: ['jost.science', 'www.jost.science'] },
+  { id: 'cabreralab', hosts: ['cabreralab.science', 'www.cabreralab.science'] },
+  { id: 'evidence', hosts: ['evidence.cabreralab.science'] },
 ];
 
 const dryRun = process.argv.includes('--dry-run');
@@ -94,33 +100,64 @@ async function upsertQueryRows(url, serviceKey, rows) {
   }
 }
 
-async function collectProperty(property, accessToken, { supabaseUrl, serviceKey }) {
-  const sites = await listGscSites(accessToken);
-  const siteUrl = pickSiteUrl(sites, property.host);
-  if (!siteUrl) {
-    throw new Error(
-      `No GSC property matches ${property.host}. Add the service account to Search Console ` +
-        `(domain ${property.host} or https://${property.host}/). Sites visible: ${sites.join(', ') || 'none'}.`,
-    );
+function dedupeRows(rows) {
+  const byKey = new Map();
+  for (const row of rows) {
+    byKey.set(`${row.date}\0${row.query}\0${row.page}`, row);
+  }
+  return [...byKey.values()];
+}
+
+async function replaceQueryWindow(url, serviceKey, propertyId, startDate, endDate, rows) {
+  await supabaseRequest(
+    url,
+    serviceKey,
+    `seo_geo_query_daily?property_id=eq.${encodeURIComponent(propertyId)}&date=gte.${startDate}&date=lte.${endDate}`,
+    { method: 'DELETE', prefer: 'return=minimal' },
+  );
+  if (rows.length) await upsertQueryRows(url, serviceKey, rows);
+}
+
+async function collectProperty(property, accessToken, sites, { supabaseUrl, serviceKey, rowCache }) {
+  const siteUrls = resolveGscSites(sites, property.hosts);
+  if (!siteUrls.length) {
+    const message =
+      `No GSC property matches ${property.hosts.join(', ')}. Add the service account in Search Console. ` +
+      `Sites visible: ${sites.join(', ') || 'none'}.`;
+    if (!dryRun && supabaseUrl && serviceKey) {
+      await markConnection(supabaseUrl, serviceKey, property.id, {
+        status: 'missing',
+        last_error: message,
+        gsc_site_url: null,
+      });
+    }
+    return { skipped: true, message };
   }
 
   const endDate = gscDate(new Date(), 1);
   const startDate = gscDate(new Date(), 28);
-  const rawRows = await fetchAllQueryRows(accessToken, siteUrl, startDate, endDate);
-  const mapped = mapGscRows(property.id, rawRows);
+  const mapped = [];
+  for (const siteUrl of siteUrls) {
+    const cacheKey = `${siteUrl}|${startDate}|${endDate}`;
+    if (!rowCache.has(cacheKey)) {
+      rowCache.set(cacheKey, await fetchAllQueryRows(accessToken, siteUrl, startDate, endDate));
+    }
+    mapped.push(...mapGscRows(property.id, rowCache.get(cacheKey)));
+  }
+  const filtered = dedupeRows(mapped.filter((row) => pageMatchesHosts(row.page, property.hosts)));
 
   if (!dryRun) {
-    await upsertQueryRows(supabaseUrl, serviceKey, mapped);
+    await replaceQueryWindow(supabaseUrl, serviceKey, property.id, startDate, endDate, filtered);
     await markConnection(supabaseUrl, serviceKey, property.id, {
-      gsc_site_url: siteUrl,
+      gsc_site_url: siteUrls.join(', '),
       status: 'connected',
       last_synced_at: new Date().toISOString(),
       last_error: null,
-      last_row_count: mapped.length,
+      last_row_count: filtered.length,
     });
   }
 
-  return { siteUrl, startDate, endDate, rows: mapped.length };
+  return { siteUrl: siteUrls.join(', '), startDate, endDate, rows: filtered.length };
 }
 
 async function main() {
@@ -136,7 +173,9 @@ async function main() {
     ? PROPERTIES.filter((item) => item.id === propertyFilter)
     : PROPERTIES;
   if (propertyFilter && !selected.length) {
-    console.error(`Unknown GSC property: ${propertyFilter}. v1 supports stsi-pro only.`);
+    console.error(
+      `Unknown GSC property: ${propertyFilter}. Expected practice, stsi-pro, camp, jost, cabreralab, or evidence.`,
+    );
     process.exit(1);
   }
 
@@ -158,11 +197,21 @@ async function main() {
   }
 
   const accessToken = await gscAccessToken(account, signJwt);
+  const sites = await listGscSites(accessToken);
+  const rowCache = new Map();
 
   for (const property of selected) {
     console.log(`Collecting GSC queries for ${property.id}…`);
     try {
-      const result = await collectProperty(property, accessToken, { supabaseUrl, serviceKey });
+      const result = await collectProperty(property, accessToken, sites, {
+        supabaseUrl,
+        serviceKey,
+        rowCache,
+      });
+      if (result.skipped) {
+        console.log(`  skipped: ${result.message}`);
+        continue;
+      }
       console.log(
         `  ${dryRun ? 'dry-run ' : ''}site ${result.siteUrl} · ${result.startDate} → ${result.endDate} · ${result.rows} rows`,
       );
