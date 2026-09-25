@@ -1,0 +1,2 @@
+[functions.cohort-progress-report]
+verify_jwt = true

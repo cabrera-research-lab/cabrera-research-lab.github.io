@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { MissionMomentsHeader } from '@/apps/mission-moments/components/MissionMomentsHeader';
@@ -22,6 +22,7 @@ import {
 import { buildCohortName, getCohort, listCohortActivity, saveCohort } from '@/apps/mission-moments/lib/cohortApi';
 import type { CohortActivityEntry } from '@/apps/mission-moments/lib/cohortApi';
 import { CohortActivityLog } from '@/apps/mission-moments/components/CohortActivityLog';
+import { downloadCohortActivityReport } from '@/apps/mission-moments/lib/activityReport';
 import { MISSION_MOMENTS_BASE, missionMomentsLoginPath, missionMomentsPath } from '@/apps/mission-moments/constants';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 
@@ -68,11 +69,34 @@ export function CohortQcPage() {
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const toastTimer = useRef<number | null>(null);
 
-  const showToast = useCallback((message: string) => {
+  const showToast = useCallback((message: string, duration = 2000) => {
     setToast(message);
-    window.setTimeout(() => setToast(null), 2000);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), duration);
   }, []);
+
+  const handleActivityReport = useCallback(async () => {
+    if (!session) {
+      showToast('Sign in to generate a report');
+      return;
+    }
+    if (isNew || !cohortId) {
+      showToast('Save the cohort before generating a report');
+      return;
+    }
+    setReporting(true);
+    try {
+      await downloadCohortActivityReport(cohortId);
+      showToast('Activity report downloaded');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Could not generate the activity report', 5000);
+    } finally {
+      setReporting(false);
+    }
+  }, [cohortId, isNew, session, showToast]);
 
   useEffect(() => {
     if (!cohortId) {
@@ -506,9 +530,10 @@ export function CohortQcPage() {
             <button
               type="button"
               className="tertiary"
-              onClick={() => showToast('Activity report generation is not connected yet')}
+              disabled={reporting}
+              onClick={() => void handleActivityReport()}
             >
-              Generate activity report
+              {reporting ? 'Generating…' : 'Generate activity report'}
             </button>
           </div>
         </section>

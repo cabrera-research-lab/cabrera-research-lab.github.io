@@ -586,6 +586,12 @@
   filter: saturate(1.05);
 }
 
+.b2b-qc button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  transform: none;
+}
+
 .b2b-qc .primary {
   background: var(--pst-blue);
   color: #fff;

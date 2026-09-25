@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { MissionMomentsHeader } from '@/apps/mission-moments/components/MissionMomentsHeader';
 import { listCohorts, type CohortSummary } from '@/apps/mission-moments/lib/cohortApi';
+import { downloadCohortActivityReport } from '@/apps/mission-moments/lib/activityReport';
 import { missionMomentsLoginPath, missionMomentsPath } from '@/apps/mission-moments/constants';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 
@@ -20,11 +21,33 @@ export function CohortListPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [reportingId, setReportingId] = useState<string | null>(null);
+  const toastTimer = useRef<number | null>(null);
 
-  const showToast = useCallback((message: string) => {
+  const showToast = useCallback((message: string, duration = 2000) => {
     setToast(message);
-    window.setTimeout(() => setToast(null), 2000);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), duration);
   }, []);
+
+  const handleActivityReport = useCallback(
+    async (cohortId: string) => {
+      if (!session) {
+        showToast('Sign in to generate a report');
+        return;
+      }
+      setReportingId(cohortId);
+      try {
+        await downloadCohortActivityReport(cohortId);
+        showToast('Activity report downloaded');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Could not generate the activity report', 5000);
+      } finally {
+        setReportingId(null);
+      }
+    },
+    [session, showToast],
+  );
 
   const loadCohorts = useCallback(async () => {
     if (!session || !isSupabaseConfigured) {
@@ -118,9 +141,10 @@ export function CohortListPage() {
                 <button
                   type="button"
                   className="tertiary b2b-qc-list-report"
-                  onClick={() => showToast('Activity report generation is not connected yet')}
+                  disabled={reportingId === cohort.id}
+                  onClick={() => void handleActivityReport(cohort.id)}
                 >
-                  Generate activity report
+                  {reportingId === cohort.id ? 'Generating…' : 'Generate activity report'}
                 </button>
               </li>
             ))}
