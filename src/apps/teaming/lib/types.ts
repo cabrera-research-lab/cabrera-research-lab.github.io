@@ -28,6 +28,10 @@ export interface UpdateRow {
   answers: string[];
   self_mission_score: number | null;
   created_at: string;
+  /** YYYY-MM-DD the words were set up. Null means created_at's calendar day. */
+  set_on?: string | null;
+  /** Shown on today from an earlier day this week; not a new submission. */
+  carried?: boolean;
   profiles?: { display_name: string };
   teams?: { name: string };
 }

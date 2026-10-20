@@ -37,7 +37,7 @@ export function DailyTeamRating({
     try {
       const periodStart = periodStartForCadence('daily');
       const rows = await fetchUpdates(orgWide ? null : teamId, 'daily', periodStart);
-      setUpdates(latestUpdatePerUser(rows));
+      setUpdates(latestUpdatePerUser(rows.filter((r) => !r.carried)));
     } catch (e) {
       console.error(e);
     } finally {

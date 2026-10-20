@@ -24,7 +24,7 @@ export function useUserSubmitted(
     try {
       const periodStart = periodStartForCadence(cadence);
       const rows = await fetchUpdates(teamId, cadence, periodStart);
-      setSubmitted(rows.some((r) => r.user_id === userId));
+      setSubmitted(rows.some((r) => r.user_id === userId && !r.carried));
     } catch (e) {
       console.error(e);
       setSubmitted(false);

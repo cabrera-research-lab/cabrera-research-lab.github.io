@@ -5,6 +5,7 @@ import {
   addComment,
   fetchCommentsForUpdates,
   fetchUpdates,
+  formatDailySetup,
 } from '@/apps/teaming/lib/api';
 import { formatPeriodLabel } from '@/apps/teaming/lib/periods';
 import { requireSupabase } from '@/shared/lib/supabase';
@@ -124,7 +125,9 @@ export function TeamReport({
               const comments = commentsMap[r.id] ?? [];
               const name = r.profiles?.display_name ?? 'Member';
               const teamName = r.teams?.name ?? '';
-              const date = new Date(r.created_at).toLocaleDateString();
+              const date = cadence === 'daily'
+                ? formatDailySetup(r)
+                : new Date(r.created_at).toLocaleDateString();
               const answers = Array.isArray(r.answers) ? r.answers : [];
               const text = answers[qIdx] ?? '—';
 
@@ -168,7 +171,9 @@ export function TeamReport({
         const comments = commentsMap[r.id] ?? [];
         const name = r.profiles?.display_name ?? 'Member';
         const teamName = r.teams?.name ?? '';
-        const date = new Date(r.created_at).toLocaleDateString();
+        const date = cadence === 'daily'
+          ? formatDailySetup(r)
+          : new Date(r.created_at).toLocaleDateString();
         const answers = Array.isArray(r.answers) ? r.answers : [];
 
         return (

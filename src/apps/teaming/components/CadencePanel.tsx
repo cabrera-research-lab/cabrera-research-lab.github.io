@@ -8,7 +8,7 @@ import { ActivityFeed, type FeedView } from '@/apps/teaming/components/ActivityF
 import { useAuth } from '@/shared/auth/AuthContext';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import { useUserSubmitted } from '@/apps/teaming/hooks/useUserSubmitted';
-import { buildUpdatePreview, submitUpdate } from '@/apps/teaming/lib/api';
+import { buildUpdatePreview, fetchDailyBringForward, submitUpdate, type DailyBringForward } from '@/apps/teaming/lib/api';
 import { getCadence } from '@/apps/teaming/lib/cadenceConfig';
 import { isOrgWideFeedCadence } from '@/apps/teaming/lib/periods';
 import type { Cadence } from '@/apps/teaming/lib/types';
@@ -42,6 +42,7 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
   const [feedView, setFeedView] = useState<FeedView>('current');
   const [step1Expanded, setStep1Expanded] = useState(true);
   const [submittedLocal, setSubmittedLocal] = useState(false);
+  const [bring, setBring] = useState<DailyBringForward | null>(null);
   const showInputs = feedView === 'current';
 
   const displayName = profile?.display_name?.trim() || 'Your Name';
@@ -52,7 +53,27 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
     setStatus('');
     setStep1Expanded(true);
     setSubmittedLocal(false);
+    setBring(null);
   }, [cadence]);
+
+  useEffect(() => {
+    if (cadence !== 'daily' || !user?.id || !showInputs) {
+      setBring(null);
+      return;
+    }
+    let cancelled = false;
+    fetchDailyBringForward(user.id)
+      .then((next) => {
+        if (!cancelled) setBring(next);
+      })
+      .catch((e) => {
+        console.error(e);
+        if (!cancelled) setBring(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cadence, user?.id, showInputs, reportKey]);
 
   const copyText = useMemo(
     () =>
@@ -91,16 +112,20 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
     setSubmitting(true);
     setStatus('');
     try {
-      await submitUpdate({
+      const result = await submitUpdate({
         teamId: team.id,
         userId: user.id,
         cadence,
         answers: answers.map((a) => a.trim() || '—'),
         selfMissionScore: null,
       });
-      setStatus('');
-      setStep1Expanded(false);
-      setSubmittedLocal(true);
+      if (result.kept) {
+        setStatus(bring ? `Still set ${bring.setupLabel}.` : 'Kept your current update.');
+      } else {
+        setStatus('');
+        setStep1Expanded(false);
+        setSubmittedLocal(true);
+      }
       setReportKey((k) => k + 1);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Submit failed');
@@ -153,6 +178,25 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
 
             {showStep1Form && (
               <>
+                {bring ? (
+                  <div className="actions" style={{ marginBottom: 12 }}>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => {
+                        setAnswers(
+                          def.questions.map((_, i) => {
+                            const text = bring.answers[i] ?? '';
+                            return text === '—' ? '' : text;
+                          }),
+                        );
+                        setStep1Expanded(true);
+                      }}
+                    >
+                      {`Bring forward · set ${bring.setupLabel}`}
+                    </button>
+                  </div>
+                ) : null}
                 <section className="form" id="daily-form">
                   {def.questions.map((q, i) => (
                     <CharTextarea

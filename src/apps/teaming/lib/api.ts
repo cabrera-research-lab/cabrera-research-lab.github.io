@@ -21,9 +21,12 @@ import type {
 import { resolveOrgPriorityTeamId, type OrgPriorityCadence } from './org';
 import {
   carryForwardPeriodStart,
+  dailyPeriodStart,
+  formatPeriodLabel,
   periodRange,
   periodStartForCadence,
   periodStartForPriority,
+  weeklyPeriodStart,
 } from './periods';
 
 function slugify(name: string): string {
@@ -114,13 +117,118 @@ export async function getTeam(teamId: string): Promise<Team | null> {
   return data;
 }
 
+const UPDATE_COLUMNS =
+  'id, team_id, user_id, cadence, answers, self_mission_score, created_at, set_on';
+
+function normalizeAnswers(answers: string[]): string[] {
+  return answers.map((a) => (a ?? '').trim() || '—');
+}
+
+function answersMatch(stored: string[], posted: string[]): boolean {
+  const left = normalizeAnswers(stored);
+  const right = normalizeAnswers(posted);
+  const n = Math.max(left.length, right.length);
+  for (let i = 0; i < n; i++) {
+    if ((left[i] ?? '—') !== (right[i] ?? '—')) return false;
+  }
+  return true;
+}
+
+function setupDateKey(row: { set_on?: string | null; created_at: string }): string {
+  const raw = row.set_on?.slice(0, 10);
+  return raw || dailyPeriodStart(new Date(row.created_at));
+}
+
+/** The date shown on a daily entry: the day the words were set up. */
+export function formatDailySetup(row: {
+  created_at: string;
+  set_on?: string | null;
+  carried?: boolean;
+}): string {
+  const createdKey = dailyPeriodStart(new Date(row.created_at));
+  const setupKey = setupDateKey(row);
+  const label = formatPeriodLabel('daily', setupKey);
+  if (row.carried || setupKey !== createdKey) return `Set ${label}`;
+  return label;
+}
+
+type DailySource = {
+  id: string;
+  answers: string[];
+  created_at: string;
+  set_on: string | null;
+};
+
+async function latestDaily(
+  userId: string,
+  bounds: { gte?: string; lt?: string },
+): Promise<DailySource | null> {
+  let query = requireSupabase()
+    .from('updates')
+    .select('id, answers, created_at, set_on')
+    .eq('user_id', userId)
+    .eq('cadence', 'daily')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (bounds.gte) query = query.gte('created_at', bounds.gte);
+  if (bounds.lt) query = query.lt('created_at', bounds.lt);
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return { ...data, answers: (data.answers ?? []) as string[] };
+}
+
+export interface DailyBringForward {
+  answers: string[];
+  setupLabel: string;
+  sameWeek: boolean;
+}
+
+/** The update this person can bring onto today, if they have not posted today. */
+export async function fetchDailyBringForward(userId: string): Promise<DailyBringForward | null> {
+  const todayFrom = periodRange('daily', dailyPeriodStart()).from;
+  const weekFrom = periodRange('daily', weeklyPeriodStart()).from;
+  const todayRow = await latestDaily(userId, { gte: todayFrom });
+  if (todayRow) return null;
+  const prior = await latestDaily(userId, { lt: todayFrom });
+  if (!prior) return null;
+  const sameWeek = new Date(prior.created_at).getTime() >= new Date(weekFrom).getTime();
+  return {
+    answers: prior.answers,
+    setupLabel: formatPeriodLabel('daily', setupDateKey(prior)),
+    sameWeek,
+  };
+}
+
 export async function submitUpdate(params: {
   teamId: string;
   userId: string;
   cadence: Cadence;
   answers: string[];
   selfMissionScore: number | null;
-}) {
+}): Promise<{ id: string; kept: boolean }> {
+  let setOn: string | null = null;
+  if (params.cadence === 'daily') {
+    const todayFrom = periodRange('daily', dailyPeriodStart()).from;
+    const weekFrom = periodRange('daily', weeklyPeriodStart()).from;
+    const todayRow = await latestDaily(params.userId, { gte: todayFrom });
+    if (todayRow && answersMatch(todayRow.answers, params.answers)) {
+      return { id: todayRow.id, kept: true };
+    }
+    if (!todayRow) {
+      const weekRow = await latestDaily(params.userId, { gte: weekFrom, lt: todayFrom });
+      if (weekRow && answersMatch(weekRow.answers, params.answers)) {
+        return { id: weekRow.id, kept: true };
+      }
+      const older = weekRow
+        ? null
+        : await latestDaily(params.userId, { lt: weekFrom });
+      if (older && answersMatch(older.answers, params.answers)) {
+        setOn = setupDateKey(older);
+      }
+    }
+  }
+
   const { data, error } = await requireSupabase()
     .from('updates')
     .insert({
@@ -129,11 +237,12 @@ export async function submitUpdate(params: {
       cadence: params.cadence,
       answers: params.answers,
       self_mission_score: params.cadence === 'daily' ? params.selfMissionScore : null,
+      set_on: setOn,
     })
     .select('id')
     .single();
   if (error) throw error;
-  return data.id;
+  return { id: data.id, kept: false };
 }
 
 export async function fetchUpdates(
@@ -143,12 +252,16 @@ export async function fetchUpdates(
 ): Promise<UpdateRow[]> {
   const startKey = periodStart ?? periodStartForCadence(cadence);
   const { from, to } = periodRange(cadence, startKey);
+  const carryCurrentDaily = cadence === 'daily' && startKey === dailyPeriodStart();
+  const queryFrom = carryCurrentDaily
+    ? periodRange('daily', weeklyPeriodStart()).from
+    : from;
 
   let query = requireSupabase()
     .from('updates')
-    .select('id, team_id, user_id, cadence, answers, self_mission_score, created_at')
+    .select(UPDATE_COLUMNS)
     .eq('cadence', cadence)
-    .gte('created_at', from)
+    .gte('created_at', queryFrom)
     .lt('created_at', to)
     .order('created_at', { ascending: false });
 
@@ -164,12 +277,33 @@ export async function fetchUpdates(
     fetchTeamNames(teamIds),
   ]);
 
-  return (rows ?? []).map((u) => ({
+  const mapped: UpdateRow[] = (rows ?? []).map((u) => ({
     ...u,
     answers: u.answers as string[],
+    set_on: u.set_on,
+    carried: false,
     profiles: { display_name: names[u.user_id] ?? 'Member' },
     teams: { name: teamNames[u.team_id] ?? '' },
   }));
+
+  if (!carryCurrentDaily) return mapped;
+
+  const todayMs = new Date(from).getTime();
+  const todayRows: UpdateRow[] = [];
+  const earlier = new Map<string, UpdateRow>();
+  for (const row of mapped) {
+    if (new Date(row.created_at).getTime() >= todayMs) {
+      todayRows.push(row);
+    } else {
+      const prev = earlier.get(row.user_id);
+      if (!prev || row.created_at > prev.created_at) earlier.set(row.user_id, row);
+    }
+  }
+  const postedToday = new Set(todayRows.map((r) => r.user_id));
+  const carried = [...earlier.values()]
+    .filter((r) => !postedToday.has(r.user_id))
+    .map((r) => ({ ...r, carried: true }));
+  return [...todayRows, ...carried];
 }
 
 async function fetchTeamNames(teamIds: string[]): Promise<Record<string, string>> {

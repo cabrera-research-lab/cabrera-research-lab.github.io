@@ -1,5 +1,6 @@
 -- Authenticated SEO/GEO refresh without an Edge Function.
 -- Uses the http extension so Postgres can fetch public pages, then upserts today's snapshot.
+-- Parameter names never match table columns (avoids PL/pgSQL "column reference is ambiguous").
 
 create extension if not exists http with schema extensions;
 
@@ -133,27 +134,25 @@ $$;
 
 revoke all on function public.seo_geo_fetch_doc(text, int) from public, anon, authenticated;
 
-create or replace function public.seo_geo_collect(property_id text default 'all')
+-- Worker: no parameter or variable named property_id / fetched_at / payload / snapshot_date.
+create or replace function public.seo_geo_collect_run(p_target text)
 returns jsonb
 language plpgsql
 security definer
 set search_path = public, extensions
 as $$
+#variable_conflict use_column
 declare
   spec record;
-  payload jsonb;
-  robots_doc jsonb;
-  sitemap_doc jsonb;
-  listed text;
-  fetched_at timestamptz := timezone('utc', now());
-  snapshot_day date := (fetched_at at time zone 'utc')::date;
-  results jsonb := '[]'::jsonb;
-  selected int := 0;
+  v_payload jsonb;
+  v_robots jsonb;
+  v_sitemap jsonb;
+  v_listed text;
+  v_fetched timestamptz := timezone('utc', now());
+  v_day date := (timezone('utc', now()))::date;
+  v_results jsonb := '[]'::jsonb;
+  v_selected int := 0;
 begin
-  if auth.uid() is null then
-    raise exception 'Sign in to refresh scores';
-  end if;
-
   for spec in
     select *
     from (
@@ -165,29 +164,29 @@ begin
         ('cabreralab', 'https://cabreralab.science/', 'https://www.cabreralab.science/', 'https://cabreralab.science/robots.txt', 'https://cabreralab.science/sitemap.xml', 'https://cabreralab.science/llms.txt'),
         ('evidence', 'https://evidence.cabreralab.science/', null, 'https://evidence.cabreralab.science/robots.txt', 'https://evidence.cabreralab.science/sitemap.xml', 'https://evidence.cabreralab.science/llms.txt')
     ) as t(id, home, alias_home, robots, sitemap, llms)
-    where property_id = 'all' or t.id = property_id
+    where p_target = 'all' or t.id = p_target
   loop
-    selected := selected + 1;
-    robots_doc := public.seo_geo_fetch_doc(spec.robots, 20000);
-    sitemap_doc := public.seo_geo_fetch_doc(spec.sitemap, 80000);
-    if coalesce((sitemap_doc ->> 'status')::int, 0) >= 400 then
-      listed := (regexp_match(coalesce(robots_doc ->> 'body', ''), '^sitemap:\s*(\S+)', 'in'))[1];
-      if listed is not null then
-        sitemap_doc := public.seo_geo_fetch_doc(listed, 80000);
+    v_selected := v_selected + 1;
+    v_robots := public.seo_geo_fetch_doc(spec.robots, 20000);
+    v_sitemap := public.seo_geo_fetch_doc(spec.sitemap, 80000);
+    if coalesce((v_sitemap ->> 'status')::int, 0) >= 400 then
+      v_listed := (regexp_match(coalesce(v_robots ->> 'body', ''), '^sitemap:\s*(\S+)', 'in'))[1];
+      if v_listed is not null then
+        v_sitemap := public.seo_geo_fetch_doc(v_listed, 80000);
       end if;
     end if;
 
-    payload := jsonb_build_object(
+    v_payload := jsonb_build_object(
       'propertyId', spec.id,
-      'fetchedAt', to_char(fetched_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+      'fetchedAt', to_char(v_fetched, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
       'home', public.seo_geo_fetch_doc(spec.home, 80000),
       'aliasHome', public.seo_geo_fetch_doc(spec.alias_home, 80000),
-      'robots', robots_doc,
-      'sitemap', sitemap_doc,
+      'robots', v_robots,
+      'sitemap', v_sitemap,
       'llms', public.seo_geo_fetch_doc(spec.llms, 20000)
     );
 
-    insert into public.seo_geo_snapshots as snap (
+    insert into public.seo_geo_snapshots (
       property_id,
       fetched_at,
       snapshot_date,
@@ -195,30 +194,49 @@ begin
     )
     values (
       spec.id,
-      fetched_at,
-      snapshot_day,
-      payload
+      v_fetched,
+      v_day,
+      v_payload
     )
     on conflict (property_id, snapshot_date)
     do update set
       fetched_at = excluded.fetched_at,
       payload = excluded.payload;
 
-    results := results || jsonb_build_array(
+    v_results := v_results || jsonb_build_array(
       jsonb_build_object(
         'id', spec.id,
-        'home', payload #>> '{home,status}',
-        'sitemap', payload #>> '{sitemap,status}',
-        'llms', payload #>> '{llms,status}'
+        'home', v_payload #>> '{home,status}',
+        'sitemap', v_payload #>> '{sitemap,status}',
+        'llms', v_payload #>> '{llms,status}'
       )
     );
   end loop;
 
-  if selected = 0 then
-    raise exception 'Unknown property: %', property_id;
+  if v_selected = 0 then
+    raise exception 'Unknown property: %', p_target;
   end if;
 
-  return jsonb_build_object('ok', true, 'results', results);
+  return jsonb_build_object('ok', true, 'results', v_results);
+end;
+$$;
+
+revoke all on function public.seo_geo_collect_run(text) from public, anon, authenticated;
+
+-- Public RPC name stays property_id so the dashboard does not need a redeploy.
+create or replace function public.seo_geo_collect(property_id text default 'all')
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_target text := coalesce(nullif(property_id, ''), 'all');
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to refresh scores';
+  end if;
+  return public.seo_geo_collect_run(v_target);
 end;
 $$;
 
