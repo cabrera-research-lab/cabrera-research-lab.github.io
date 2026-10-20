@@ -179,23 +179,21 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
             {showStep1Form && (
               <>
                 {bring ? (
-                  <div className="actions" style={{ marginBottom: 12 }}>
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => {
-                        setAnswers(
-                          def.questions.map((_, i) => {
-                            const text = bring.answers[i] ?? '';
-                            return text === '—' ? '' : text;
-                          }),
-                        );
-                        setStep1Expanded(true);
-                      }}
-                    >
-                      {`Bring forward · set ${bring.setupLabel}`}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="btn secondary bring-forward"
+                    onClick={() => {
+                      setAnswers(
+                        def.questions.map((_, i) => {
+                          const text = bring.answers[i] ?? '';
+                          return text === '—' ? '' : text;
+                        }),
+                      );
+                      setStep1Expanded(true);
+                    }}
+                  >
+                    {`Bring forward · set ${bring.setupLabel}`}
+                  </button>
                 ) : null}
                 <section className="form" id="daily-form">
                   {def.questions.map((q, i) => (
