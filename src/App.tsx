@@ -7,6 +7,7 @@ import { SiteNav } from '@/shared/navigation/SiteNav';
 import { missionMomentsRoutes } from '@/apps/mission-moments/routes';
 import { seoGeoRoutes } from '@/apps/seo-geo/routes';
 import { teamingRoutes } from '@/apps/teaming/routes';
+import { tqEnhancementRoutes } from '@/apps/tq-enhancement/routes';
 
 function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       {missionMomentsRoutes}
       {seoGeoRoutes}
+      {tqEnhancementRoutes}
       {teamingRoutes}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

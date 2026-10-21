@@ -28,6 +28,13 @@ export const INTERNAL_TOOLS: InternalTool[] = [
     description: 'SEO and GEO QC for STSI, C∆MP, JOST, and Cabrera Lab properties.',
     path: '/seo-geo',
   },
+  {
+    id: 'tq-enhancement',
+    label: 'TQ enhancement',
+    title: 'PST-SA variant review',
+    description: 'Validate each TQ variant, comment on it, and add variants of your own.',
+    path: '/tq-enhancement',
+  },
 ];
 
 export function isToolActive(tool: InternalTool, pathname: string): boolean {
@@ -36,6 +43,7 @@ export function isToolActive(tool: InternalTool, pathname: string): boolean {
     return pathname.startsWith('/mission-moments') || pathname.startsWith('/b2b-qc');
   }
   if (tool.id === 'seo-geo') return pathname.startsWith('/seo-geo');
+  if (tool.id === 'tq-enhancement') return pathname.startsWith('/tq-enhancement');
   return pathname.startsWith(tool.path);
 }
 

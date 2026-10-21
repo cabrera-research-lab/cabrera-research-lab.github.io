@@ -26,6 +26,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        globIgnores: ['**/tq/**'],
         navigateFallback: `${pagesBase}index.html`,
         runtimeCaching: [
           {

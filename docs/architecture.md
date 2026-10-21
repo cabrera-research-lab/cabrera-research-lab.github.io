@@ -1,4 +1,4 @@
-# Architecture — Teaming, Mission Moments, and SEO & GEO
+# Architecture — Teaming, Mission Moments, SEO & GEO, and TQ enhancement
 
 This document describes how three product surfaces coexist in one repository without mixing domain logic.
 
@@ -31,7 +31,7 @@ This document describes how three product surfaces coexist in one repository wit
                     └──────────────────┘
 ```
 
-All three apps deploy as **one static bundle**. They are separate products with separate UI, styles, API modules, and database tables — not separate npm packages.
+The apps deploy as **one static bundle**. They are separate products with separate UI, styles, API modules, and database tables — not separate npm packages. TQ enhancement is a fourth surface at `/tq-enhancement`.
 
 SEO & GEO snapshots are **written** by a GitHub Action or the signed-in `seo_geo_collect` RPC (Postgres `http` extension), not by the browser. Same-day collects **upsert** today's row so the trend chart stays one bar per day.
 
@@ -80,6 +80,18 @@ Search and generative-engine health for STSI public properties.
 | `routes.tsx` | Nested routes under `/seo-geo/*` |
 | `styles/seo-geo.css` | Scoped styles (`.seo-geo` root class) |
 
+### `src/apps/tq-enhancement/`
+
+PST-SA variant review. The question bank and figures are static files. Supabase stores each member's copy.
+
+| Path | Purpose |
+|------|---------|
+| `lib/bank.json` | Original item plus drafts A, B, and C |
+| `lib/api.ts` | Own-row saves and the reviewer read of every copy |
+| `pages/` | Personal review and the reviewer-only copies page |
+| `routes.tsx` | Nested routes under `/tq-enhancement/*` |
+| `styles/tq-enhancement.css` | Scoped styles (`.tq` root class) |
+
 ### `src/shared/`
 
 Code used by all apps. Keep this layer thin.
@@ -92,7 +104,7 @@ Code used by all apps. Keep this layer thin.
 | `lib/supabase.ts` | Supabase client singleton |
 | `lib/authApi.ts` | Sign in, sign up, sign out, password reset |
 | `navigation/SiteNav.tsx` | Global hamburger menu to switch between internal tools |
-| `navigation/tools.ts` | Tool registry (Teaming, Mission Moments, SEO & GEO) |
+| `navigation/tools.ts` | Tool registry (Teaming, Mission Moments, SEO & GEO, TQ enhancement) |
 
 ## Routing
 
@@ -105,6 +117,7 @@ Defined in `src/App.tsx`:
 | `/mission-moments/*` | Mission Moments | Soft (pages handle session) |
 | `/b2b-qc/*` | — | Redirects to `/mission-moments` |
 | `/seo-geo/*` | SEO & GEO | Soft (pages handle session) |
+| `/tq-enhancement/*` | TQ enhancement | Soft (pages require a session to read or save) |
 
 Teaming cadence is **not** a separate route — it uses query params on `/` (`?cadence=daily|weekly|monthly|quarterly`).
 
@@ -119,6 +132,11 @@ SEO & GEO nested routes (in `apps/seo-geo/routes.tsx`):
 - `/seo-geo` — property portfolio
 - `/seo-geo/:propertyId` — checks and history (`practice`, `stsi-pro`, `camp`, `jost`, `cabreralab`, `evidence`)
 - `/seo-geo/:propertyId?tab=keywords` — GSC keyword rankings once that site is added in Search Console
+
+TQ enhancement nested routes (in `apps/tq-enhancement/routes.tsx`):
+
+- `/tq-enhancement` — each member's own variant review
+- `/tq-enhancement/copies` — every member's copy, reviewer account only
 
 ## Authentication
 
@@ -146,6 +164,8 @@ Migrations live in `supabase/migrations/`. Tables are namespaced by app:
 
 **SEO & GEO:** `seo_geo_snapshots`, `seo_geo_gsc_connections`, `seo_geo_target_keywords`, `seo_geo_query_daily` (authenticated SELECT; collectors insert with the service role)
 
+**TQ enhancement:** `tq_variant_feedback` and `tq_added_variants` (a member reads and writes only their rows), `tq_reviewers` (one account can read every copy)
+
 All use `auth.users` and `profiles`. No cross-app foreign keys.
 
 ## Styling
@@ -153,6 +173,7 @@ All use `auth.users` and `profiles`. No cross-app foreign keys.
 - **Teaming:** `tokens.css` is global — loaded in `main.tsx`. Applies to auth pages and the main app.
 - **Mission Moments:** `mission-moments.css` is imported once in `MissionMomentsApp.tsx`. All rules are scoped under `.b2b-qc`.
 - **SEO & GEO:** `seo-geo.css` is imported once in `SeoGeoApp.tsx`. All rules are scoped under `.seo-geo`.
+- **TQ enhancement:** `tq-enhancement.css` is imported once in `TqEnhancementApp.tsx`. All rules are scoped under `.tq`.
 
 ## Import conventions
 
