@@ -184,12 +184,10 @@ export interface DailyBringForward {
   sameWeek: boolean;
 }
 
-/** The update this person can bring onto today, if they have not posted today. */
+/** The latest daily before today. Each question can be copied into today's form. */
 export async function fetchDailyBringForward(userId: string): Promise<DailyBringForward | null> {
   const todayFrom = periodRange('daily', dailyPeriodStart()).from;
   const weekFrom = periodRange('daily', weeklyPeriodStart()).from;
-  const todayRow = await latestDaily(userId, { gte: todayFrom });
-  if (todayRow) return null;
   const prior = await latestDaily(userId, { lt: todayFrom });
   if (!prior) return null;
   const sameWeek = new Date(prior.created_at).getTime() >= new Date(weekFrom).getTime();

@@ -28,6 +28,14 @@ export function CadencePanel({ cadence, onPriorityCountChange }: Props) {
   return <StandupPanel cadence={cadence} />;
 }
 
+const NO_TEAM_UPDATES = 'No updates to report to team.';
+
+const DAILY_QUICK_FILLS: { label: string; needsPrior: boolean }[] = [
+  { label: 'No new updates since yesterday', needsPrior: false },
+  { label: "Still working on yesterday's task", needsPrior: true },
+  { label: 'Same blockers as yesterday', needsPrior: true },
+];
+
 function StandupPanel({ cadence }: { cadence: Cadence }) {
   const { user, profile, team } = useAuth();
   const def = getCadence(cadence);
@@ -107,6 +115,18 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
     setAnswers((prev) => prev.map((a, idx) => (idx === i ? v : a)));
   }
 
+  function priorAnswer(index: number): string {
+    const text = (bring?.answers[index] ?? '').trim();
+    return text === '—' ? '' : text;
+  }
+
+  function bringQuestion(index: number) {
+    const text = index === 0 ? NO_TEAM_UPDATES : priorAnswer(index);
+    if (!text) return;
+    setAnswer(index, text);
+    setStep1Expanded(true);
+  }
+
   async function handleSubmit() {
     if (!user || !team) return;
     setSubmitting(true);
@@ -179,32 +199,25 @@ function StandupPanel({ cadence }: { cadence: Cadence }) {
             {showStep1Form && (
               <>
                 {bring ? (
-                  <button
-                    type="button"
-                    className="btn secondary bring-forward"
-                    onClick={() => {
-                      setAnswers(
-                        def.questions.map((_, i) => {
-                          const text = bring.answers[i] ?? '';
-                          return text === '—' ? '' : text;
-                        }),
-                      );
-                      setStep1Expanded(true);
-                    }}
-                  >
-                    {`Bring forward · set ${bring.setupLabel}`}
-                  </button>
+                  <p className="bring-note">{`Yesterday's task and blockers are from set ${bring.setupLabel}. You can edit the text after.`}</p>
                 ) : null}
                 <section className="form" id="daily-form">
-                  {def.questions.map((q, i) => (
-                    <CharTextarea
-                      key={i}
-                      index={i}
-                      question={q}
-                      value={answers[i] ?? ''}
-                      onChange={(v) => setAnswer(i, v)}
-                    />
-                  ))}
+                  {def.questions.map((q, i) => {
+                    const prior = priorAnswer(i);
+                    const quick = cadence === 'daily' ? DAILY_QUICK_FILLS[i] : undefined;
+                    const canBring = Boolean(quick) && (!quick?.needsPrior || Boolean(prior));
+                    return (
+                      <CharTextarea
+                        key={i}
+                        index={i}
+                        question={q}
+                        value={answers[i] ?? ''}
+                        onChange={(v) => setAnswer(i, v)}
+                        bringLabel={quick?.label}
+                        onBring={canBring ? () => bringQuestion(i) : undefined}
+                      />
+                    );
+                  })}
                 </section>
 
                 <div className="actions">
