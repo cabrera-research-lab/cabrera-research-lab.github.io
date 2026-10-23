@@ -144,7 +144,9 @@ export function CopiesPage() {
                 const member = nameById.get(row.user_id);
                 return (
                   <article key={row.id} className="tq-card">
-                    <h3>Added variant · {memberLabel(member, row.user_id)}</h3>
+                    <h3>
+                      {item.mode === 'recommend' ? 'Recommendation' : 'Added variant'} · {memberLabel(member, row.user_id)}
+                    </h3>
                     {member?.email ? <p className="tq-meta">{member.email}</p> : null}
                     <p className="tq-current">{verdictLabel(row.is_good)}</p>
                     <p className="tq-stem">{row.stem || 'No stem yet'}</p>

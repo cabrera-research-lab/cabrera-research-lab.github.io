@@ -14,6 +14,8 @@ export type TqVariant = {
   choices: TqChoice[];
 };
 
+export type TqReviewMode = 'variants' | 'original' | 'recommend';
+
 export type TqItem = {
   order: number;
   category: string;
@@ -21,6 +23,7 @@ export type TqItem = {
   qtype: string;
   note: string;
   group: string;
+  mode: TqReviewMode;
   variants: TqVariant[];
 };
 

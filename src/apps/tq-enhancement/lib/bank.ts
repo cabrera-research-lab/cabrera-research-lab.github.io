@@ -1,7 +1,24 @@
 import raw from './bank.json';
-import type { TqItem } from '@/apps/tq-enhancement/lib/types';
+import type { TqItem, TqReviewMode } from '@/apps/tq-enhancement/lib/types';
 
-export const TQ_ITEMS = (raw as TqItem[]).filter((item) => item.order > 6);
+const RECOMMENDATION_ORDERS = new Set([9, 13, 14, 18, 24, 27, 32, 34]);
+
+export function reviewMode(order: number): TqReviewMode {
+  if (RECOMMENDATION_ORDERS.has(order)) return 'recommend';
+  if (order >= 48 && order <= 71) return 'original';
+  return 'variants';
+}
+
+export const TQ_ITEMS: TqItem[] = (raw as Omit<TqItem, 'mode'>[])
+  .filter((item) => item.order > 6)
+  .map((item) => {
+    const mode = reviewMode(item.order);
+    return {
+      ...item,
+      mode,
+      variants: mode === 'variants' ? item.variants : item.variants.filter((variant) => variant.id === 'original'),
+    };
+  });
 
 export const TQ_FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'All' },

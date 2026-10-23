@@ -86,7 +86,7 @@ PST-SA variant review. The question bank and figures are static files. Supabase 
 
 | Path | Purpose |
 |------|---------|
-| `lib/bank.json` | Original item plus drafts A, B, and C |
+| `lib/bank.json` | Original item plus drafts A, B, and C. Questions 9, 13, 14, 18, 24, 27, 32, 34, and 48–71 keep the original only |
 | `lib/api.ts` | Own-row saves and the reviewer read of every copy |
 | `pages/` | Personal review and the reviewer-only copies page |
 | `routes.tsx` | Nested routes under `/tq-enhancement/*` |

@@ -8,6 +8,8 @@ import shutil
 from pathlib import Path
 
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
+# These items keep the original only. Reviewers write a recommendation instead of marking drafts.
+RECOMMENDATION_ORDERS = {9, 13, 14, 18, 24, 27, 32, 34}
 ROOT = Path(__file__).resolve().parents[3]
 BANK = ROOT / "stsi.tools" / "src" / "tq_test" / "parallel_bank"
 MEDIA = ROOT / "stsi.tools" / "src" / "media"
@@ -92,6 +94,8 @@ def main():
                 "image": fig_rel,
                 "choices": choices,
             })
+        if item["order"] in RECOMMENDATION_ORDERS or 48 <= item["order"] <= 71:
+            variants = [variant for variant in variants if variant["id"] == "original"]
         bank.append({
             "order": item["order"],
             "category": item["category"],

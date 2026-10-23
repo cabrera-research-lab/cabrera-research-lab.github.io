@@ -35,23 +35,11 @@ function Verdict({
   );
 }
 
-function BankVariantCard({
-  item,
-  variant,
-  note,
-  onChange,
-}: {
-  item: TqItem;
-  variant: TqVariant;
-  note: VariantNote;
-  onChange: (next: VariantNote, immediate?: boolean) => void;
-}) {
+function VariantBody({ item, variant }: { item: TqItem; variant: TqVariant }) {
   const showKeyed = item.group !== 'intake';
-  const tone = note.isGood === true ? ' good' : note.isGood === false ? ' not-good' : '';
 
   return (
-    <article className={`tq-card${tone}`}>
-      <h3>{variant.label}</h3>
+    <>
       <p className="tq-stem">{variant.stem}</p>
       {variant.image ? (
         <img
@@ -85,6 +73,27 @@ function BankVariantCard({
       ) : (
         <p className="tq-empty">Open response</p>
       )}
+    </>
+  );
+}
+
+function BankVariantCard({
+  item,
+  variant,
+  note,
+  onChange,
+}: {
+  item: TqItem;
+  variant: TqVariant;
+  note: VariantNote;
+  onChange: (next: VariantNote, immediate?: boolean) => void;
+}) {
+  const tone = note.isGood === true ? ' good' : note.isGood === false ? ' not-good' : '';
+
+  return (
+    <article className={`tq-card${tone}`}>
+      <h3>{variant.label}</h3>
+      <VariantBody item={item} variant={variant} />
       <Verdict
         isGood={note.isGood}
         label={`Is ${variant.label} good?`}
@@ -107,15 +116,18 @@ function AddedVariantCard({
   item,
   variant,
   index,
+  recommendation,
   onChange,
   onRemove,
 }: {
   item: TqItem;
   variant: AddedVariant;
   index: number;
+  recommendation: boolean;
   onChange: (next: AddedVariant, immediate?: boolean) => void;
   onRemove: () => void;
 }) {
+  const noun = recommendation ? 'recommendation' : 'variant';
   const tone = variant.isGood === true ? ' good' : variant.isGood === false ? ' not-good' : '';
 
   function setChoice(choiceIndex: number, text: string) {
@@ -127,7 +139,7 @@ function AddedVariantCard({
   return (
     <article className={`tq-card tq-added${tone}`}>
       <header className="tq-item-head">
-        <h3>Your variant {index + 1}</h3>
+        <h3>Your {noun} {index + 1}</h3>
         <button type="button" className="tq-remove" onClick={onRemove}>
           Remove
         </button>
@@ -178,17 +190,19 @@ function AddedVariantCard({
           ) : null}
         </div>
       </fieldset>
-      <Verdict
-        isGood={variant.isGood}
-        label={`Is your variant ${index + 1} good?`}
-        onChange={(isGood) => onChange({ ...variant, isGood }, true)}
-      />
+      {recommendation ? null : (
+        <Verdict
+          isGood={variant.isGood}
+          label={`Is your ${noun} ${index + 1} good?`}
+          onChange={(isGood) => onChange({ ...variant, isGood }, true)}
+        />
+      )}
       <label className="tq-comment">
         <span>Comment</span>
         <textarea
           value={variant.comment}
           rows={3}
-          placeholder="Why you added this, or what still needs work."
+          placeholder={recommendation ? 'Anything else about this recommendation.' : 'Why you added this, or what still needs work.'}
           onChange={(event) => onChange({ ...variant, comment: event.target.value })}
         />
       </label>
@@ -218,7 +232,9 @@ export function QuestionReview({
 }) {
   const statusText =
     status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved to your copy' : status === 'error' ? 'Could not save' : '';
+  const recommend = item.mode === 'recommend';
   const marked = item.variants.filter((variant) => work.feedback[variant.id]?.isGood != null).length;
+  const original = item.variants.find((variant) => variant.id === 'original') ?? item.variants[0];
 
   return (
     <section className="tq-item" id={`q${item.order}`} data-group={item.group}>
@@ -236,17 +252,25 @@ export function QuestionReview({
       </header>
 
       {item.note ? <p className="tq-note">{item.note}</p> : null}
+      {recommend ? <p className="tq-note">Drafts are off for this question. Add your recommendation below.</p> : null}
 
       <div className="tq-grid">
-        {item.variants.map((variant) => (
-          <BankVariantCard
-            key={variant.id}
-            item={item}
-            variant={variant}
-            note={work.feedback[variant.id] ?? emptyNote()}
-            onChange={(note, immediate) => onFeedback(variant.id, note, immediate)}
-          />
-        ))}
+        {recommend && original ? (
+          <article className="tq-card">
+            <h3>Original</h3>
+            <VariantBody item={item} variant={original} />
+          </article>
+        ) : (
+          item.variants.map((variant) => (
+            <BankVariantCard
+              key={variant.id}
+              item={item}
+              variant={variant}
+              note={work.feedback[variant.id] ?? emptyNote()}
+              onChange={(note, immediate) => onFeedback(variant.id, note, immediate)}
+            />
+          ))
+        )}
       </div>
 
       <div className="tq-added-list">
@@ -256,6 +280,7 @@ export function QuestionReview({
             item={item}
             variant={variant}
             index={index}
+            recommendation={recommend}
             onChange={onAddedChange}
             onRemove={() => onRemove(variant.id)}
           />
@@ -263,7 +288,7 @@ export function QuestionReview({
       </div>
 
       <button type="button" className="tq-add" onClick={onAdd}>
-        Add a variant
+        {recommend ? 'Add a recommendation' : 'Add a variant'}
       </button>
     </section>
   );

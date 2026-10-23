@@ -1,6 +1,8 @@
 # TQ enhancement
 
-Question-bank review for the PST-SA parallel items. The shared bank is the live question plus drafts A, B, and C. Questions 1–6 (name, email, and the other intake items) are left out. Each member validates the remaining variants on a private copy and can add more variants.
+Question-bank review for the PST-SA parallel items. The shared bank is the live question plus drafts A, B, and C, except where drafts are turned off. Questions 1–6 (name, email, and the other intake items) are left out. Each member validates the remaining variants on a private copy and can add more variants.
+
+Questions 9, 13, 14, 18, 24, 27, 32, and 34 show the original only. Members add a recommendation instead of marking drafts. Questions 48–71 (confidence, motivation, and facilitation) show the original only.
 
 ## Routes
 
