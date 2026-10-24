@@ -2,7 +2,7 @@
 
 Question-bank review for the PST-SA parallel items. The shared bank is the live question plus drafts A, B, and C, except where drafts are turned off. Questions 1–6 (name, email, and the other intake items) are left out. Each member validates the remaining variants on a private copy and can add more variants.
 
-Questions 9, 13, 14, 18, 24, 27, 32, and 34 show the original only. Members add a recommendation instead of marking drafts. Questions 48–71 (confidence, motivation, and facilitation) show the original only.
+Questions 9, 18, 24, 27, 32, and 34 show the original only. Members add a recommendation instead of marking drafts. Questions 13 and 14 include drafts A, B, and C from the parts-counting HTML templates. Questions 48–71 (confidence, motivation, and facilitation) show the original only.
 
 ## Routes
 
@@ -30,7 +30,7 @@ Feedback is stored on `tq_variant_feedback`. Added variants are stored on `tq_ad
 
 ## Images
 
-Original stems use the live question art. Questions 18 and 27 show the choice panels. Drafts that have a drawing show `public/tq/figures/qNNa.jpg` (and B, C) next to the figure brief. Added variants store a figure note, not an uploaded image.
+Original stems use the live question art. Questions 18 and 27 show the choice panels. Drafts that have a drawing show `public/tq/figures/qNNa.jpg` (and B, C) next to the figure brief. Questions 13 and 14 draw their draft figures in the page from `parts-drafts.json`. Added variants store a figure note, not an uploaded image.
 
 ## Regenerating the bank
 

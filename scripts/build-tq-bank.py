@@ -9,13 +9,15 @@ from pathlib import Path
 
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
 # These items keep the original only. Reviewers write a recommendation instead of marking drafts.
-RECOMMENDATION_ORDERS = {9, 13, 14, 18, 24, 27, 32, 34}
+# Questions 13 and 14 take their drafts from parts-drafts.json (the q13/q14 HTML templates).
+RECOMMENDATION_ORDERS = {9, 18, 24, 27, 32, 34}
 ROOT = Path(__file__).resolve().parents[3]
 BANK = ROOT / "stsi.tools" / "src" / "tq_test" / "parallel_bank"
 MEDIA = ROOT / "stsi.tools" / "src" / "media"
 APP = Path(__file__).resolve().parents[1]
 PUBLIC = APP / "public" / "tq"
 OUT = APP / "src" / "apps" / "tq-enhancement" / "lib" / "bank.json"
+PARTS = APP / "src" / "apps" / "tq-enhancement" / "lib" / "parts-drafts.json"
 
 
 def group_of(item):
@@ -32,6 +34,7 @@ def keyed(option):
 
 def main():
     items = json.loads((BANK / "source_items.json").read_text(encoding="utf-8"))
+    parts = json.loads(PARTS.read_text(encoding="utf-8")) if PARTS.exists() else {}
     for folder in ("originals", "figures", "options"):
         (PUBLIC / folder).mkdir(parents=True, exist_ok=True)
 
@@ -96,6 +99,9 @@ def main():
             })
         if item["order"] in RECOMMENDATION_ORDERS or 48 <= item["order"] <= 71:
             variants = [variant for variant in variants if variant["id"] == "original"]
+        extra = parts.get(str(item["order"])) or []
+        if extra:
+            variants = [variant for variant in variants if variant["id"] == "original"] + extra
         bank.append({
             "order": item["order"],
             "category": item["category"],

@@ -1,7 +1,15 @@
 import raw from './bank.json';
-import type { TqItem, TqReviewMode } from '@/apps/tq-enhancement/lib/types';
+import partsDrafts from './parts-drafts.json';
+import type { TqItem, TqReviewMode, TqVariant } from '@/apps/tq-enhancement/lib/types';
 
-const RECOMMENDATION_ORDERS = new Set([9, 13, 14, 18, 24, 27, 32, 34]);
+const RECOMMENDATION_ORDERS = new Set([9, 18, 24, 27, 32, 34]);
+const PARTS_DRAFTS = partsDrafts as unknown as Record<string, TqVariant[]>;
+
+function withPartsDrafts(order: number, variants: TqVariant[]): TqVariant[] {
+  const extra = PARTS_DRAFTS[String(order)];
+  if (!extra?.length) return variants;
+  return [...variants.filter((variant) => variant.id === 'original'), ...extra];
+}
 
 export function reviewMode(order: number): TqReviewMode {
   if (RECOMMENDATION_ORDERS.has(order)) return 'recommend';
@@ -13,10 +21,11 @@ export const TQ_ITEMS: TqItem[] = (raw as Omit<TqItem, 'mode'>[])
   .filter((item) => item.order > 6)
   .map((item) => {
     const mode = reviewMode(item.order);
+    const bankVariants = mode === 'variants' ? item.variants : item.variants.filter((variant) => variant.id === 'original');
     return {
       ...item,
       mode,
-      variants: mode === 'variants' ? item.variants : item.variants.filter((variant) => variant.id === 'original'),
+      variants: withPartsDrafts(item.order, bankVariants),
     };
   });
 

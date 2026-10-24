@@ -1,3 +1,4 @@
+import { PartsDiagram } from '@/apps/tq-enhancement/components/PartsDiagram';
 import { tqAsset } from '@/apps/tq-enhancement/lib/bank';
 import type { AddedVariant, QuestionWork, TqItem, TqVariant, VariantNote } from '@/apps/tq-enhancement/lib/types';
 import { emptyNote } from '@/apps/tq-enhancement/lib/types';
@@ -41,7 +42,9 @@ function VariantBody({ item, variant }: { item: TqItem; variant: TqVariant }) {
   return (
     <>
       <p className="tq-stem">{variant.stem}</p>
-      {variant.image ? (
+      {variant.diagram ? (
+        <PartsDiagram diagram={variant.diagram} label={`${variant.label} for question ${item.order}`} />
+      ) : variant.image ? (
         <img
           className="tq-figure"
           src={tqAsset(variant.image)}

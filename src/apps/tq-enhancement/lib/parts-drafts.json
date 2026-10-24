@@ -1,0 +1,149 @@
+{
+  "13": [
+    {
+      "id": "A",
+      "label": "Draft A",
+      "stem": "This is System B. How many parts are visible in System B?",
+      "figure": "",
+      "image": "",
+      "diagram": {
+        "gap": 34,
+        "nodes": [
+          { "x": 70, "y": 45, "shape": "triangle" },
+          { "x": 230, "y": 45, "shape": "circle" },
+          { "x": 230, "y": 175, "shape": "pentagon" },
+          { "x": 70, "y": 175, "shape": "square" }
+        ],
+        "edges": [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2]]
+      },
+      "choices": [
+        { "letter": "a", "text": "4", "keyed": false, "image": "" },
+        { "letter": "b", "text": "5", "keyed": false, "image": "" },
+        { "letter": "c", "text": "9", "keyed": true, "image": "" },
+        { "letter": "d", "text": "14", "keyed": false, "image": "" },
+        { "letter": "e", "text": "18", "keyed": false, "image": "" }
+      ]
+    },
+    {
+      "id": "B",
+      "label": "Draft B",
+      "stem": "This is System C. How many parts are visible in System C?",
+      "figure": "",
+      "image": "",
+      "diagram": {
+        "gap": 34,
+        "nodes": [
+          { "x": 70, "y": 110, "shape": "circle" },
+          { "x": 230, "y": 110, "shape": "square" }
+        ],
+        "edges": [[0, 1]]
+      },
+      "choices": [
+        { "letter": "a", "text": "1", "keyed": false, "image": "" },
+        { "letter": "b", "text": "2", "keyed": false, "image": "" },
+        { "letter": "c", "text": "3", "keyed": true, "image": "" },
+        { "letter": "d", "text": "4", "keyed": false, "image": "" },
+        { "letter": "e", "text": "5", "keyed": false, "image": "" }
+      ]
+    },
+    {
+      "id": "C",
+      "label": "Draft C",
+      "stem": "This is System D. How many parts are visible in System D?",
+      "figure": "",
+      "image": "",
+      "diagram": {
+        "gap": 34,
+        "nodes": [
+          { "x": 150, "y": 110, "shape": "hexagon" },
+          { "x": 150, "y": 28, "shape": "triangle" },
+          { "x": 228, "y": 85, "shape": "square" },
+          { "x": 198, "y": 176, "shape": "circle" },
+          { "x": 102, "y": 176, "shape": "diamond" },
+          { "x": 72, "y": 85, "shape": "pentagon" }
+        ],
+        "edges": [[0, 1], [0, 2], [0, 3], [0, 4], [0, 5]]
+      },
+      "choices": [
+        { "letter": "a", "text": "5", "keyed": false, "image": "" },
+        { "letter": "b", "text": "6", "keyed": false, "image": "" },
+        { "letter": "c", "text": "11", "keyed": true, "image": "" },
+        { "letter": "d", "text": "16", "keyed": false, "image": "" },
+        { "letter": "e", "text": "22", "keyed": false, "image": "" }
+      ]
+    }
+  ],
+  "14": [
+    {
+      "id": "A",
+      "label": "Draft A",
+      "stem": "This is a pond system. How many parts are shown in this system?",
+      "figure": "",
+      "image": "",
+      "diagram": {
+        "gap": 40,
+        "nodes": [
+          { "x": 70, "y": 50, "icon": "sun", "caption": "Sun" },
+          { "x": 230, "y": 50, "icon": "leaf", "caption": "Pond plant" },
+          { "x": 230, "y": 165, "icon": "fish", "caption": "Fish" },
+          { "x": 70, "y": 165, "icon": "feather", "caption": "Heron" }
+        ],
+        "edges": [[0, 1], [1, 2], [2, 3], [3, 0]]
+      },
+      "choices": [
+        { "letter": "a", "text": "4", "keyed": false, "image": "" },
+        { "letter": "b", "text": "5", "keyed": false, "image": "" },
+        { "letter": "c", "text": "8", "keyed": true, "image": "" },
+        { "letter": "d", "text": "12", "keyed": false, "image": "" },
+        { "letter": "e", "text": "None of the above", "keyed": false, "image": "" }
+      ]
+    },
+    {
+      "id": "B",
+      "label": "Draft B",
+      "stem": "This is a garden system. How many parts are shown in this system?",
+      "figure": "",
+      "image": "",
+      "diagram": {
+        "gap": 40,
+        "nodes": [
+          { "x": 45, "y": 110, "icon": "flower", "caption": "Flower" },
+          { "x": 150, "y": 110, "icon": "bug", "caption": "Beetle" },
+          { "x": 255, "y": 110, "icon": "feather", "caption": "Robin" }
+        ],
+        "edges": [[0, 1], [1, 2]]
+      },
+      "choices": [
+        { "letter": "a", "text": "2", "keyed": false, "image": "" },
+        { "letter": "b", "text": "3", "keyed": false, "image": "" },
+        { "letter": "c", "text": "4", "keyed": false, "image": "" },
+        { "letter": "d", "text": "6", "keyed": false, "image": "" },
+        { "letter": "e", "text": "None of the above", "keyed": true, "image": "" }
+      ]
+    },
+    {
+      "id": "C",
+      "label": "Draft C",
+      "stem": "This is a forest system. How many parts are shown in this system?",
+      "figure": "",
+      "image": "",
+      "diagram": {
+        "gap": 40,
+        "nodes": [
+          { "x": 150, "y": 35, "icon": "tree", "caption": "Tree" },
+          { "x": 262, "y": 110, "icon": "mushroom", "caption": "Fungus" },
+          { "x": 150, "y": 180, "icon": "paw", "caption": "Deer" },
+          { "x": 38, "y": 110, "icon": "butterfly", "caption": "Moth" }
+        ],
+        "edges": [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
+      },
+      "choices": [
+        { "letter": "a", "text": "4", "keyed": false, "image": "" },
+        { "letter": "b", "text": "6", "keyed": false, "image": "" },
+        { "letter": "c", "text": "10", "keyed": true, "image": "" },
+        { "letter": "d", "text": "16", "keyed": false, "image": "" },
+        { "letter": "e", "text": "None of the above", "keyed": false, "image": "" }
+      ]
+    }
+  ]
+}

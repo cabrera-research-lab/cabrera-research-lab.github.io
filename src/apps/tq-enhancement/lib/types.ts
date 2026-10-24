@@ -5,6 +5,22 @@ export type TqChoice = {
   image: string;
 };
 
+export type TqShapeName = 'circle' | 'square' | 'triangle' | 'pentagon' | 'hexagon' | 'diamond';
+
+export type TqDiagramNode = {
+  x: number;
+  y: number;
+  shape?: TqShapeName;
+  icon?: string;
+  caption?: string;
+};
+
+export type TqDiagram = {
+  gap: number;
+  nodes: TqDiagramNode[];
+  edges: [number, number][];
+};
+
 export type TqVariant = {
   id: 'original' | 'A' | 'B' | 'C';
   label: string;
@@ -12,6 +28,7 @@ export type TqVariant = {
   figure: string;
   image: string;
   choices: TqChoice[];
+  diagram?: TqDiagram;
 };
 
 export type TqReviewMode = 'variants' | 'original' | 'recommend';
