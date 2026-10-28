@@ -8,9 +8,11 @@ import shutil
 from pathlib import Path
 
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
-# These items keep the original only. Reviewers write a recommendation instead of marking drafts.
-# Questions 13 and 14 take their drafts from parts-drafts.json (the q13/q14 HTML templates).
-RECOMMENDATION_ORDERS = {9, 18, 24, 27, 32, 34}
+# Question 9 keeps the original only. Reviewers write a recommendation instead of marking drafts.
+# Questions 13 and 14 take their drafts from parts-drafts.json.
+# Questions 18, 24, 27, 32, and 34, and the figure revisions, are reapplied
+# by apply_derek_drafts.py after this script writes the bank.
+RECOMMENDATION_ORDERS = {9}
 ROOT = Path(__file__).resolve().parents[3]
 BANK = ROOT / "stsi.tools" / "src" / "tq_test" / "parallel_bank"
 MEDIA = ROOT / "stsi.tools" / "src" / "media"
@@ -113,6 +115,10 @@ def main():
         })
 
     OUT.write_text(json.dumps(bank, ensure_ascii=False, indent=2), encoding="utf-8")
+    from apply_derek_drafts import main as apply_derek_drafts
+
+    apply_derek_drafts()
+    bank = json.loads(OUT.read_text(encoding="utf-8"))
     drafted = sum(1 for item in bank if len(item["variants"]) > 1)
     print(f"Items: {len(bank)}")
     print(f"With drafts: {drafted}")

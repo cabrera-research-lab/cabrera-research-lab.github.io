@@ -54,23 +54,28 @@ export function ReviewPage() {
   const [filter, setFilter] = useState('all');
   const [reviewer, setReviewer] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const timers = useRef<Record<string, number>>({});
   const removed = useRef(new Set<string>());
 
+  const userId = session?.user?.id;
+  const reviewReady = Boolean(userId) && loadedUserId === userId;
+
   const load = useCallback(async () => {
-    if (!session?.user || !isSupabaseConfigured) {
+    if (!userId || !isSupabaseConfigured) {
       setWork({});
       setReviewer(false);
+      setLoadedUserId(null);
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const [feedback, added, isReviewer] = await Promise.all([
-        listOwnFeedback(session.user.id),
-        listOwnAdded(session.user.id),
-        isTqReviewer(session.user.id),
+        listOwnFeedback(userId),
+        listOwnAdded(userId),
+        isTqReviewer(userId),
       ]);
       const next: Record<number, QuestionWork> = {};
       const ensure = (order: number) => {
@@ -96,12 +101,13 @@ export function ReviewPage() {
       }
       setWork(next);
       setReviewer(isReviewer);
+      setLoadedUserId(userId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load your copy');
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [userId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -259,7 +265,7 @@ export function ReviewPage() {
   return (
     <div className="tq">
       <TqHeader reviewer={reviewer} />
-      {authLoading || loading ? <p className="tq-banner">Loading your copy…</p> : null}
+      {authLoading || (loading && !reviewReady) ? <p className="tq-banner">Loading your copy…</p> : null}
       {!authLoading && !session ? (
         <section className="tq-card">
           <h2>Sign in to review</h2>
@@ -270,7 +276,7 @@ export function ReviewPage() {
         </section>
       ) : null}
       {error ? <p className="tq-banner bad">{error}</p> : null}
-      {session && !loading ? (
+      {session && (reviewReady || !loading) ? (
         <>
           <div className="tq-toolbar">
             <div className="tq-filters" role="group" aria-label="Filter questions">

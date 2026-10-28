@@ -50,7 +50,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Choose the statement that best fits the image.",
-        "figure": "An oak leaf and a maple leaf, labeled, shown as a distinction: each has its own identity, and each is the other's other.",
+        "figure": "An oak leaf and a maple leaf, photographed on white, with no labels.",
         "image": "tq/figures/q07a.jpg",
         "choices": [
           {
@@ -89,7 +89,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Choose the statement that best fits the image.",
-        "figure": "A river and a lake, labeled, shown as a distinction.",
+        "figure": "A river and a lake, photographed side by side on white, with no labels.",
         "image": "tq/figures/q07b.jpg",
         "choices": [
           {
@@ -128,7 +128,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Choose the statement that best fits the image.",
-        "figure": "A violin and a drum, labeled, shown as a distinction.",
+        "figure": "A violin and a drum, photographed on white, with no labels.",
         "image": "tq/figures/q07c.jpg",
         "choices": [
           {
@@ -431,8 +431,8 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Which of the following describes X?",
-        "figure": "X is a circle. Y is a larger oval. Their areas are not equal.",
-        "image": "tq/figures/q10a.jpg",
+        "figure": "X is a gray circle and Y is a larger gray oval. Each letter sits inside its shape. The areas are not equal.",
+        "image": "tq/figures/q10a.svg",
         "choices": [
           {
             "letter": "a",
@@ -470,8 +470,8 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Which of the following describes X?",
-        "figure": "X is a pentagon. Y is a hexagon of a different area.",
-        "image": "tq/figures/q10b.jpg",
+        "figure": "X is a gray pentagon and Y is a gray hexagon of a different size. Each letter sits inside its shape.",
+        "image": "tq/figures/q10b.svg",
         "choices": [
           {
             "letter": "a",
@@ -509,8 +509,8 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Which of the following describes X?",
-        "figure": "X is a five-pointed star. Y is a square of a different area.",
-        "image": "tq/figures/q10c.jpg",
+        "figure": "X is a gray star and Y is a gray square of a different size. Each letter sits inside its shape.",
+        "image": "tq/figures/q10c.svg",
         "choices": [
           {
             "letter": "a",
@@ -597,8 +597,8 @@
         "id": "A",
         "label": "Draft A",
         "stem": "In the image, what makes stick M the medium stick?",
-        "figure": "Three sticks labeled S, M, and L. S is shortest, M is between S and L, L is longest.",
-        "image": "tq/figures/q11a.jpg",
+        "figure": "Three gray bars. S, M, and L sit inside the bars. S is shortest, M is between them, and L is longest.",
+        "image": "tq/figures/q11a.svg",
         "choices": [
           {
             "letter": "a",
@@ -636,8 +636,8 @@
         "id": "B",
         "label": "Draft B",
         "stem": "In the image, what makes cup M the medium cup?",
-        "figure": "Three cups labeled S, M, and L, increasing in size.",
-        "image": "tq/figures/q11b.jpg",
+        "figure": "Three gray cups. S, M, and L sit inside the cups, and the cups increase in size.",
+        "image": "tq/figures/q11b.svg",
         "choices": [
           {
             "letter": "a",
@@ -674,25 +674,25 @@
       {
         "id": "C",
         "label": "Draft C",
-        "stem": "In the image, what makes note M the medium note?",
-        "figure": "Three notes on a staff labeled S, M, and L. S is lowest, M is between them, L is highest.",
-        "image": "tq/figures/q11c.jpg",
+        "stem": "In the image, what makes bottle M the medium bottle?",
+        "figure": "Three gray bottles. S, M, and L sit inside the bottles, and the bottles increase in size.",
+        "image": "tq/figures/q11c.svg",
         "choices": [
           {
             "letter": "a",
-            "text": "its pitch",
+            "text": "its size",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "b",
-            "text": "note S",
+            "text": "bottle S",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "c",
-            "text": "note L",
+            "text": "bottle L",
             "keyed": false,
             "image": ""
           },
@@ -1520,6 +1520,123 @@
             "image": "tq/options/q18e.png"
           }
         ]
+      },
+      {
+        "id": "A",
+        "label": "Draft A",
+        "stem": "Which image shows the most parts?",
+        "figure": "Garden icons on a circle. No count is printed on the options. Parts are things plus lines. Option e has the most: 6 things and 15 lines.",
+        "image": "",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-a-a.svg"
+          },
+          {
+            "letter": "b",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-a-b.svg"
+          },
+          {
+            "letter": "c",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-a-c.svg"
+          },
+          {
+            "letter": "d",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-a-d.svg"
+          },
+          {
+            "letter": "e",
+            "text": "",
+            "keyed": true,
+            "image": "tq/options/q18-a-e.svg"
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "label": "Draft B",
+        "stem": "Which image shows the most parts?",
+        "figure": "Pond icons. No count is printed on the options. Option a has the most: 6 things and 10 lines.",
+        "image": "",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "",
+            "keyed": true,
+            "image": "tq/options/q18-b-a.svg"
+          },
+          {
+            "letter": "b",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-b-b.svg"
+          },
+          {
+            "letter": "c",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-b-c.svg"
+          },
+          {
+            "letter": "d",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-b-d.svg"
+          },
+          {
+            "letter": "e",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-b-e.svg"
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "label": "Draft C",
+        "stem": "Which image shows the most parts?",
+        "figure": "Mountain icons. No count is printed on the options. Option c has the most: 5 things and 9 lines.",
+        "image": "",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-c-a.svg"
+          },
+          {
+            "letter": "b",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-c-b.svg"
+          },
+          {
+            "letter": "c",
+            "text": "",
+            "keyed": true,
+            "image": "tq/options/q18-c-c.svg"
+          },
+          {
+            "letter": "d",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-c-d.svg"
+          },
+          {
+            "letter": "e",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q18-c-e.svg"
+          }
+        ]
       }
     ]
   },
@@ -1740,8 +1857,8 @@
         "id": "A",
         "label": "Draft A",
         "stem": "What is the maximum number of perspectives represented in the image?",
-        "figure": "A busy street corner. People, roles, vehicles, signs, and relationships must support more than nine perspectives.",
-        "image": "tq/figures/q20a.jpg",
+        "figure": "A street corner with drivers, passengers, people walking, a dog, a cyclist, and someone in a shop. No written labels. More than nine perspectives are available.",
+        "image": "tq/figures/q20a.svg",
         "choices": [
           {
             "letter": "a",
@@ -1779,8 +1896,8 @@
         "id": "B",
         "label": "Draft B",
         "stem": "What is the maximum number of perspectives represented in the image?",
-        "figure": "A family dinner with several people, dishes, and roles. More than nine perspectives must be available.",
-        "image": "tq/figures/q20b.jpg",
+        "figure": "A dinner with ten people around one table. No written labels. More than nine perspectives are available.",
+        "image": "tq/figures/q20b.svg",
         "choices": [
           {
             "letter": "a",
@@ -1818,8 +1935,8 @@
         "id": "C",
         "label": "Draft C",
         "stem": "What is the maximum number of perspectives represented in the image?",
-        "figure": "A hospital waiting room with staff, patients, objects, and roles. More than nine perspectives must be available.",
-        "image": "tq/figures/q20c.jpg",
+        "figure": "A hospital room and waiting area with patients and staff. No written labels. More than nine perspectives are available.",
+        "image": "tq/figures/q20c.svg",
         "choices": [
           {
             "letter": "a",
@@ -1906,7 +2023,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "In the image, what are three possible perspectives from which you could view the bridge?",
-        "figure": "A single bridge, shown so that form, people, and value are all plausible viewpoints.",
+        "figure": "The original line drawing of a bridge, with no labels.",
         "image": "tq/figures/q21a.jpg",
         "choices": [
           {
@@ -1945,7 +2062,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "In the image, what are three possible perspectives from which you could view the meal?",
-        "figure": "A single plated meal.",
+        "figure": "A plated meal, drawn as a line drawing in the same style as the bridge, with no labels.",
         "image": "tq/figures/q21b.jpg",
         "choices": [
           {
@@ -1984,7 +2101,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "In the image, what are three possible perspectives from which you could view the park?",
-        "figure": "A public park.",
+        "figure": "A park with a path, trees, and a bench, drawn as a line drawing in the same style as the bridge, with no labels.",
         "image": "tq/figures/q21c.jpg",
         "choices": [
           {
@@ -2399,6 +2516,123 @@
             "image": ""
           }
         ]
+      },
+      {
+        "id": "A",
+        "label": "Draft A",
+        "stem": "If you only see circles, how many objects will you see?",
+        "figure": "Five teal circles and four teal triangles, unlabeled.",
+        "image": "tq/figures/q24a.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "1",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "4",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "5",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "9",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "label": "Draft B",
+        "stem": "If you only see green, how many objects will you see?",
+        "figure": "Three green shapes among purple ones, unlabeled.",
+        "image": "tq/figures/q24b.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "2",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "3",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "5",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "8",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "label": "Draft C",
+        "stem": "If you only see large objects, how many objects will you see?",
+        "figure": "Three large red squares and four small ones. Three is not listed, so the key is e.",
+        "image": "tq/figures/q24c.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "2",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "4",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "5",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "7",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": true,
+            "image": ""
+          }
+        ]
       }
     ]
   },
@@ -2453,7 +2687,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "You are being violently attacked in your home. You look around the room and see the following object. What is it?",
-        "figure": "A hockey stick, shown during the attack described in the stem.",
+        "figure": "A hockey stick on white, with no caption.",
         "image": "tq/figures/q25a.jpg",
         "choices": [
           {
@@ -2492,7 +2726,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "You are being violently attacked in your home. You look around the room and see the following object. What is it?",
-        "figure": "A thick wooden branch, shown during the attack.",
+        "figure": "A wooden branch on white, with no caption.",
         "image": "tq/figures/q25b.jpg",
         "choices": [
           {
@@ -2531,7 +2765,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "You are being violently attacked in your home. You look around the room and see the following object. What is it?",
-        "figure": "A wooden oar, shown during the attack.",
+        "figure": "A oar on white, with no caption.",
         "image": "tq/figures/q25c.jpg",
         "choices": [
           {
@@ -2619,7 +2853,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "You are lost in the woods and cold. You look around and see this. Is it:",
-        "figure": "The same hockey stick as draft A of question 25, now in a cold woods.",
+        "figure": "The same hockey stick as draft A of question 25, lying in snow, with no caption.",
         "image": "tq/figures/q26a.jpg",
         "choices": [
           {
@@ -2658,7 +2892,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "You are lost in the woods and cold. You look around and see this. Is it:",
-        "figure": "The same thick wooden branch as draft B of question 25, now in a cold woods.",
+        "figure": "The same wooden branch as draft B of question 25, lying in snow, with no caption.",
         "image": "tq/figures/q26b.jpg",
         "choices": [
           {
@@ -2697,7 +2931,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "You are lost in the woods and cold. You look around and see this. Is it:",
-        "figure": "The same wooden oar as draft C of question 25, now in a cold woods.",
+        "figure": "The same oar as draft C of question 25, lying in snow, with no caption.",
         "image": "tq/figures/q26c.jpg",
         "choices": [
           {
@@ -2778,6 +3012,123 @@
             "text": "e",
             "keyed": false,
             "image": "tq/options/q27e.png"
+          }
+        ]
+      },
+      {
+        "id": "A",
+        "label": "Draft A",
+        "stem": "Which image has a perspective?",
+        "figure": "Photographs of tracks, an apple, and a hallway, with no labels. Every picture is from a point of view, so d is keyed.",
+        "image": "",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-a-a.jpg"
+          },
+          {
+            "letter": "b",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-a-b.jpg"
+          },
+          {
+            "letter": "c",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-a-c.jpg"
+          },
+          {
+            "letter": "d",
+            "text": "All of the images",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "Answers a and c",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "label": "Draft B",
+        "stem": "Which image does not have a perspective?",
+        "figure": "Photographs of a town, a fence, and a mug, with no labels. Each is still seen from somewhere, so none of them lacks a perspective.",
+        "image": "",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-b-a.jpg"
+          },
+          {
+            "letter": "b",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-b-b.jpg"
+          },
+          {
+            "letter": "c",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-b-c.jpg"
+          },
+          {
+            "letter": "d",
+            "text": "None of the images",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "Answer c",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "label": "Draft C",
+        "stem": "Which images have a perspective?",
+        "figure": "Photographs of a tower, a leaf, and a town, with no labels. All three are seen from a point of view.",
+        "image": "",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-c-a.jpg"
+          },
+          {
+            "letter": "b",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-c-b.jpg"
+          },
+          {
+            "letter": "c",
+            "text": "",
+            "keyed": false,
+            "image": "tq/options/q27-c-c.jpg"
+          },
+          {
+            "letter": "d",
+            "text": "Answer a only",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "All of the images",
+            "keyed": true,
+            "image": ""
           }
         ]
       }
@@ -3166,7 +3517,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Which is a possible relationship between the two items in the image?",
-        "figure": "A bee and a flower. Nectar, pollen, and the meadow must all be plausible relationships between them.",
+        "figure": "Two photographs side by side: a bee and a flower. Nectar, pollination, and a meadow are not shown.",
         "image": "tq/figures/q30a.jpg",
         "choices": [
           {
@@ -3177,13 +3528,13 @@
           },
           {
             "letter": "b",
-            "text": "pollen",
+            "text": "pollination",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "c",
-            "text": "the meadow",
+            "text": "a meadow",
             "keyed": false,
             "image": ""
           },
@@ -3205,24 +3556,24 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Which is a possible relationship between the two items in the image?",
-        "figure": "A farmer and a field. Water, the harvest, and the valley must all be plausible relationships.",
+        "figure": "Two photographs side by side: a key and a padlock. Metal, access, and a door are not shown.",
         "image": "tq/figures/q30b.jpg",
         "choices": [
           {
             "letter": "a",
-            "text": "water",
+            "text": "metal",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "b",
-            "text": "the harvest",
+            "text": "access",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "c",
-            "text": "the valley",
+            "text": "a door",
             "keyed": false,
             "image": ""
           },
@@ -3244,24 +3595,24 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Which is a possible relationship between the two items in the image?",
-        "figure": "A fish and a heron. Water, food, and the wetland must all be plausible relationships.",
+        "figure": "Two photographs side by side: a fish and a heron. Predation, the sky, and a wetland are not shown.",
         "image": "tq/figures/q30c.jpg",
         "choices": [
           {
             "letter": "a",
-            "text": "water",
+            "text": "predation",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "b",
-            "text": "food",
+            "text": "the sky",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "c",
-            "text": "the wetland",
+            "text": "a wetland",
             "keyed": false,
             "image": ""
           },
@@ -3332,7 +3683,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Which of the following answers completes the blank in the image?",
-        "figure": "Two neighbors with a blank where the relationship label would go. Friendship, a shared fence, and an agreement must all be able to fill the blank.",
+        "figure": "Two people, each at a house, with a line and a blank between them. No word labels.",
         "image": "tq/figures/q31a.jpg",
         "choices": [
           {
@@ -3371,7 +3722,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Which of the following answers completes the blank in the image?",
-        "figure": "Two bands with a blank relationship label. A tour, a stage, and a contract must all be able to fill the blank.",
+        "figure": "Two people, each with a guitar, with a line and a blank between them. No word labels.",
         "image": "tq/figures/q31b.jpg",
         "choices": [
           {
@@ -3410,7 +3761,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Which of the following answers completes the blank in the image?",
-        "figure": "Two founders with a blank relationship label. A partnership, an office, and a contract must all be able to fill the blank.",
+        "figure": "Two people, each with a briefcase, with a line and a blank between them. No word labels.",
         "image": "tq/figures/q31c.jpg",
         "choices": [
           {
@@ -3490,6 +3841,123 @@
             "letter": "e",
             "text": "None of the above",
             "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "A",
+        "label": "Draft A",
+        "stem": "What is true about Teacher, Student, and Mentoring?",
+        "figure": "Teacher and Student on the ends, Mentoring on the arrow between them.",
+        "image": "tq/figures/q32a.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "Teacher and Student are related to one another",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "Teacher and Student are related to one another, but the relationship is not clear",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "Mentoring is the relationship between Teacher and Student",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "Answers a and c",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "label": "Draft B",
+        "stem": "What is true about [P], [Q], and [M]?",
+        "figure": "P above, Q below, and M on the arrow between them.",
+        "image": "tq/figures/q32b.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "[M] is a third thing that is not related to [P] or [Q]",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "[P] and [Q] are not related to one another",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "[P] and [Q] are related to one another, and [M] is that relationship",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "Answer a only",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "label": "Draft C",
+        "stem": "What is true about Rain, Crops, and Water?",
+        "figure": "Rain and Crops on the ends, Water on the arrow between them.",
+        "image": "tq/figures/q32c.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "Rain and Crops are related to one another",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "Water is the relationship between Rain and Crops",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "Rain and Crops are related to one another, but how is not shown",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "Answers a and b",
+            "keyed": true,
             "image": ""
           }
         ]
@@ -3667,7 +4135,7 @@
     "category": "R",
     "scoring": "competence",
     "qtype": "multiple_choice",
-    "note": "",
+    "note": "Derek noted that variants are hard to write for this item. These three keep the two-head arrow pattern and change the words inside the heads.",
     "group": "R",
     "variants": [
       {
@@ -3704,6 +4172,123 @@
           {
             "letter": "e",
             "text": "Answers c and d are the best answers",
+            "keyed": true,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "A",
+        "label": "Draft A",
+        "stem": "In the image, choose the best explanation.",
+        "figure": "Two adult heads. Inside each: impulse, pause, response. Arrows run inside each head and across between them.",
+        "image": "tq/figures/q34a.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "Two coworkers responding to each other",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "Two coworkers responding to each other and to themselves (internally), so they pause instead of acting on impulse",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "Thoughtful, responsible communication at work",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "Answers b and c are the best answers",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "Two coworkers reacting to each other on impulse",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "label": "Draft B",
+        "stem": "In the image, choose the best explanation.",
+        "figure": "A larger head and a smaller head. Inside each: feel, think, say. Arrows run inside each head and across between them.",
+        "image": "tq/figures/q34b.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "A parent correcting a child",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "A parent and child talking to each other",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "A parent and child talking to each other and to themselves (internally), so neither one just reacts",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "A parent and child talking to themselves instead of to each other",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "label": "Draft C",
+        "stem": "In the image, choose the best explanation.",
+        "figure": "Two adult heads. Inside each: hear, reflect, reply. Arrows run inside each head and across between them.",
+        "image": "tq/figures/q34c.svg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "Calm, responsible negotiation",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "Two negotiators interacting with each other and with themselves (internally) to avoid reacting",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "Two negotiators interacting with each other",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "Two negotiators interacting with each other and with themselves (internally)",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "Answers a and b are the best answers",
             "keyed": true,
             "image": ""
           }
@@ -5754,8 +6339,8 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Two hospitals (North and South) are in a dispute. Each hospital has a perspective on the dispute. Each has three units (emergency, surgery, and outpatient). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "",
-        "image": "",
+        "figure": "A map of two hospital campuses, labeled North and South.",
+        "image": "tq/figures/q47a.jpg",
         "choices": [
           {
             "letter": "a",
@@ -5793,8 +6378,8 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Two universities (East and West) are in a dispute. Each university has a perspective on the dispute. Each has three faculties (sciences, arts, and engineering). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "",
-        "image": "",
+        "figure": "A map of two university campuses, labeled East and West.",
+        "image": "tq/figures/q47b.jpg",
         "choices": [
           {
             "letter": "a",
@@ -5832,8 +6417,8 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Two cities (Harbor and Ridge) are in a dispute. Each city has a perspective on the dispute. Each has three districts (north, central, and south). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "",
-        "image": "",
+        "figure": "A street map of two cities, labeled Harbor and Ridge.",
+        "image": "tq/figures/q47c.jpg",
         "choices": [
           {
             "letter": "a",

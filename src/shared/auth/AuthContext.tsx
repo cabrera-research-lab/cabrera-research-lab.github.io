@@ -23,6 +23,16 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+function sameSession(current: Session | null, next: Session | null): boolean {
+  if (current === next) return true;
+  if (!current || !next) return false;
+  return (
+    current.access_token === next.access_token &&
+    current.expires_at === next.expires_at &&
+    current.user.id === next.user.id
+  );
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -58,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+    } = supabase.auth.onAuthStateChange((_event, next) => {
+      setSession((current) => (sameSession(current, next) ? current : next));
     });
 
     return () => subscription.unsubscribe();
