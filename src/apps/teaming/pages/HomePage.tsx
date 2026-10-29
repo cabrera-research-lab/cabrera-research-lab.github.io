@@ -6,6 +6,7 @@ import { MissionMomentsPanel } from '@/apps/teaming/components/MissionMomentsPan
 import { MissionVisionHero } from '@/apps/teaming/components/MissionVisionHero';
 import { SettingsPanel } from '@/apps/teaming/components/SettingsPanel';
 import { ShowcasePanel } from '@/apps/teaming/components/ShowcasePanel';
+import { ReviewPage } from '@/apps/tq-enhancement/pages/ReviewPage';
 import { fetchOrgPriorities } from '@/apps/teaming/lib/api';
 import { renderDeltaText } from '@/apps/teaming/lib/deltaText';
 import type { Cadence, PriorityCadence } from '@/apps/teaming/lib/types';
@@ -59,7 +60,8 @@ function countLabel(n: number): string {
 export function HomePage() {
   const { team } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const view = searchParams.get('view') === 'settings' ? 'settings' : 'teaming';
+  const viewParam = searchParams.get('view');
+  const view = viewParam === 'settings' || viewParam === 'tq' ? viewParam : 'teaming';
   const initial = useMemo(() => parseInitialOpen(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useState<Set<CascadeId>>(initial);
   const [mounted, setMounted] = useState<Set<CascadeId>>(() => new Set(initial));
@@ -135,6 +137,8 @@ export function HomePage() {
     <div className="app">
       {view === 'settings' ? (
         <SettingsPanel />
+      ) : view === 'tq' ? (
+        <ReviewPage />
       ) : (
         <section className="view on" id="view-teaming">
           <div className="eyebrow">

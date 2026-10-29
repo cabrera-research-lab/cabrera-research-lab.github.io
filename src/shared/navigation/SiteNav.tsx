@@ -73,17 +73,18 @@ export function SiteNav() {
   const close = useCallback(() => setOpen(false), []);
   const displayName = profile?.display_name?.trim() || user?.email || '';
   const onTeamingHome = pathname === '/' || pathname === '';
-  const view = searchParams.get('view') === 'settings' ? 'settings' : 'teaming';
+  const viewParam = searchParams.get('view');
+  const view = viewParam === 'settings' || viewParam === 'tq' ? viewParam : 'teaming';
 
   async function handleSignOut() {
     await signOut();
   }
 
-  function setView(next: 'teaming' | 'settings') {
+  function setView(next: 'teaming' | 'settings' | 'tq') {
     if (!onTeamingHome) return;
     const params = new URLSearchParams(searchParams);
-    if (next === 'settings') params.set('view', 'settings');
-    else params.delete('view');
+    if (next === 'teaming') params.delete('view');
+    else params.set('view', next);
     setSearchParams(params, { replace: true });
   }
 
@@ -136,6 +137,15 @@ export function SiteNav() {
               onClick={() => setView('teaming')}
             >
               {renderDeltaText('TE∆MING')}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={view === 'tq' ? 'on' : ''}
+              aria-selected={view === 'tq'}
+              onClick={() => setView('tq')}
+            >
+              TQ
             </button>
             <button
               type="button"

@@ -20,6 +20,7 @@ import {
 } from '@/apps/tq-enhancement/lib/types';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
+import '@/apps/tq-enhancement/styles/tq-enhancement.css';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
