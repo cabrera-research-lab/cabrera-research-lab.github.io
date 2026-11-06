@@ -77,7 +77,12 @@ function carriedIdsFromDest(localItems: LocalItem[], destItems: PriorityItemInpu
 }
 
 /** Keep local edits for dirty rows; adopt remote for everything else. */
-function mergeRemoteItems(local: LocalItem[], remote: LocalItem[], dirtyIds: Set<string>): LocalItem[] {
+function mergeRemoteItems(
+  local: LocalItem[],
+  remote: LocalItem[],
+  dirtyIds: Set<string>,
+  keepBlank = true,
+): LocalItem[] {
   const localById = new Map(local.map((item) => [item.id, item]));
   const remoteIds = new Set(remote.map((item) => item.id));
   const merged: LocalItem[] = remote.map((item) =>
@@ -90,7 +95,8 @@ function mergeRemoteItems(local: LocalItem[], remote: LocalItem[], dirtyIds: Set
     }
   }
 
-  return normalizeItems(merged.length ? merged : [emptyItem(0)]);
+  if (!merged.length) return keepBlank ? [emptyItem(0)] : [];
+  return normalizeItems(merged);
 }
 
 interface Props {
@@ -137,7 +143,11 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   const currentPeriod = priorityCadence ? periodStartForPriority(priorityCadence) : '';
   const latestArchive = priorityCadence ? latestArchivePeriodStart(priorityCadence) : '';
   const activePeriod = view === 'archive' ? archivePeriod : currentPeriod;
+  const activePeriodRef = useRef(activePeriod);
+  activePeriodRef.current = activePeriod;
   const canEdit = Boolean(team?.id) && view === 'current';
+  const canCheckArchive = Boolean(team?.id) && view === 'archive' && priorityCadence === 'weekly';
+  const canCheck = canEdit || canCheckArchive;
   const canCarry = Boolean(team?.id && priorityCadence);
   const hasGoals = items.some((item) => item.goal.trim());
   const destPeriod =
@@ -222,8 +232,15 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
             : Promise.resolve([] as PriorityItemInput[]),
         ]);
         const remote = loaded.length ? toLocalItems(loaded) : [];
-        if (opts?.merge && viewRef.current === 'current') {
-          const next = applyRemote(remote);
+        const canMergeRemote =
+          viewRef.current === 'current' ||
+          (viewRef.current === 'archive' && priorityCadence === 'weekly');
+        if (opts?.merge && canMergeRemote) {
+          const next =
+            viewRef.current === 'archive'
+              ? mergeRemoteItems(itemsRef.current, remote, dirtyIdsRef.current, false)
+              : applyRemote(remote);
+          if (viewRef.current === 'archive') setItems(next);
           syncCarried(next, destStart ? destLoaded : undefined);
         } else {
           const next =
@@ -252,14 +269,17 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   }, [load, clearPendingEdits]);
 
   useEffect(() => {
-    if (!priorityCadence || view !== 'current') return;
+    const watchArchive = view === 'archive' && priorityCadence === 'weekly';
+    if (!priorityCadence || (view !== 'current' && !watchArchive)) return;
+
+    const period = watchArchive ? archivePeriod : currentPeriod;
 
     function onRemoteChange() {
       if (savingRef.current || saveTimer.current) {
         pendingRemoteReloadRef.current = true;
         return;
       }
-      void load({ silent: true, merge: true, periodStart: currentPeriod });
+      void load({ silent: true, merge: true, periodStart: period });
     }
 
     const sb = requireSupabase();
@@ -285,10 +305,13 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
     return () => {
       sb.removeChannel(channel);
     };
-  }, [priorityCadence, view, load, currentPeriod]);
+  }, [priorityCadence, view, load, currentPeriod, archivePeriod]);
 
-  async function persist(next: LocalItem[]) {
-    if (!priorityCadence || !team || viewRef.current !== 'current') return;
+  async function persist(next: LocalItem[], periodStart?: string) {
+    if (!priorityCadence || !team) return;
+    const period = periodStart ?? activePeriodRef.current;
+    const savingArchive = period !== periodStartForPriority(priorityCadence);
+    if (savingArchive && priorityCadence !== 'weekly') return;
     const dirtyIds = dirtyIdsRef.current;
     const deleteIds = [...deletedIdsRef.current];
     const normalized = normalizeItems(next);
@@ -297,10 +320,10 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
 
     savingRef.current = true;
     try {
-      await saveOrgPriorities(priorityCadence, toUpsert, team.id, deleteIds, currentPeriod);
+      await saveOrgPriorities(priorityCadence, toUpsert, team.id, deleteIds, period);
       for (const item of toUpsert) dirtyIds.delete(item.id);
       deletedIdsRef.current.clear();
-      onCountChangeRef.current?.(filledCount(normalized));
+      if (!savingArchive) onCountChangeRef.current?.(filledCount(normalized));
       void refreshArchivePeriods();
       setStatus('Saved.');
       window.setTimeout(() => setStatus(''), 1600);
@@ -310,7 +333,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
       savingRef.current = false;
       if (pendingRemoteReloadRef.current) {
         pendingRemoteReloadRef.current = false;
-        void load({ silent: true, merge: true, periodStart: currentPeriod });
+        void load({ silent: true, merge: true, periodStart: period });
       }
     }
   }
@@ -393,15 +416,17 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
   }
 
   function toggleCompleted(index: number) {
-    if (!canEdit) return;
-    setItems((prev) => {
-      const next = prev.map((it, i) =>
-        i === index ? { ...it, completed: !it.completed } : it,
-      );
-      dirtyIdsRef.current.add(next[index].id);
+    if (!canCheck) return;
+    const next = itemsRef.current.map((it, i) =>
+      i === index ? { ...it, completed: !it.completed } : it,
+    );
+    dirtyIdsRef.current.add(next[index].id);
+    setItems(next);
+    if (canCheckArchive) {
+      void persist(next, activePeriod);
+    } else {
       scheduleSave(next);
-      return next;
-    });
+    }
   }
 
   function addItem() {
@@ -546,7 +571,9 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
           <div className="step-sub">
             {view === 'archive'
               ? archivePeriods.length || hasGoals
-                ? `Archived priorities for ${archiveLabel}.`
+                ? `Archived priorities for ${archiveLabel}.${
+                    priorityCadence === 'weekly' ? ' You can still mark them done.' : ''
+                  }`
                 : `No archived ${priorityCadence} priorities yet. Past periods appear here after a new ${priorityCadence === 'weekly' ? 'week' : priorityCadence === 'monthly' ? 'month' : 'quarter'} starts.`
               : def.subtitle || def.step1Sub}
           </div>
@@ -591,7 +618,7 @@ export function PriorityPanel({ cadence, onCountChange }: Props) {
                     <input
                       type="checkbox"
                       checked={Boolean(item.completed)}
-                      disabled={!canEdit}
+                      disabled={!canCheck}
                       aria-label={
                         item.completed
                           ? `Mark priority ${idx + 1} incomplete`
