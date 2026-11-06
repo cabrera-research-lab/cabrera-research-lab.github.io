@@ -52,7 +52,6 @@ function VariantBody({ item, variant }: { item: TqItem; variant: TqVariant }) {
           loading="lazy"
         />
       ) : null}
-      {variant.figure ? <p className="tq-figure-note">{variant.figure}</p> : null}
       {variant.choices.length > 0 ? (
         <ol className="tq-choices">
           {variant.choices.map((choice) => (

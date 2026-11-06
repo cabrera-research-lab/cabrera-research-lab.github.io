@@ -1857,8 +1857,8 @@
         "id": "A",
         "label": "Draft A",
         "stem": "What is the maximum number of perspectives represented in the image?",
-        "figure": "A street corner with drivers, passengers, people walking, a dog, a cyclist, and someone in a shop. No written labels. More than nine perspectives are available.",
-        "image": "tq/figures/q20a.svg",
+        "figure": "A street corner with a driver, a passenger, a cyclist, four people walking, a dog, and two people at a shop. No labels. Ten perspectives are shown.",
+        "image": "tq/figures/q20a.jpg",
         "choices": [
           {
             "letter": "a",
@@ -1896,8 +1896,8 @@
         "id": "B",
         "label": "Draft B",
         "stem": "What is the maximum number of perspectives represented in the image?",
-        "figure": "A dinner with ten people around one table. No written labels. More than nine perspectives are available.",
-        "image": "tq/figures/q20b.svg",
+        "figure": "Ten people seated around one table. No labels.",
+        "image": "tq/figures/q20b.jpg",
         "choices": [
           {
             "letter": "a",
@@ -1935,8 +1935,8 @@
         "id": "C",
         "label": "Draft C",
         "stem": "What is the maximum number of perspectives represented in the image?",
-        "figure": "A hospital room and waiting area with patients and staff. No written labels. More than nine perspectives are available.",
-        "image": "tq/figures/q20c.svg",
+        "figure": "A clinic with ten people: four waiting, one at the desk, two clinicians, one patient, one adult, and one child. No labels.",
+        "image": "tq/figures/q20c.jpg",
         "choices": [
           {
             "letter": "a",
@@ -6339,7 +6339,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Two hospitals (North and South) are in a dispute. Each hospital has a perspective on the dispute. Each has three units (emergency, surgery, and outpatient). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "A map of two hospital campuses, labeled North and South.",
+        "figure": "Two hospitals in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
         "image": "tq/figures/q47a.jpg",
         "choices": [
           {
@@ -6378,7 +6378,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Two universities (East and West) are in a dispute. Each university has a perspective on the dispute. Each has three faculties (sciences, arts, and engineering). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "A map of two university campuses, labeled East and West.",
+        "figure": "Two university buildings in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
         "image": "tq/figures/q47b.jpg",
         "choices": [
           {
@@ -6417,7 +6417,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Two cities (Harbor and Ridge) are in a dispute. Each city has a perspective on the dispute. Each has three districts (north, central, and south). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "A street map of two cities, labeled Harbor and Ridge.",
+        "figure": "A waterfront city and a hill city in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
         "image": "tq/figures/q47c.jpg",
         "choices": [
           {

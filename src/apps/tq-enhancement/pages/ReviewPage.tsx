@@ -24,6 +24,8 @@ import '@/apps/tq-enhancement/styles/tq-enhancement.css';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+const DEREK_REVIEW_ORDERS = new Set([7, 10, 11, 13, 14, 18, 21, 24, 25, 26, 27, 30, 31, 32, 34, 47]);
+
 function blankAdded(order: number): AddedVariant {
   const item = TQ_ITEMS.find((entry) => entry.order === order);
   const count = item?.variants[0]?.choices.length ?? 0;
@@ -244,9 +246,14 @@ export function ReviewPage() {
   );
 
   const visible = useMemo(
-    () => TQ_ITEMS.filter((item) => filter === 'all' || item.group === filter),
+    () =>
+      TQ_ITEMS.filter((item) => {
+        if (filter === 'review') return DEREK_REVIEW_ORDERS.has(item.order);
+        return filter === 'all' || item.group === filter;
+      }),
     [filter],
   );
+  const reviewCount = TQ_ITEMS.filter((item) => DEREK_REVIEW_ORDERS.has(item.order)).length;
   const markedCount = Object.values(work).reduce((sum, entry) => {
     const bank = Object.values(entry.feedback).filter((note) => note.isGood !== null).length;
     const added = entry.added.filter((variant) => variant.isGood !== null).length;
@@ -289,7 +296,7 @@ export function ReviewPage() {
                   aria-pressed={filter === item.id}
                   onClick={() => setFilter(item.id)}
                 >
-                  {item.label}
+                  {item.id === 'review' ? `To review (${reviewCount})` : item.label}
                 </button>
               ))}
             </div>

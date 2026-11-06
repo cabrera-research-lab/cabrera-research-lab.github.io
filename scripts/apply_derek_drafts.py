@@ -1088,7 +1088,9 @@ def patch(item, letter, **fields):
 
 def copy_revision_photos():
     mapping = {
-        FIG / "q21b.jpg": ASSETS / "q21-meal-line.jpg",
+        FIG / "q20a.jpg": ASSETS / "q20-street.jpg",
+        FIG / "q20b.jpg": ASSETS / "q20-dinner.jpg",
+        FIG / "q20c.jpg": ASSETS / "q20-clinic.jpg",
         FIG / "q21c.jpg": ASSETS / "q21-park-line.jpg",
         FIG / "q25a.jpg": ASSETS / "q25-hockey-stick.jpg",
         FIG / "q26b.jpg": ASSETS / "q26-branch-snow.jpg",
@@ -1099,9 +1101,9 @@ def copy_revision_photos():
         FIG / "q31a.jpg": ASSETS / "q31-neighbors.jpg",
         FIG / "q31b.jpg": ASSETS / "q31-musicians.jpg",
         FIG / "q31c.jpg": ASSETS / "q31-founders.jpg",
-        FIG / "q47a.jpg": ASSETS / "q47-hospitals-map.jpg",
-        FIG / "q47b.jpg": ASSETS / "q47-universities-map.jpg",
-        FIG / "q47c.jpg": ASSETS / "q47-cities-map.jpg",
+        FIG / "q47a.jpg": ASSETS / "q47-hospitals-style.jpg",
+        FIG / "q47b.jpg": ASSETS / "q47-universities-style.jpg",
+        FIG / "q47c.jpg": ASSETS / "q47-cities-style.jpg",
         OPT / "q27-a-a.jpg": ASSETS / "q27-tracks.jpg",
         OPT / "q27-a-b.jpg": ASSETS / "q27-apple.jpg",
         OPT / "q27-a-c.jpg": ASSETS / "q27-hallway.jpg",
@@ -1179,12 +1181,12 @@ def apply_bank():
         upsert(by_order[18], letter, stem, figure, image, option_choices)
 
     scene = {
-        "A": "A street corner with drivers, passengers, people walking, a dog, a cyclist, and someone in a shop. No written labels. More than nine perspectives are available.",
-        "B": "A dinner with ten people around one table. No written labels. More than nine perspectives are available.",
-        "C": "A hospital room and waiting area with patients and staff. No written labels. More than nine perspectives are available.",
+        "A": "A street corner with a driver, a passenger, a cyclist, four people walking, a dog, and two people at a shop. No labels. Ten perspectives are shown.",
+        "B": "Ten people seated around one table. No labels.",
+        "C": "A clinic with ten people: four waiting, one at the desk, two clinicians, one patient, one adult, and one child. No labels.",
     }
     for letter in "ABC":
-        patch(by_order[20], letter, figure=scene[letter], image=f"tq/figures/q20{letter.lower()}.svg")
+        patch(by_order[20], letter, figure=scene[letter], image=f"tq/figures/q20{letter.lower()}.jpg")
 
     subjects = {
         "A": "The original line drawing of a bridge, with no labels.",
@@ -1255,9 +1257,9 @@ def apply_bank():
         upsert(by_order[34], letter, stem, figure, image, choices(options, key))
 
     maps = {
-        "A": "A map of two hospital campuses, labeled North and South.",
-        "B": "A map of two university campuses, labeled East and West.",
-        "C": "A street map of two cities, labeled Harbor and Ridge.",
+        "A": "Two hospitals in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
+        "B": "Two university buildings in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
+        "C": "A waterfront city and a hill city in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
     }
     for letter in "ABC":
         patch(by_order[47], letter, figure=maps[letter], image=f"tq/figures/q47{letter.lower()}.jpg")

@@ -11,9 +11,11 @@ function withPartsDrafts(order: number, variants: TqVariant[]): TqVariant[] {
   return [...variants.filter((variant) => variant.id === 'original'), ...extra];
 }
 
+const ORIGINAL_ONLY = new Set([20]);
+
 export function reviewMode(order: number): TqReviewMode {
   if (RECOMMENDATION_ORDERS.has(order)) return 'recommend';
-  if (order >= 48 && order <= 71) return 'original';
+  if (ORIGINAL_ONLY.has(order) || (order >= 48 && order <= 71)) return 'original';
   return 'variants';
 }
 
@@ -31,6 +33,7 @@ export const TQ_ITEMS: TqItem[] = (raw as Omit<TqItem, 'mode'>[])
 
 export const TQ_FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'All' },
+  { id: 'review', label: 'To review' },
   { id: 'D', label: 'D' },
   { id: 'S', label: 'S' },
   { id: 'R', label: 'R' },
