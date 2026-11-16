@@ -2,7 +2,7 @@ import raw from './bank.json';
 import partsDrafts from './parts-drafts.json';
 import type { TqItem, TqReviewMode, TqVariant } from '@/apps/tq-enhancement/lib/types';
 
-const RECOMMENDATION_ORDERS = new Set([9]);
+const RECOMMENDATION_ORDERS = new Set<number>([]);
 const PARTS_DRAFTS = partsDrafts as unknown as Record<string, TqVariant[]>;
 
 function withPartsDrafts(order: number, variants: TqVariant[]): TqVariant[] {

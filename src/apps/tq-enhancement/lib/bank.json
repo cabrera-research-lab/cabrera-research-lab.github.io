@@ -377,6 +377,123 @@
             "image": ""
           }
         ]
+      },
+      {
+        "id": "A",
+        "label": "Draft A",
+        "stem": "How many distinctions are there in the image?",
+        "figure": "An apple, a pear, and a banana, with those names on the photo.",
+        "image": "tq/figures/q09a.jpg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "1",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "3",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "6",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "7",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "More than 7",
+            "keyed": true,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "label": "Draft B",
+        "stem": "How many distinctions are there in the image?",
+        "figure": "Five labeled tools: hammer, wrench, screwdriver, saw, and pliers.",
+        "image": "tq/figures/q09b.jpg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "1",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "5",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "10",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "Many more than 10",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "label": "Draft C",
+        "stem": "How many distinctions are there in the image?",
+        "figure": "A guitar and a drum, with those names on the photo.",
+        "image": "tq/figures/q09c.jpg",
+        "choices": [
+          {
+            "letter": "a",
+            "text": "More than 4",
+            "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "b",
+            "text": "2",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "c",
+            "text": "4",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "5",
+            "keyed": false,
+            "image": ""
+          },
+          {
+            "letter": "e",
+            "text": "None of the above",
+            "keyed": false,
+            "image": ""
+          }
+        ]
       }
     ]
   },
@@ -596,7 +713,7 @@
       {
         "id": "A",
         "label": "Draft A",
-        "stem": "In the image, what makes stick M the medium stick?",
+        "stem": "In the image, what makes bar M the medium bar?",
         "figure": "Three gray bars. S, M, and L sit inside the bars. S is shortest, M is between them, and L is longest.",
         "image": "tq/figures/q11a.svg",
         "choices": [
@@ -608,13 +725,13 @@
           },
           {
             "letter": "b",
-            "text": "stick S",
+            "text": "bar S",
             "keyed": false,
             "image": ""
           },
           {
             "letter": "c",
-            "text": "stick L",
+            "text": "bar L",
             "keyed": false,
             "image": ""
           },
@@ -908,13 +1025,13 @@
           {
             "letter": "c",
             "text": "6",
-            "keyed": true,
+            "keyed": false,
             "image": ""
           },
           {
             "letter": "d",
             "text": "9",
-            "keyed": false,
+            "keyed": true,
             "image": ""
           },
           {
@@ -944,26 +1061,26 @@
         "choices": [
           {
             "letter": "a",
-            "text": "2",
-            "keyed": false,
-            "image": ""
-          },
-          {
-            "letter": "b",
             "text": "3",
             "keyed": false,
             "image": ""
           },
           {
-            "letter": "c",
-            "text": "4",
+            "letter": "b",
+            "text": "6",
             "keyed": false,
             "image": ""
           },
           {
-            "letter": "d",
-            "text": "6",
+            "letter": "c",
+            "text": "9",
             "keyed": true,
+            "image": ""
+          },
+          {
+            "letter": "d",
+            "text": "12",
+            "keyed": false,
             "image": ""
           },
           {
@@ -1153,7 +1270,7 @@
       {
         "id": "original",
         "label": "Original",
-        "stem": "If you broke the concepts “country,” “fairness,” and “cat” into 3 parts each, how many of those parts would have parts?",
+        "stem": "If you broke the concepts \u201ccountry,\u201d \u201cfairness,\u201d and \u201ccat\u201d into 3 parts each, how many of those parts would have parts?",
         "figure": "",
         "image": "",
         "choices": [
@@ -2333,7 +2450,7 @@
           },
           {
             "letter": "c",
-            "text": "using the term “dog” in a sentence",
+            "text": "using the term \u201cdog\u201d in a sentence",
             "keyed": false,
             "image": ""
           },
@@ -2598,8 +2715,8 @@
       {
         "id": "C",
         "label": "Draft C",
-        "stem": "If you only see large objects, how many objects will you see?",
-        "figure": "Three large red squares and four small ones. Three is not listed, so the key is e.",
+        "stem": "If you only see red, how many objects will you see?",
+        "figure": "Seven red squares, three large and four small. All seven are red, so the key is d.",
         "image": "tq/figures/q24c.svg",
         "choices": [
           {
@@ -2623,13 +2740,13 @@
           {
             "letter": "d",
             "text": "7",
-            "keyed": false,
+            "keyed": true,
             "image": ""
           },
           {
             "letter": "e",
             "text": "None of the above",
-            "keyed": true,
+            "keyed": false,
             "image": ""
           }
         ]
@@ -3595,7 +3712,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Which is a possible relationship between the two items in the image?",
-        "figure": "Two photographs side by side: a fish and a heron. Predation, the sky, and a wetland are not shown.",
+        "figure": "Two photographs side by side: a fish and a heron. Predation, water, and a wetland are the relationships.",
         "image": "tq/figures/q30c.jpg",
         "choices": [
           {
@@ -3606,7 +3723,7 @@
           },
           {
             "letter": "b",
-            "text": "the sky",
+            "text": "water",
             "keyed": false,
             "image": ""
           },
@@ -4679,7 +4796,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Which of the following statements are true about the image?",
-        "figure": "Music and focus joined by an unlabeled relationship. Do not draw an arrow that states a cause.",
+        "figure": "Music and focus joined by a two-way arrow. The arrow does not state a cause.",
         "image": "tq/figures/q37a.jpg",
         "choices": [
           {
@@ -4718,7 +4835,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Which of the following statements are true about the image?",
-        "figure": "Sleep and mood joined by an unlabeled relationship. No causal arrow.",
+        "figure": "Sleep and mood joined by a two-way arrow. The arrow does not state a cause.",
         "image": "tq/figures/q37b.jpg",
         "choices": [
           {
@@ -4757,7 +4874,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Which of the following statements are true about the image?",
-        "figure": "Sunlight and alertness joined by an unlabeled relationship. No causal arrow.",
+        "figure": "Sunlight and alertness joined by a two-way arrow. The arrow does not state a cause.",
         "image": "tq/figures/q37c.jpg",
         "choices": [
           {
@@ -5967,7 +6084,7 @@
       {
         "id": "original",
         "label": "Original",
-        "stem": "Which one of the following best describes the term “category?”",
+        "stem": "Which one of the following best describes the term \u201ccategory?\u201d",
         "figure": "",
         "image": "",
         "choices": [
@@ -6006,7 +6123,7 @@
       {
         "id": "A",
         "label": "Draft A",
-        "stem": "Which statement best describes the term “category”?",
+        "stem": "Which statement best describes the term \u201ccategory\u201d?",
         "figure": "",
         "image": "",
         "choices": [
@@ -6250,7 +6367,7 @@
       {
         "id": "C",
         "label": "Draft C",
-        "stem": "There are two coaching duos discussing a game plan. How many possible perspectives are there on the game plan?",
+        "stem": "There are two sport coaching duos discussing a game plan. How many possible perspectives are there on the game plan?",
         "figure": "",
         "image": "",
         "choices": [
@@ -6339,7 +6456,7 @@
         "id": "A",
         "label": "Draft A",
         "stem": "Two hospitals (North and South) are in a dispute. Each hospital has a perspective on the dispute. Each has three units (emergency, surgery, and outpatient). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "Two hospitals in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
+        "figure": "Two hospitals side by side, with no arrow and no word labels.",
         "image": "tq/figures/q47a.jpg",
         "choices": [
           {
@@ -6378,7 +6495,7 @@
         "id": "B",
         "label": "Draft B",
         "stem": "Two universities (East and West) are in a dispute. Each university has a perspective on the dispute. Each has three faculties (sciences, arts, and engineering). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "Two university buildings in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
+        "figure": "Two university buildings side by side, with no arrow and no word labels.",
         "image": "tq/figures/q47b.jpg",
         "choices": [
           {
@@ -6417,7 +6534,7 @@
         "id": "C",
         "label": "Draft C",
         "stem": "Two cities (Harbor and Ridge) are in a dispute. Each city has a perspective on the dispute. Each has three districts (north, central, and south). In this scenario, what is the total number of perspectives mentioned on the dispute?",
-        "figure": "A waterfront city and a hill city in the same illustration style as question 31, with a double arrow and a question mark between them. No word labels.",
+        "figure": "A waterfront city and a hill city side by side, with no arrow and no word labels.",
         "image": "tq/figures/q47c.jpg",
         "choices": [
           {
